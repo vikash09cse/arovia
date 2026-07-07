@@ -1,0 +1,88 @@
+<header class="page-header">
+  <a routerLink="/patients" class="back-link">← Back to patients</a>
+  @if (patient(); as p) {
+    <div class="header-row">
+      <div>
+        <h1>{{ p.patientCode }} · {{ p.firstName }} {{ p.lastName }}</h1>
+        <p class="subtitle">{{ p.gender }} · @if (p.age != null) { Age {{ p.age }} · } {{ p.phone }} · {{ p.status }}</p>
+      </div>
+      @if (canEdit()) {
+        <a [routerLink]="['/visits/new']" [queryParams]="{ patientId: p.id }" class="btn-primary">Record visit</a>
+      }
+    </div>
+  }
+</header>
+
+@if (loading()) {
+  <p class="status">Loading…</p>
+} @else if (error()) {
+  <div class="error">{{ error() }}</div>
+} @else {
+  @if (patient(); as p) {
+  @if (summary()?.upcomingScheduledSurgeryDate) {
+    <div class="surgery-banner">
+      Surgery scheduled: {{ summary()!.upcomingScheduledSurgeryDate | date: 'mediumDate' }}
+    </div>
+  }
+
+  @if (summary(); as s) {
+    <div class="stats">
+      <div class="stat-card">
+        <span class="stat-label">Total visits</span>
+        <strong>{{ s.totalVisits }}</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Charged</span>
+        <strong>{{ s.totalCharged }}</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Free</span>
+        <strong>{{ s.totalFree }}</strong>
+      </div>
+    </div>
+  }
+
+  @if (canEdit()) {
+    <div class="quick-actions">
+      <a [routerLink]="['/visits/new']" [queryParams]="{ patientId: p.id, visitType: 3 }" class="btn-secondary">Record pre-op visit</a>
+      <a [routerLink]="['/visits/new']" [queryParams]="{ patientId: p.id, visitType: 4 }" class="btn-secondary">Record surgery visit</a>
+    </div>
+  }
+
+  <h2 class="section-title">Visit history</h2>
+  @if (visits().length === 0) {
+    <p class="status">No visits recorded yet.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Visit ID</th>
+            <th>Type</th>
+            <th>Doctor</th>
+            <th>Purpose</th>
+            <th>Consult</th>
+            <th>Payment</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (v of visits(); track v.id) {
+            <tr>
+              <td>{{ v.visitDateTime | date: 'medium' }}</td>
+              <td>{{ v.visitCode }}</td>
+              <td>{{ v.visitType }}</td>
+              <td>{{ v.doctorFullName }}</td>
+              <td>{{ v.purpose }}</td>
+              <td>{{ v.feeStatus === 'Free' ? 'Free' : formatMoney(v.feeAmount) }}</td>
+              <td>{{ v.aggregatedPaymentStatus }}</td>
+              <td><a [routerLink]="['/visits', v.id]">View</a></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  }
+}

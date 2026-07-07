@@ -1,0 +1,19 @@
+CREATE OR ALTER PROCEDURE dbo.sp_get_payment_collectors
+    @tenantid UNIQUEIDENTIFIER
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        u.userid,
+        u.firstname,
+        u.lastname,
+        u.email
+    FROM dbo.users u
+    WHERE u.tenantid = @tenantid
+      AND u.usertype IN (1, 2)
+      AND u.userstatus = 1
+      AND u.isdeleted = 0
+    ORDER BY u.lastname, u.firstname;
+END
+GO

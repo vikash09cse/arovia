@@ -1,0 +1,318 @@
+<header class="page-header">
+  <a routerLink="/visits" class="back-link">← Back to visits</a>
+  <h1>Record visit</h1>
+  <p class="hint">Visit date and time are set automatically when saved.</p>
+</header>
+
+@if (error()) {
+  <div class="error">{{ error() }}</div>
+}
+
+<div class="form-layout">
+  <form class="form-card" (ngSubmit)="submit()">
+    <section>
+      <h2>Visit details</h2>
+
+      <div class="visit-details-split">
+        <div class="visit-details-main">
+          <label class="patient-field">
+            Patient *
+            <div class="patient-search">
+              <input
+                type="text"
+                name="patientSearch"
+                placeholder="Search patient code or phone"
+                [(ngModel)]="patientSearch"
+                [disabled]="!!selectedPatient()"
+              />
+              @if (!selectedPatient()) {
+                <button type="button" class="btn-secondary" (click)="searchPatients()">Find</button>
+              } @else {
+                <button type="button" class="btn-text" (click)="resetPatient()">Change</button>
+              }
+            </div>
+          </label>
+
+          <label>
+            Visit type *
+            <select name="visitType" [(ngModel)]="visitType" required>
+              <option [ngValue]="1">OPD</option>
+              <option [ngValue]="2">Follow-up</option>
+              <option [ngValue]="3">Pre-op</option>
+              <option [ngValue]="4">Surgery</option>
+            </select>
+          </label>
+
+          <label class="full">
+            Purpose *
+            <input type="text" name="purpose" [(ngModel)]="purpose" maxlength="300" required />
+          </label>
+
+          <label class="full">
+            Visit notes
+            <textarea name="visitNotes" rows="3" [(ngModel)]="visitNotes" maxlength="1000"></textarea>
+          </label>
+
+          <div class="visit-bottom-row">
+            <label>
+              Scheduled surgery date
+              <input type="date" name="scheduledSurgeryDate" [(ngModel)]="scheduledSurgeryDate" />
+            </label>
+
+            <label>
+              Procedure / surgery charge
+              <input
+                type="number"
+                name="procedureChargeAmount"
+                [(ngModel)]="procedureChargeAmount"
+                (ngModelChange)="onProcedureChargeChange()"
+                min="0"
+                step="0.01"
+                placeholder="Optional"
+              />
+            </label>
+          </div>
+
+          @if (activeAddons().length > 0) {
+            <fieldset class="addons-fieldset full">
+              <legend>Add-ons</legend>
+              @for (addon of activeAddons(); track addon.id) {
+                <label class="checkbox-row">
+                  <input
+                    type="checkbox"
+                    [checked]="isAddonSelected(addon.id)"
+                    (change)="toggleAddon(addon.id)"
+                  />
+                  {{ addon.name }} ({{ formatMoney(addon.defaultAmount) }})
+                </label>
+              }
+            </fieldset>
+          }
+        </div>
+
+        <div class="visit-details-side">
+          <label>
+            Consulting doctor *
+            <select name="consultingDoctorId" [(ngModel)]="consultingDoctorId" required [disabled]="doctors().length === 0">
+              <option value="">Select doctor</option>
+              @for (d of doctors(); track d.id) {
+                <option [value]="d.id">{{ d.fullName }}</option>
+              }
+            </select>
+            @if (doctors().length === 0) {
+              <span class="field-hint">
+                No active doctors yet.
+                @if (isSuperAdmin()) {
+                  <a routerLink="/doctors/new">Add a doctor</a>
+                } @else {
+                  Ask your hospital administrator to add doctors.
+                }
+              </span>
+            }
+          </label>
+
+          <div class="consultation-fee-box">
+            <h3>Consultation fee</h3>
+            @if (!selectedPatient()) {
+              <p class="section-hint">Select a patient to load the suggested fee.</p>
+            } @else {
+              <label>
+                Fee type *
+                <select
+                  name="consultationFeeStatus"
+                  [(ngModel)]="consultationFeeStatus"
+                  (ngModelChange)="onConsultationFeeStatusChange()"
+                  required
+                >
+                  <option [ngValue]="1">Charged</option>
+                  <option [ngValue]="2">Free</option>
+                </select>
+              </label>
+
+              <label>
+                Consultation fee *
+                <input
+                  type="number"
+                  name="consultationFeeAmount"
+                  [(ngModel)]="consultationFeeAmount"
+                  min="0"
+                  step="0.01"
+                  [disabled]="consultationFeeStatus === 2"
+                  [required]="consultationFeeStatus === 1"
+                  placeholder="Amount"
+                />
+              </label>
+
+              <label>
+                Discount (₹)
+                <input
+                  type="number"
+                  name="discountAmount"
+                  [(ngModel)]="discountAmount"
+                  (ngModelChange)="onDiscountChange()"
+                  min="0"
+                  step="0.01"
+                  placeholder="Optional"
+                />
+              </label>
+
+              @if (discountAmount && discountAmount > 0) {
+                <label class="full">
+                  Discount reason *
+                  <input
+                    type="text"
+                    name="discountReason"
+                    [(ngModel)]="discountReason"
+                    maxlength="500"
+                    required
+                    placeholder="e.g. senior citizen, staff discount"
+                  />
+                </label>
+              }
+
+              @if (showPaymentFields) {
+                <label>
+                  Collect payment now?
+                  <select name="collectAtCreate" [(ngModel)]="collectAtCreate" (ngModelChange)="onCollectAtCreateChange()" required>
+                    <option [ngValue]="false">No — balance due later</option>
+                    <option [ngValue]="true">Yes — record a collection</option>
+                  </select>
+                </label>
+
+                @if (collectAtCreate) {
+                  <label>
+                    Amount collecting now *
+                    <input
+                      type="number"
+                      name="initialCollectionAmount"
+                      [(ngModel)]="initialCollectionAmount"
+                      min="0.01"
+                      [max]="totalDue"
+                      step="0.01"
+                      required
+                    />
+                    <span class="field-hint">Total due: {{ formatMoney(totalDue) }}</span>
+                  </label>
+
+                  <label>
+                    Payment collected by *
+                    <select
+                      name="collectedByUserId"
+                      [(ngModel)]="collectedByUserId"
+                      required
+                    >
+                      <option value="">Select staff</option>
+                      @for (c of collectors(); track c.id) {
+                        <option [value]="c.id">{{ c.fullName }}</option>
+                      }
+                    </select>
+                    <span class="field-hint">Who received the payment at collection time</span>
+                  </label>
+                }
+              }
+
+              @if (!(discountAmount && discountAmount > 0)) {
+                <label class="full">
+                  Consultation fee note
+                  <input
+                    type="text"
+                    name="feeNote"
+                    [(ngModel)]="feeNote"
+                    maxlength="500"
+                    placeholder="Optional — e.g. why fee was changed or waived"
+                  />
+                </label>
+              }
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="actions">
+      <a routerLink="/visits" class="btn-secondary">Cancel</a>
+      <button type="submit" class="btn-primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Record visit' }}
+      </button>
+    </div>
+  </form>
+
+  <aside class="fee-preview">
+    <h2>Fee preview</h2>
+    @if (previewLoading()) {
+      <p class="status">Calculating…</p>
+    } @else if (!selectedPatient()) {
+      <p class="status">Select a patient to see fee details.</p>
+    } @else {
+      @if (feePreview(); as preview) {
+      <dl>
+        <dt>Fee type</dt>
+        <dd>
+          <span class="fee-tag" [class.charged]="consultationFeeStatus === 1">
+            {{ consultationFeeStatus === 1 ? 'Charged' : 'Free' }}
+          </span>
+          @if (consultationFeeStatus === 1) {
+            <span class="amount">{{ formatMoney(consultationFeeAmount ?? 0) }}</span>
+          }
+        </dd>
+
+        @if (preview.lastChargedVisitDateTime) {
+          <dt>Last charged visit</dt>
+          <dd>{{ preview.lastChargedVisitDateTime | date: 'mediumDate' }}</dd>
+        }
+
+        @if (preview.daysSinceLastCharged != null) {
+          <dt>Days since last charged</dt>
+          <dd>{{ preview.daysSinceLastCharged }} / window {{ preview.freeVisitWindowDays }} days</dd>
+        }
+      </dl>
+
+      <div class="total-box">
+        <h3>Total due today</h3>
+        <div class="total-line">
+          <span>Consultation</span>
+          <span>{{ formatMoney(consultationDue) }}</span>
+        </div>
+        @if (procedureChargeAmount && procedureChargeAmount > 0) {
+          <div class="total-line">
+            <span>Procedure</span>
+            <span>{{ formatMoney(procedureChargeAmount) }}</span>
+          </div>
+        }
+        @for (addon of selectedAddonItems(); track addon.id) {
+          <div class="total-line">
+            <span>{{ addon.name }}</span>
+            <span>{{ formatMoney(addon.defaultAmount) }}</span>
+          </div>
+        }
+        <div class="total-line">
+          <span>Subtotal</span>
+          <span>{{ formatMoney(grossSubtotal) }}</span>
+        </div>
+        @if (discountDue > 0) {
+          <div class="total-line discount">
+            <span>Discount</span>
+            <span>−{{ formatMoney(discountDue) }}</span>
+          </div>
+        }
+        <div class="total-line grand">
+          <span>Total</span>
+          <strong>{{ formatMoney(totalDue) }}</strong>
+        </div>
+        @if (showPaymentFields) {
+          <div class="total-line payment-status-line">
+            <span>Collection at create</span>
+            <span class="badge" [class.paid]="collectAtCreate" [class.unpaid]="!collectAtCreate">
+              @if (collectAtCreate) {
+                {{ formatMoney(initialCollectionAmount ?? 0) }}
+              } @else {
+                Balance due later
+              }
+            </span>
+          </div>
+        }
+      </div>
+      }
+    }
+  </aside>
+</div>

@@ -1,0 +1,59 @@
+<header class="page-header">
+  <a routerLink="/doctors" class="back-link">← Back to doctors</a>
+  <h1>{{ isEdit() ? 'Edit doctor' : 'Add doctor' }}</h1>
+  @if (!isEdit()) {
+    <p class="hint">A temporary password is generated automatically if you leave the password field blank.</p>
+  }
+</header>
+
+@if (loading()) {
+  <p class="status">Loading…</p>
+} @else {
+  @if (error()) {
+    <div class="error">{{ error() }}</div>
+  }
+
+  <form class="form-card" (ngSubmit)="submit()">
+    <section>
+      <h2>Doctor details</h2>
+      <div class="grid">
+        <label>
+          First name *
+          <input type="text" name="firstName" [(ngModel)]="firstName" required minlength="2" />
+        </label>
+        <label>
+          Last name *
+          <input type="text" name="lastName" [(ngModel)]="lastName" required minlength="2" />
+        </label>
+        @if (!isEdit()) {
+          <label>
+            Email *
+            <input type="email" name="email" [(ngModel)]="email" required />
+          </label>
+          <label>
+            Temporary password
+            <input
+              type="text"
+              name="temporaryPassword"
+              [(ngModel)]="temporaryPassword"
+              placeholder="Leave blank to auto-generate"
+              autocomplete="new-password"
+            />
+          </label>
+        } @else {
+          <label>
+            Email
+            <input type="email" [value]="email" disabled />
+          </label>
+        }
+      </div>
+    </section>
+
+    <div class="actions">
+      <a routerLink="/doctors" class="btn-secondary">Cancel</a>
+      <button type="submit" class="btn-primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : (isEdit() ? 'Update doctor' : 'Add doctor') }}
+      </button>
+    </div>
+  </form>
+}

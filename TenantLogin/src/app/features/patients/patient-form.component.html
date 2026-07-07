@@ -1,0 +1,111 @@
+<header class="page-header">
+  <a routerLink="/patients" class="back-link">← Back to patients</a>
+  <h1>{{ isEdit() ? 'Edit patient' : 'Register patient' }}</h1>
+</header>
+
+@if (loading()) {
+  <p class="status">Loading…</p>
+} @else {
+  @if (error()) {
+    <div class="error">{{ error() }}</div>
+  }
+
+  <form class="form-card" (ngSubmit)="submit()">
+    <section>
+      <h2>Personal details</h2>
+      <div class="grid">
+        <label>
+          First name *
+          <input type="text" name="firstName" [(ngModel)]="firstName" required minlength="2" />
+        </label>
+        <label>
+          Last name *
+          <input type="text" name="lastName" [(ngModel)]="lastName" required minlength="2" />
+        </label>
+        <label>
+          Date of birth
+          <app-dob-picker name="dateOfBirth" [(ngModel)]="dateOfBirth" />
+        </label>
+        <label>
+          Age
+          <input
+            type="number"
+            name="age"
+            [(ngModel)]="age"
+            min="0"
+            max="150"
+            step="1"
+            placeholder="Years"
+            (keydown)="blockDecimal($event)"
+            (input)="sanitizeAge()"
+          />
+        </label>
+        <label>
+          Gender *
+          <select name="gender" [(ngModel)]="gender" required>
+            <option [ngValue]="1">Male</option>
+            <option [ngValue]="2">Female</option>
+            <option [ngValue]="3">Other</option>
+          </select>
+        </label>
+        <label>
+          Blood group
+          <select name="bloodGroup" [(ngModel)]="bloodGroup">
+            <option [ngValue]="null">—</option>
+            <option [ngValue]="1">A+</option>
+            <option [ngValue]="2">A-</option>
+            <option [ngValue]="3">B+</option>
+            <option [ngValue]="4">B-</option>
+            <option [ngValue]="5">AB+</option>
+            <option [ngValue]="6">AB-</option>
+            <option [ngValue]="7">O+</option>
+            <option [ngValue]="8">O-</option>
+          </select>
+        </label>
+        <label>
+          Referred by
+          <input type="text" name="referredBy" [(ngModel)]="referredBy" placeholder="Doctor name or Self" />
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Contact information</h2>
+      <div class="grid">
+        <label>
+          Phone *
+          <input type="tel" name="phone" [(ngModel)]="phone" required />
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" [(ngModel)]="email" />
+        </label>
+        <label>
+          Address *
+          <input type="text" name="address" [(ngModel)]="address" required />
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Emergency contact <span class="optional">(optional)</span></h2>
+      <div class="grid">
+        <label>
+          Contact name
+          <input type="text" name="emergencyContactName" [(ngModel)]="emergencyContactName" />
+        </label>
+        <label>
+          Contact phone
+          <input type="tel" name="emergencyContactPhone" [(ngModel)]="emergencyContactPhone" />
+        </label>
+      </div>
+    </section>
+
+    <div class="actions">
+      <a routerLink="/patients" class="btn-secondary">Cancel</a>
+      <button type="submit" class="btn-primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : (isEdit() ? 'Update patient' : 'Register patient') }}
+      </button>
+    </div>
+  </form>
+}

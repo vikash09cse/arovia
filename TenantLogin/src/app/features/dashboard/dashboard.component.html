@@ -1,0 +1,29 @@
+<header class="page-header">
+  <h1>Dashboard</h1>
+  @if (user(); as u) {
+    <p class="subtitle">Welcome back, {{ u.fullName }}</p>
+  }
+</header>
+
+<div class="cards">
+  <div class="card">
+    <span class="card-label">Today's patients</span>
+    <strong class="card-value">—</strong>
+    <span class="card-note">Patients module coming soon</span>
+  </div>
+  <div class="card">
+    <span class="card-label">Active visits</span>
+    <strong class="card-value">—</strong>
+    <span class="card-note">Visits module coming soon</span>
+  </div>
+  <a class="card card-link" routerLink="/payments" [queryParams]="{ status: '1' }">
+    <span class="card-label">Pending payments</span>
+    <strong class="card-value">View</strong>
+    <span class="card-note">Unpaid consultation &amp; procedure charges</span>
+  </a>
+  <a class="card card-link" routerLink="/lab-tests">
+    <span class="card-label">Lab agencies</span>
+    <strong class="card-value">Manage</strong>
+    <span class="card-note">Register labs and assign them to visits</span>
+  </a>
+</div>

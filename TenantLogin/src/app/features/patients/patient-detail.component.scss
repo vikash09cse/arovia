@@ -1,0 +1,62 @@
+.page-header { margin-bottom: 1.25rem; }
+.back-link { display: inline-block; margin-bottom: 0.5rem; color: #64748b; text-decoration: none; font-size: 0.9rem; }
+.header-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+h1 { margin: 0; font-size: clamp(1.35rem, 3vw, 1.75rem); color: #0f172a; }
+.subtitle { margin: 0.35rem 0 0; color: #64748b; font-size: 0.95rem; }
+.section-title { font-size: 1rem; color: #334155; margin: 1.5rem 0 0.75rem; }
+.status { color: #64748b; }
+.error { background: #fee2e2; color: #b91c1c; padding: 0.75rem 1rem; border-radius: 10px; }
+
+.btn-primary, .btn-secondary {
+  border: none; border-radius: 10px; padding: 0.625rem 1rem;
+  font-size: 0.9rem; text-decoration: none; display: inline-flex; align-items: center;
+}
+.btn-primary { background: #0f766e; color: #fff; }
+.btn-secondary { background: #f1f5f9; color: #334155; }
+
+.surgery-banner {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stat-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.stat-label { font-size: 0.8rem; color: #64748b; }
+.stat-card strong { font-size: 1.5rem; color: #0f172a; }
+
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #f1f5f9; }
+th { background: #f8fafc; color: #64748b; font-size: 0.8rem; }

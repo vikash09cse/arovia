@@ -1,0 +1,76 @@
+@import '../visits/visits.component.scss';
+
+.filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #fff;
+}
+
+.visit-code {
+  display: block;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.balance-line {
+  display: block;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.balance-sub {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.15rem;
+}
+
+.status-select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  background: #fff;
+  max-width: 6.5rem;
+}
+
+.status-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.actions-col {
+  width: 120px;
+}
+
+.collector-select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  background: #fff;
+  max-width: 10rem;
+}
+
+@media (max-width: 767px) {
+  .status-select {
+    max-width: none;
+    flex: 1;
+  }
+}

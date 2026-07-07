@@ -1,0 +1,12 @@
+*.rsuser
+*.suo
+*.user
+.vs/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+node_modules/
+dist/
+.angular/
+.env
+appsettings.*.local.json

@@ -1,0 +1,134 @@
+<header class="page-header">
+  <div class="header-row">
+    <div>
+      <h1>Visits</h1>
+      <p class="subtitle">Schedule and track patient visits</p>
+    </div>
+    @if (canEdit()) {
+      <a routerLink="/visits/new" class="btn-primary">Record visit</a>
+    }
+  </div>
+</header>
+
+<form class="search-bar" (ngSubmit)="onSearch()">
+  <input type="text" name="searchTerm" placeholder="Search by patient code" [(ngModel)]="searchTerm" />
+  <input type="date" name="dateFrom" [(ngModel)]="dateFrom" title="From date" />
+  <input type="date" name="dateTo" [(ngModel)]="dateTo" title="To date" />
+  <select name="visitTypeFilter" [(ngModel)]="visitTypeFilter">
+    <option value="">All types</option>
+    <option value="1">OPD</option>
+    <option value="2">Follow-up</option>
+    <option value="3">Pre-op</option>
+    <option value="4">Surgery</option>
+  </select>
+  <button type="submit" class="btn-secondary">Search</button>
+  @if (searchTerm || dateFrom || dateTo || visitTypeFilter) {
+    <button type="button" class="btn-text" (click)="clearFilters()">Clear</button>
+  }
+</form>
+
+@if (loading()) {
+  <p class="status">Loading visits…</p>
+} @else if (error()) {
+  <div class="error">{{ error() }}</div>
+} @else if (visits().length === 0) {
+  <div class="empty">
+    No visits found.
+    @if (canEdit()) {
+      <a routerLink="/visits/new">Record the first visit</a>
+    }
+  </div>
+} @else {
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Visit ID</th>
+          <th>Date / time</th>
+          <th>Patient</th>
+          <th>Type</th>
+          <th>Doctor</th>
+          <th>Consult</th>
+          <th>Procedure</th>
+          <th>Payment</th>
+          <th>Status</th>
+          <th class="actions-col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (v of visits(); track v.id) {
+          <tr>
+            <td data-label="Visit ID">{{ v.visitCode }}</td>
+            <td data-label="Date">{{ formatDateTime(v.visitDateTime) }}</td>
+            <td data-label="Patient">
+              <span class="patient-code">{{ v.patientCode }}</span>
+              {{ v.patientFirstName }} {{ v.patientLastName }}
+            </td>
+            <td data-label="Type">{{ v.visitType }}</td>
+            <td data-label="Doctor">{{ v.doctorFullName }}</td>
+            <td data-label="Consult">{{ v.feeStatus === 'Free' ? 'Free' : formatMoney(v.feeAmount) }}</td>
+            <td data-label="Procedure">{{ formatMoney(v.procedureChargeAmount) }}</td>
+            <td data-label="Payment">
+              <span class="badge" [class]="paymentBadgeClass(v.aggregatedPaymentStatusCode)">
+                {{ v.aggregatedPaymentStatus }}
+              </span>
+            </td>
+            <td data-label="Status">
+              <span class="badge" [class.active]="v.visitStatusCode === 1">{{ v.visitStatus }}</span>
+            </td>
+            <td data-label="Actions" class="actions-cell">
+              <div class="row-actions">
+                <a
+                  [routerLink]="['/visits', v.id]"
+                  class="icon-btn icon-btn-view"
+                  title="View visit"
+                  aria-label="View visit"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </a>
+                @if (canEdit() && v.visitStatusCode === 1) {
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn-delete"
+                    title="Cancel visit"
+                    aria-label="Cancel visit"
+                    [disabled]="deletingId() === v.id"
+                    (click)="cancelVisit(v)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (totalCount() > pageSize) {
+    <div class="pager">
+      <button type="button" class="btn-secondary" [disabled]="page() <= 1" (click)="prevPage()">Previous</button>
+      <span>Page {{ page() }} of {{ Math.ceil(totalCount() / pageSize) || 1 }}</span>
+      <button type="button" class="btn-secondary" [disabled]="page() >= Math.ceil(totalCount() / pageSize)" (click)="nextPage()">Next</button>
+    </div>
+  }
+}
+
+<app-confirm-dialog
+  [open]="confirmTarget() !== null"
+  title="Cancel visit?"
+  [message]="confirmMessage()"
+  confirmLabel="Cancel visit"
+  cancelLabel="Keep visit"
+  variant="danger"
+  [loading]="deletingId() !== null"
+  (confirm)="confirmDelete()"
+  (cancel)="cancelDelete()"
+/>

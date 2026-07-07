@@ -1,0 +1,11 @@
+<h1>Platform Dashboard</h1>
+@if (loading()) { <p>Loading...</p> }
+@if (dashboard(); as d) {
+  <div class="cards">
+    <div class="card"><span>Total Tenants</span><strong>{{ d.totalTenants }}</strong></div>
+    <div class="card"><span>Active</span><strong>{{ d.activeTenants }}</strong></div>
+    <div class="card"><span>Suspended</span><strong>{{ d.suspendedTenants }}</strong></div>
+    <div class="card"><span>Tenant Users</span><strong>{{ d.totalTenantUsers }}</strong></div>
+    <div class="card"><span>Total Patients</span><strong>{{ d.totalPatients }}</strong></div>
+  </div>
+}

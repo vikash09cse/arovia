@@ -1,0 +1,97 @@
+<header class="page-header">
+  <div class="header-row">
+    <div>
+      <h1>Users</h1>
+      <p class="subtitle">Staff and doctors for your hospital</p>
+    </div>
+    <button type="button" class="btn-primary" (click)="openDrawer()">Add staff</button>
+  </div>
+</header>
+
+@if (loading()) {
+  <p class="status">Loading users…</p>
+} @else if (error()) {
+  <div class="error">{{ error() }}</div>
+} @else if (users().length === 0) {
+  <div class="empty">
+    No staff users yet.
+    <button type="button" class="btn-text" (click)="openDrawer()">Add the first staff member</button>
+  </div>
+} @else {
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (u of users(); track u.id) {
+          <tr>
+            <td data-label="Name">{{ u.firstName }} {{ u.lastName }}</td>
+            <td data-label="Email">{{ u.email }}</td>
+            <td data-label="Role">{{ u.role }}</td>
+            <td data-label="Status">
+              <span class="badge" [class.active]="u.statusCode === 1">{{ u.status }}</span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (drawerOpen()) {
+  <div class="drawer-backdrop" (click)="closeDrawer()">
+    <aside class="drawer-panel" (click)="$event.stopPropagation()">
+      <header class="drawer-header">
+        <div>
+          <h2>Add staff member</h2>
+          <p class="drawer-hint">Staff can collect payments and manage day-to-day hospital operations.</p>
+        </div>
+        <button type="button" class="drawer-close" (click)="closeDrawer()" aria-label="Close">×</button>
+      </header>
+
+      @if (formError()) {
+        <div class="error">{{ formError() }}</div>
+      }
+
+      <form class="drawer-form" (ngSubmit)="submitStaff()">
+        <label>
+          First name *
+          <input type="text" name="firstName" [(ngModel)]="firstName" required minlength="2" [disabled]="saving()" />
+        </label>
+        <label>
+          Last name *
+          <input type="text" name="lastName" [(ngModel)]="lastName" required minlength="2" [disabled]="saving()" />
+        </label>
+        <label>
+          Email *
+          <input type="email" name="email" [(ngModel)]="email" required [disabled]="saving()" />
+        </label>
+        <label>
+          Temporary password
+          <input
+            type="text"
+            name="temporaryPassword"
+            [(ngModel)]="temporaryPassword"
+            placeholder="Leave blank to auto-generate"
+            autocomplete="new-password"
+            [disabled]="saving()"
+          />
+          <span class="field-hint">Share this with the staff member for their first login.</span>
+        </label>
+
+        <div class="drawer-actions">
+          <button type="button" class="btn-secondary" [disabled]="saving()" (click)="closeDrawer()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Adding…' : 'Add staff' }}
+          </button>
+        </div>
+      </form>
+    </aside>
+  </div>
+}

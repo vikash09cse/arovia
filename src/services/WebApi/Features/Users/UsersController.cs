@@ -35,4 +35,8 @@ public class UsersController(UsersService service) : ControllerBase
 
         return (await service.SetUserStatusAsync(id, (UserStatus)status, ct)).ToActionResult();
     }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct) =>
+        (await service.DeleteUserAsync(id, ct)).ToActionResult();
 }

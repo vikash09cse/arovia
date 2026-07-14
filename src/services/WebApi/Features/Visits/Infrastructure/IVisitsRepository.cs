@@ -6,7 +6,7 @@ public class VisitListRow
     public string VisitCode { get; set; } = string.Empty;
     public DateTime VisitDateTime { get; set; }
     public byte VisitType { get; set; }
-    public string Purpose { get; set; } = string.Empty;
+    public string? Purpose { get; set; }
     public byte FeeStatus { get; set; }
     public decimal? FeeAmount { get; set; }
     public decimal? ProcedureChargeAmount { get; set; }
@@ -30,7 +30,7 @@ public class VisitDetailRow
     public string VisitCode { get; set; } = string.Empty;
     public DateTime VisitDateTime { get; set; }
     public byte VisitType { get; set; }
-    public string Purpose { get; set; } = string.Empty;
+    public string? Purpose { get; set; }
     public string? VisitNotes { get; set; }
     public DateTime? ScheduledSurgeryDate { get; set; }
     public byte FeeStatus { get; set; }
@@ -84,6 +84,7 @@ public class VisitLabAgencyRow
     public Guid AssignedByUserId { get; set; }
     public string? AssignerFirstName { get; set; }
     public string? AssignerLastName { get; set; }
+    public string? TestName { get; set; }
     public string? Notes { get; set; }
 }
 
@@ -131,7 +132,7 @@ public interface IVisitsRepository
         Guid patientId,
         Guid consultingDoctorId,
         byte visitType,
-        string purpose,
+        string? purpose,
         string? visitNotes,
         decimal? procedureChargeAmount,
         DateOnly? scheduledSurgeryDate,
@@ -152,6 +153,8 @@ public interface IVisitsRepository
         int pageSize,
         Guid? patientId,
         string? patientCode,
+        string? visitCode,
+        byte[]? phoneBlindIndex,
         Guid? consultingDoctorId,
         byte? visitType,
         byte? feeStatus,

@@ -7,6 +7,7 @@ BEGIN
         labagencyid      UNIQUEIDENTIFIER NOT NULL,
         assignedat       DATETIME2        NOT NULL CONSTRAINT DF_visit_lab_agencies_assignedat DEFAULT (SYSUTCDATETIME()),
         assignedby       UNIQUEIDENTIFIER NOT NULL,
+        testname         NVARCHAR(250)    NULL,
         notes            NVARCHAR(500)    NULL,
         CONSTRAINT FK_visit_lab_agencies_tenant FOREIGN KEY (tenantid) REFERENCES dbo.tenants (tenantid),
         CONSTRAINT FK_visit_lab_agencies_visit FOREIGN KEY (visitid) REFERENCES dbo.visits (visitid),

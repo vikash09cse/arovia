@@ -10,6 +10,7 @@ BEGIN
         u.email,
         u.firstname,
         u.lastname,
+        u.designation,
         u.usertype AS role,
         u.userstatus AS status,
         u.lastloginat,

@@ -7,6 +7,7 @@ BEGIN
         passwordhash    NVARCHAR(256)    NOT NULL,
         firstname       NVARCHAR(100)    NOT NULL,
         lastname        NVARCHAR(100)    NOT NULL,
+        designation     NVARCHAR(100)    NULL,
         usertype        TINYINT          NOT NULL,
         userstatus      TINYINT          NOT NULL CONSTRAINT DF_users_userstatus DEFAULT (1),
         lastloginat     DATETIME2        NULL,

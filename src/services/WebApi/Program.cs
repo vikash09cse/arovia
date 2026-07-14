@@ -5,7 +5,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(o => o.AddPolicy("AllowAngularApps", p =>
     p.WithOrigins("http://localhost:4200", "https://localhost:4200",
-                  "http://localhost:4201", "https://localhost:4201")
+                  "http://localhost:4201", "https://localhost:4201",
+                  "https://janakurocare.com", "http://janakurocare.com",
+                  "https://www.janakurocare.com", "http://www.janakurocare.com")
      .AllowAnyHeader()
      .AllowAnyMethod()
      .AllowCredentials()));

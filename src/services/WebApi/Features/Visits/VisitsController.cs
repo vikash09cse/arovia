@@ -17,6 +17,8 @@ public class VisitsController(VisitsService service) : ControllerBase
         [FromQuery] int pageSize = 10,
         [FromQuery] Guid? patientId = null,
         [FromQuery] string? patientCode = null,
+        [FromQuery] string? visitCode = null,
+        [FromQuery] string? phone = null,
         [FromQuery] Guid? consultingDoctorId = null,
         [FromQuery] byte? visitType = null,
         [FromQuery] byte? feeStatus = null,
@@ -25,7 +27,7 @@ public class VisitsController(VisitsService service) : ControllerBase
         [FromQuery] DateOnly? dateTo = null,
         CancellationToken ct = default) =>
         (await service.GetVisitsAsync(
-            page, pageSize, patientId, patientCode, consultingDoctorId,
+            page, pageSize, patientId, patientCode, visitCode, phone, consultingDoctorId,
             visitType, feeStatus, visitStatus, dateFrom, dateTo, ct)).ToActionResult();
 
     [HttpGet("fee-preview")]

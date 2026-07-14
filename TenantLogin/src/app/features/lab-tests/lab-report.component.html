@@ -1,0 +1,102 @@
+<header class="page-header">
+  <div class="header-row">
+    <div>
+      <h1>Lab Report</h1>
+      <p class="subtitle">Visit assignments by lab agency</p>
+    </div>
+    @if (totalVisits() > 0) {
+      <div class="summary-pill">{{ totalVisits() }} visit{{ totalVisits() === 1 ? '' : 's' }} assigned</div>
+    }
+  </div>
+</header>
+
+<form class="search-bar" (ngSubmit)="onSearch()">
+  <label class="filter-type">
+    <span>Filter by</span>
+    <select name="filterType" [(ngModel)]="filterType" (ngModelChange)="onFilterTypeChange()">
+      <option value="date">Date</option>
+      <option value="phone">Phone Number</option>
+      <option value="patientCode">Patient Number</option>
+    </select>
+  </label>
+
+  @if (filterType === 'date') {
+    <label class="date-filter">
+      <span>From</span>
+      <input type="date" name="dateFrom" [(ngModel)]="dateFrom" />
+    </label>
+    <label class="date-filter">
+      <span>To</span>
+      <input type="date" name="dateTo" [(ngModel)]="dateTo" />
+    </label>
+  } @else if (filterType === 'phone') {
+    <input
+      type="text"
+      name="searchTerm"
+      placeholder="Enter phone number"
+      [(ngModel)]="searchTerm"
+      inputmode="tel"
+      autocomplete="tel"
+    />
+  } @else {
+    <input
+      type="text"
+      name="searchTerm"
+      placeholder="Enter patient number (e.g. 20260714-01)"
+      [(ngModel)]="searchTerm"
+      autocomplete="off"
+    />
+  }
+
+  <button type="submit" class="btn-secondary">Search</button>
+  @if (filtersAreActive()) {
+    <button type="button" class="btn-text" (click)="clearFilters()">Clear</button>
+  }
+</form>
+
+@if (loading()) {
+  <p class="status">Loading lab report…</p>
+} @else if (error()) {
+  <div class="error">{{ error() }}</div>
+} @else if (rows().length === 0) {
+  <div class="empty">
+    @if (filterType === 'date') {
+      No lab agencies found.
+    } @else if (searchTerm.trim()) {
+      No lab assignments found for the selected filters.
+    } @else if (filterType === 'phone') {
+      Enter a phone number and search to find lab assignments.
+    } @else {
+      Enter a patient number and search to find lab assignments.
+    }
+  </div>
+} @else {
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Lab agency</th>
+          <th>Contact</th>
+          <th>Phone</th>
+          <th>Status</th>
+          <th class="count-col">Visits assigned</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of rows(); track r.id) {
+          <tr>
+            <td data-label="Lab agency">{{ r.name }}</td>
+            <td data-label="Contact">{{ r.contactPerson || '—' }}</td>
+            <td data-label="Phone">{{ r.phone || '—' }}</td>
+            <td data-label="Status">
+              <span class="badge" [class.active]="r.statusCode === 1">{{ r.status }}</span>
+            </td>
+            <td data-label="Visits assigned" class="count-cell">
+              <span class="visit-count" [class.zero]="r.visitCount === 0">{{ r.visitCount }}</span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

@@ -18,6 +18,7 @@ BEGIN
         u.email,
         u.firstname,
         u.lastname,
+        u.designation,
         u.usertype AS role,
         u.userstatus AS status,
         u.lastloginat,
@@ -26,7 +27,7 @@ BEGIN
     FROM dbo.users u
     WHERE u.tenantid = @tenantid
       AND u.isdeleted = 0
-      AND (@like IS NULL OR u.email LIKE @like OR u.firstname LIKE @like OR u.lastname LIKE @like)
+      AND (@like IS NULL OR u.email LIKE @like OR u.firstname LIKE @like OR u.lastname LIKE @like OR u.designation LIKE @like)
     ORDER BY u.createdat DESC
     OFFSET @offset ROWS FETCH NEXT @pagesize ROWS ONLY;
 END

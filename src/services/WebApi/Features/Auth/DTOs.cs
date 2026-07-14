@@ -16,6 +16,7 @@ public record LoginResponse(
     string FullName,
     string Role,
     byte UserType,
+    string? Designation,
     Guid? TenantId,
     string? TenantName,
     string? Subdomain,

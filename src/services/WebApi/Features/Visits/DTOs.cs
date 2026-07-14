@@ -7,7 +7,7 @@ public record CreateVisitRequest(
     Guid PatientId,
     Guid ConsultingDoctorId,
     byte VisitType,
-    string Purpose,
+    string? Purpose,
     string? VisitNotes,
     decimal? ProcedureChargeAmount,
     DateOnly? ScheduledSurgeryDate,
@@ -58,7 +58,7 @@ public record VisitResponse(
     DateTime VisitDateTime,
     string VisitType,
     byte VisitTypeCode,
-    string Purpose,
+    string? Purpose,
     string? VisitNotes,
     DateOnly? ScheduledSurgeryDate,
     string FeeStatus,
@@ -93,7 +93,8 @@ public record VisitResponse(
     byte AggregatedPaymentStatusCode,
     IEnumerable<PaymentCollectionResponse> PaymentCollections,
     IEnumerable<VisitLabAgencyResponse> LabAgencies,
-    IEnumerable<VisitAddonLineResponse> Addons);
+    IEnumerable<VisitAddonLineResponse> Addons,
+    bool CanEditFees);
 
 public record VisitListItem(
     Guid Id,
@@ -101,7 +102,7 @@ public record VisitListItem(
     DateTime VisitDateTime,
     string VisitType,
     byte VisitTypeCode,
-    string Purpose,
+    string? Purpose,
     string FeeStatus,
     byte FeeStatusCode,
     decimal? FeeAmount,

@@ -35,6 +35,7 @@ interface VisitLabAgency {
   assignedAt: string;
   assignedByUserId: string;
   assignedByName?: string | null;
+  testName?: string | null;
   notes?: string | null;
 }
 
@@ -76,6 +77,7 @@ interface VisitDetail {
   paymentCollections: PaymentCollection[];
   labAgencies: VisitLabAgency[];
   addons: VisitAddonLine[];
+  canEditFees?: boolean;
 }
 
 @Component({
@@ -114,12 +116,25 @@ export class VisitDetailComponent implements OnInit {
   paymentCollectedByUserId = '';
   paymentNotes = '';
   selectedLabAgencyId = '';
+  labAssignmentTestName = '';
   labAssignmentNotes = '';
 
   readonly canManagePayments = computed(() => {
     const v = this.visit();
     return this.canEdit() && v?.visitStatusCode === 1;
   });
+
+  readonly canManageDiscount = computed(() => {
+    const v = this.visit();
+    if (!this.canEdit() || v?.visitStatusCode !== 1) return false;
+
+    const role = this.auth.currentUser()?.role;
+    if (role === 'TenantSuperAdmin') return true;
+    if (role === 'Staff') return this.isVisitToday(v.visitDateTime);
+    return false;
+  });
+
+  readonly isStaffUser = computed(() => this.auth.currentUser()?.role === 'Staff');
 
   readonly hasBalanceDue = computed(() => {
     const v = this.visit();
@@ -156,6 +171,7 @@ export class VisitDetailComponent implements OnInit {
 
   openAssignLab() {
     this.selectedLabAgencyId = '';
+    this.labAssignmentTestName = '';
     this.labAssignmentNotes = '';
     this.showAssignLab.set(true);
     this.error.set('');
@@ -163,6 +179,7 @@ export class VisitDetailComponent implements OnInit {
 
   cancelAssignLab() {
     this.showAssignLab.set(false);
+    this.labAssignmentTestName = '';
     this.labAssignmentNotes = '';
   }
 
@@ -175,16 +192,23 @@ export class VisitDetailComponent implements OnInit {
       return;
     }
 
+    if (this.labAssignmentTestName.length > 250) {
+      this.error.set('Test name cannot exceed 250 characters.');
+      return;
+    }
+
     this.assigningLab.set(true);
     this.error.set('');
 
     this.api.post<ApiResult<unknown>>(`/visits/${v.id}/lab-agencies`, {
       labAgencyId: this.selectedLabAgencyId,
+      testName: this.labAssignmentTestName.trim() || null,
       notes: this.labAssignmentNotes.trim() || null
     }).subscribe({
       next: () => {
         this.assigningLab.set(false);
         this.showAssignLab.set(false);
+        this.labAssignmentTestName = '';
         this.labAssignmentNotes = '';
         this.loadVisit(v.id);
       },
@@ -244,6 +268,9 @@ export class VisitDetailComponent implements OnInit {
         this.visit.set(data);
         this.visitNotes = data?.visitNotes ?? '';
         this.syncDiscountFormFromVisit(data);
+        if (!this.canManageDiscount()) {
+          this.showDiscountForm.set(false);
+        }
         if (data && this.paymentAmount == null) {
           this.paymentAmount = data.balanceDue > 0 ? data.balanceDue : null;
         }
@@ -292,6 +319,11 @@ export class VisitDetailComponent implements OnInit {
   submitDiscount() {
     const v = this.visit();
     if (!v) return;
+
+    if (!this.canManageDiscount()) {
+      this.error.set('Fee and price changes are only allowed on the day of the visit.');
+      return;
+    }
 
     const amount = this.discountEditAmount ?? 0;
     if (amount < 0) {
@@ -417,6 +449,14 @@ export class VisitDetailComponent implements OnInit {
   formatMoney(value?: number | null): string {
     if (value == null) return '—';
     return `₹${value.toLocaleString('en-IN')}`;
+  }
+
+  /** Staff fee edits are allowed only on the visit's calendar day (India time). */
+  isVisitToday(visitDateTime: string): boolean {
+    const tz = 'Asia/Kolkata';
+    const visitDay = new Date(visitDateTime).toLocaleDateString('en-CA', { timeZone: tz });
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+    return visitDay === today;
   }
 
   paymentBadgeClass(code: number): string {

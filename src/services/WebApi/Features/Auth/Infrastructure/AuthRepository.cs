@@ -13,6 +13,7 @@ public class UserLoginRow
     public string PasswordHash { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
+    public string? Designation { get; set; }
     public byte UserType { get; set; }
     public byte Status { get; set; }
     public string? HospitalName { get; set; }

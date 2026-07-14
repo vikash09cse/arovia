@@ -24,8 +24,10 @@
         <tr>
           <th>Name</th>
           <th>Email</th>
+          <th>Designation</th>
           <th>Role</th>
           <th>Status</th>
+          <th class="actions-col">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -33,9 +35,43 @@
           <tr>
             <td data-label="Name">{{ u.firstName }} {{ u.lastName }}</td>
             <td data-label="Email">{{ u.email }}</td>
+            <td data-label="Designation">{{ u.designation || '—' }}</td>
             <td data-label="Role">{{ u.role }}</td>
             <td data-label="Status">
               <span class="badge" [class.active]="u.statusCode === 1">{{ u.status }}</span>
+            </td>
+            <td data-label="Actions" class="actions-cell">
+              @if (canManageUser(u)) {
+                <div class="row-actions">
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn-edit"
+                    title="Edit user"
+                    aria-label="Edit user"
+                    (click)="openEdit(u)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn-delete"
+                    title="Delete user"
+                    aria-label="Delete user"
+                    [disabled]="deletingId() === u.id"
+                    (click)="deleteUser(u)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </button>
+                </div>
+              } @else {
+                <span class="actions-muted">—</span>
+              }
             </td>
           </tr>
         }
@@ -49,8 +85,14 @@
     <aside class="drawer-panel" (click)="$event.stopPropagation()">
       <header class="drawer-header">
         <div>
-          <h2>Add staff member</h2>
-          <p class="drawer-hint">Staff can collect payments and manage day-to-day hospital operations.</p>
+          <h2>{{ isEditing() ? 'Edit user' : 'Add staff member' }}</h2>
+          <p class="drawer-hint">
+            @if (isEditing()) {
+              Update name, designation, or role for this hospital user.
+            } @else {
+              Staff can collect payments and manage day-to-day hospital operations.
+            }
+          </p>
         </div>
         <button type="button" class="drawer-close" (click)="closeDrawer()" aria-label="Close">×</button>
       </header>
@@ -59,7 +101,7 @@
         <div class="error">{{ formError() }}</div>
       }
 
-      <form class="drawer-form" (ngSubmit)="submitStaff()">
+      <form class="drawer-form" (ngSubmit)="submitUser()">
         <label>
           First name *
           <input type="text" name="firstName" [(ngModel)]="firstName" required minlength="2" [disabled]="saving()" />
@@ -70,28 +112,73 @@
         </label>
         <label>
           Email *
-          <input type="email" name="email" [(ngModel)]="email" required [disabled]="saving()" />
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            required
+            [disabled]="saving() || isEditing()"
+          />
+          @if (isEditing()) {
+            <span class="field-hint">Email cannot be changed after creation.</span>
+          }
         </label>
         <label>
-          Temporary password
+          Designation
           <input
             type="text"
-            name="temporaryPassword"
-            [(ngModel)]="temporaryPassword"
-            placeholder="Leave blank to auto-generate"
-            autocomplete="new-password"
+            name="designation"
+            [(ngModel)]="designation"
+            placeholder="Optional (e.g. Receptionist, Cashier)"
+            maxlength="100"
             [disabled]="saving()"
           />
-          <span class="field-hint">Share this with the staff member for their first login.</span>
         </label>
+        <label>
+          Role *
+          <select name="roleCode" [(ngModel)]="roleCode" [disabled]="saving()">
+            <option [ngValue]="2">Staff</option>
+            <option [ngValue]="3">Doctor</option>
+          </select>
+        </label>
+        @if (!isEditing()) {
+          <label>
+            Temporary password
+            <input
+              type="text"
+              name="temporaryPassword"
+              [(ngModel)]="temporaryPassword"
+              placeholder="Leave blank to auto-generate"
+              autocomplete="new-password"
+              [disabled]="saving()"
+            />
+            <span class="field-hint">Share this with the staff member for their first login.</span>
+          </label>
+        }
 
         <div class="drawer-actions">
           <button type="button" class="btn-secondary" [disabled]="saving()" (click)="closeDrawer()">Cancel</button>
           <button type="submit" class="btn-primary" [disabled]="saving()">
-            {{ saving() ? 'Adding…' : 'Add staff' }}
+            @if (saving()) {
+              {{ isEditing() ? 'Saving…' : 'Adding…' }}
+            } @else {
+              {{ isEditing() ? 'Save changes' : 'Add staff' }}
+            }
           </button>
         </div>
       </form>
     </aside>
   </div>
 }
+
+<app-confirm-dialog
+  [open]="confirmTarget() !== null"
+  title="Delete user?"
+  [message]="confirmMessage()"
+  confirmLabel="Delete"
+  cancelLabel="Cancel"
+  variant="danger"
+  [loading]="deletingId() !== null"
+  (confirm)="confirmDelete()"
+  (cancel)="cancelDelete()"
+/>

@@ -2,6 +2,7 @@ CREATE OR ALTER PROCEDURE dbo.sp_visit_lab_agency_assign
     @tenantid    UNIQUEIDENTIFIER,
     @visitid     UNIQUEIDENTIFIER,
     @labagencyid UNIQUEIDENTIFIER,
+    @testname    NVARCHAR(250) = NULL,
     @notes       NVARCHAR(500) = NULL,
     @actorid     UNIQUEIDENTIFIER
 AS
@@ -34,9 +35,10 @@ BEGIN
     DECLARE @assignedat DATETIME2 = SYSUTCDATETIME();
 
     INSERT INTO dbo.visit_lab_agencies (
-        visitlabagencyid, tenantid, visitid, labagencyid, assignedat, assignedby, notes)
+        visitlabagencyid, tenantid, visitid, labagencyid, assignedat, assignedby, testname, notes)
     VALUES (
         @visitlabagencyid, @tenantid, @visitid, @labagencyid, @assignedat, @actorid,
+        NULLIF(LTRIM(RTRIM(@testname)), ''),
         NULLIF(LTRIM(RTRIM(@notes)), ''));
 
     SELECT
@@ -47,6 +49,7 @@ BEGIN
         vla.assignedby AS assignedbyuserid,
         u.firstname AS assignerfirstname,
         u.lastname AS assignerlastname,
+        vla.testname,
         vla.notes
     FROM dbo.visit_lab_agencies vla
     INNER JOIN dbo.lab_agencies la ON la.labagencyid = vla.labagencyid AND la.tenantid = vla.tenantid

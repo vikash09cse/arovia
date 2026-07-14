@@ -32,23 +32,22 @@ export class LayoutComponent {
     { label: 'Patients', route: '/patients', icon: 'patients' },
     { label: 'Visits', route: '/visits', icon: 'visits' },
     { label: 'Payments', route: '/payments', icon: 'payments' },
-    { label: 'Lab Tests', route: '/lab-tests', icon: 'lab' }
+    { label: 'Lab Agencies', route: '/lab-tests', icon: 'lab' },
+    { label: 'Lab Report', route: '/lab-report', icon: 'lab' }
   ];
 
   readonly adminNav = computed<NavItem[]>(() => {
-    const items: NavItem[] = [];
-    if (this.user()?.role === 'TenantSuperAdmin') {
-      items.push(
-        { label: 'Doctors', route: '/doctors', icon: 'doctors' },
-        { label: 'Visit Add-ons', route: '/visit-addons', icon: 'addons' }
-      );
-    }
-    items.push(
+    if (this.user()?.role !== 'TenantSuperAdmin') return [];
+
+    return [
+      { label: 'Doctors', route: '/doctors', icon: 'doctors' },
+      { label: 'Visit Add-ons', route: '/visit-addons', icon: 'addons' },
       { label: 'Users', route: '/users', icon: 'users' },
       { label: 'Tenant Settings', route: '/settings', icon: 'settings' }
-    );
-    return items;
+    ];
   });
+
+  readonly showAdminSection = computed(() => this.adminNav().length > 0);
 
   constructor() {
     this.router.events.pipe(

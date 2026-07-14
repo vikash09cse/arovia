@@ -8,6 +8,7 @@ public class TenantContext
     public string UserName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
+    public string? Designation { get; set; }
     public Guid TenantId { get; set; }
     public string TenantName { get; set; } = string.Empty;
     public string Subdomain { get; set; } = string.Empty;
@@ -35,6 +36,9 @@ public class TenantContext
             UserName = claims.GetValueOrDefault("user_name", string.Empty) ?? string.Empty,
             Email = claims.GetValueOrDefault("email", string.Empty) ?? string.Empty,
             FullName = claims.GetValueOrDefault("full_name", string.Empty) ?? string.Empty,
+            Designation = string.IsNullOrWhiteSpace(claims.GetValueOrDefault("designation"))
+                ? null
+                : claims.GetValueOrDefault("designation"),
             TenantId = tenantId,
             TenantName = claims.GetValueOrDefault("tenant_name", string.Empty) ?? string.Empty,
             Subdomain = claims.GetValueOrDefault("subdomain", string.Empty) ?? string.Empty,

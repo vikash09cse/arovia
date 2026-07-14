@@ -5,18 +5,21 @@ public record CreateTenantUserRequest(
     string FirstName,
     string LastName,
     byte Role,
-    string? TemporaryPassword);
+    string? TemporaryPassword,
+    string? Designation);
 
 public record UpdateTenantUserRequest(
     string FirstName,
     string LastName,
-    byte Role);
+    byte Role,
+    string? Designation);
 
 public record TenantUserResponse(
     Guid Id,
     string Email,
     string FirstName,
     string LastName,
+    string? Designation,
     string Role,
     byte RoleCode,
     string Status,

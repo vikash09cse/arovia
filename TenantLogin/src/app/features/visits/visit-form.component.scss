@@ -69,6 +69,23 @@
   gap: 1rem;
 }
 
+.visit-type-purpose-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: end;
+}
+
+.visit-type-purpose-row label {
+  max-width: none;
+}
+
+@media (max-width: 600px) {
+  .visit-type-purpose-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .visit-bottom-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

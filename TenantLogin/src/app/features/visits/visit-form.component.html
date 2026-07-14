@@ -33,20 +33,22 @@
             </div>
           </label>
 
-          <label>
-            Visit type *
-            <select name="visitType" [(ngModel)]="visitType" required>
-              <option [ngValue]="1">OPD</option>
-              <option [ngValue]="2">Follow-up</option>
-              <option [ngValue]="3">Pre-op</option>
-              <option [ngValue]="4">Surgery</option>
-            </select>
-          </label>
+          <div class="visit-type-purpose-row">
+            <label>
+              Visit type *
+              <select name="visitType" [(ngModel)]="visitType" required>
+                <option [ngValue]="1">OPD</option>
+                <option [ngValue]="2">Follow-up</option>
+                <option [ngValue]="3">Pre-op</option>
+                <option [ngValue]="4">Surgery</option>
+              </select>
+            </label>
 
-          <label class="full">
-            Purpose *
-            <input type="text" name="purpose" [(ngModel)]="purpose" maxlength="300" required />
-          </label>
+            <label class="purpose-field">
+              Purpose
+              <input type="text" name="purpose" [(ngModel)]="purpose" maxlength="300" placeholder="Optional" />
+            </label>
+          </div>
 
           <label class="full">
             Visit notes

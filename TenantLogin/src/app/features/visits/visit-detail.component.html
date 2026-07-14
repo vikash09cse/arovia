@@ -12,302 +12,369 @@
   <div class="error">{{ error() }}</div>
 } @else {
   @if (visit(); as v) {
-  <div class="detail-grid">
-    <section class="card">
-      <h2>Patient & doctor</h2>
-      <dl>
-        <dt>Patient</dt>
-        <dd>
-          <a [routerLink]="['/patients', v.patientId]" class="link">{{ v.patientCode }} — {{ v.patientFirstName }} {{ v.patientLastName }}</a>
-        </dd>
-        <dt>Doctor</dt>
-        <dd>{{ v.doctorFullName }}</dd>
-        <dt>Purpose</dt>
-        <dd>{{ v.purpose }}</dd>
-        @if (v.scheduledSurgeryDate) {
-          <dt>Scheduled surgery</dt>
-          <dd>{{ v.scheduledSurgeryDate }}</dd>
-        }
-        <dt>Visit status</dt>
-        <dd>{{ v.visitStatus }}</dd>
-      </dl>
-    </section>
+  <div class="visit-layout">
+    <div class="visit-column visit-column-left">
+      <section class="card">
+        <h2>Patient & doctor</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Patient</span>
+            <span class="info-value">
+              <a [routerLink]="['/patients', v.patientId]" class="link">{{ v.patientCode }} — {{ v.patientFirstName }} {{ v.patientLastName }}</a>
+            </span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Doctor</span>
+            <span class="info-value">{{ v.doctorFullName }}</span>
+          </div>
+          <div class="info-item info-item-wide">
+            <span class="info-label">Purpose</span>
+            <span class="info-value">{{ v.purpose || '—' }}</span>
+          </div>
+          @if (v.scheduledSurgeryDate) {
+            <div class="info-item">
+              <span class="info-label">Scheduled surgery</span>
+              <span class="info-value">{{ v.scheduledSurgeryDate }}</span>
+            </div>
+          }
+          <div class="info-item">
+            <span class="info-label">Visit status</span>
+            <span class="info-value">{{ v.visitStatus }}</span>
+          </div>
+        </div>
+      </section>
 
-    <section class="card">
-      <h2>Fees & balance</h2>
-      <dl>
-        <dt>Consultation</dt>
-        <dd>{{ v.feeStatus }} {{ v.feeAmount != null ? formatMoney(v.feeAmount) : '' }}</dd>
-        <dt>Procedure charge</dt>
-        <dd>{{ formatMoney(v.procedureChargeAmount) }}</dd>
-        @for (addon of (v.addons ?? []); track addon.id) {
-          <dt>{{ addon.addonName }}</dt>
-          <dd>{{ formatMoney(addon.amount) }}</dd>
+      <section class="card panel-card">
+        <h2>Payment collections</h2>
+        @if (v.paymentCollections.length === 0) {
+          <p class="status">No payments collected yet.</p>
+        } @else {
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Receipt</th>
+                  <th>Amount</th>
+                  <th>Collected by</th>
+                  <th>Date</th>
+                  <th>Notes</th>
+                  @if (canManagePayments()) {
+                    <th class="actions-col">Actions</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of v.paymentCollections; track c.id) {
+                  <tr>
+                    <td>{{ c.receiptNumber ?? '—' }}</td>
+                    <td>{{ formatMoney(c.amount) }}</td>
+                    <td>{{ c.collectedByName ?? '—' }}</td>
+                    <td>{{ c.collectionDateTime ? (c.collectionDateTime | date: 'medium') : '—' }}</td>
+                    <td>{{ c.notes ?? '—' }}</td>
+                    @if (canManagePayments()) {
+                      <td class="actions-cell">
+                        <button
+                          type="button"
+                          class="btn-text btn-danger"
+                          [disabled]="voidingPaymentId() === c.id"
+                          (click)="voidCollection(c)"
+                        >
+                          {{ voidingPaymentId() === c.id ? 'Voiding…' : 'Void' }}
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         }
-        <dt>Subtotal</dt>
-        <dd>{{ formatMoney(v.grossSubtotal) }}</dd>
-        @if (v.discountAmount && v.discountAmount > 0) {
-          <dt>Discount</dt>
-          <dd class="discount-amount">−{{ formatMoney(v.discountAmount) }}</dd>
-          <dt>Discount reason</dt>
-          <dd>{{ v.discountReason }}</dd>
+      </section>
+
+      <section class="card panel-card">
+        <div class="section-header">
+          <h2>Lab agencies</h2>
+          @if (canManageLab() && v.visitStatusCode === 1 && availableLabAgencies().length > 0 && !showAssignLab()) {
+            <button type="button" class="btn-text" (click)="openAssignLab()">Assign agency</button>
+          }
+        </div>
+
+        @if (canManageLab() && v.visitStatusCode === 1 && activeLabAgencies().length === 0) {
+          <p class="status">
+            No active lab agencies.
+            <a routerLink="/lab-tests" class="link">Add agencies</a>
+          </p>
+        } @else if (showAssignLab() && canManageLab()) {
+          <div class="lab-assign-form">
+            <div class="lab-assign-row lab-assign-row-top">
+              <label>
+                Lab agency *
+                <select name="selectedLabAgencyId" [(ngModel)]="selectedLabAgencyId" [disabled]="assigningLab()">
+                  <option value="">Select agency</option>
+                  @for (a of availableLabAgencies(); track a.id) {
+                    <option [value]="a.id">{{ a.name }}</option>
+                  }
+                </select>
+              </label>
+              <label>
+                Test name
+                <input
+                  type="text"
+                  name="labAssignmentTestName"
+                  [(ngModel)]="labAssignmentTestName"
+                  maxlength="250"
+                  placeholder="Optional"
+                  [disabled]="assigningLab()"
+                />
+              </label>
+            </div>
+            <div class="lab-assign-row lab-assign-row-bottom">
+              <label class="notes-field">
+                Notes
+                <input
+                  type="text"
+                  name="labAssignmentNotes"
+                  [(ngModel)]="labAssignmentNotes"
+                  maxlength="500"
+                  placeholder="Optional"
+                  [disabled]="assigningLab()"
+                />
+              </label>
+              <div class="lab-assign-actions">
+                <button type="button" class="btn-secondary" [disabled]="assigningLab()" (click)="cancelAssignLab()">Cancel</button>
+                <button type="button" class="btn-primary" [disabled]="assigningLab()" (click)="submitLabAssignment()">
+                  {{ assigningLab() ? 'Assigning…' : 'Assign' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        } @else if (v.labAgencies.length === 0) {
+          <p class="status">No lab agencies assigned.</p>
+        } @else {
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Agency</th>
+                  <th>Test name</th>
+                  <th>Assigned by</th>
+                  <th>Assigned on</th>
+                  <th>Notes</th>
+                  @if (canManageLab() && v.visitStatusCode === 1) {
+                    <th class="actions-col">Actions</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (la of v.labAgencies; track la.id) {
+                  <tr>
+                    <td>{{ la.agencyName }}</td>
+                    <td class="test-name-cell">{{ la.testName ?? '—' }}</td>
+                    <td>{{ la.assignedByName ?? '—' }}</td>
+                    <td>{{ la.assignedAt | date: 'medium' }}</td>
+                    <td>{{ la.notes ?? '—' }}</td>
+                    @if (canManageLab() && v.visitStatusCode === 1) {
+                      <td class="actions-cell">
+                        <button
+                          type="button"
+                          class="btn-text btn-danger"
+                          [disabled]="removingLabId() === la.id"
+                          (click)="removeLabAssignment(la)"
+                        >
+                          {{ removingLabId() === la.id ? 'Removing…' : 'Remove' }}
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         }
-        <dt>Total due</dt>
-        <dd><strong>{{ formatMoney(v.totalDue) }}</strong></dd>
-        <dt>Collected</dt>
-        <dd>{{ formatMoney(v.totalCollected) }}</dd>
-        <dt>Balance due</dt>
-        <dd><strong class="balance-due">{{ formatMoney(v.balanceDue) }}</strong></dd>
-        <dt>Payment status</dt>
-        <dd>
+      </section>
+    </div>
+
+    <div class="visit-column visit-column-right">
+      <section class="card fees-card">
+        <div class="section-header fees-header">
+          <h2>Fees & balance</h2>
           <span class="badge" [class]="paymentBadgeClass(v.aggregatedPaymentStatusCode)">
             {{ v.aggregatedPaymentStatus }}
           </span>
-        </dd>
-      </dl>
+        </div>
+        <table class="fee-table">
+          <tbody>
+            <tr>
+              <td>Consultation</td>
+              <td>{{ v.feeStatus }} {{ v.feeAmount != null ? formatMoney(v.feeAmount) : '' }}</td>
+            </tr>
+            <tr>
+              <td>Procedure charge</td>
+              <td>{{ formatMoney(v.procedureChargeAmount) }}</td>
+            </tr>
+            @for (addon of (v.addons ?? []); track addon.id) {
+              <tr>
+                <td>{{ addon.addonName }}</td>
+                <td>{{ formatMoney(addon.amount) }}</td>
+              </tr>
+            }
+            <tr class="fee-subtotal">
+              <td>Subtotal</td>
+              <td>{{ formatMoney(v.grossSubtotal) }}</td>
+            </tr>
+            @if (v.discountAmount && v.discountAmount > 0) {
+              <tr>
+                <td>Discount</td>
+                <td class="discount-amount">−{{ formatMoney(v.discountAmount) }}</td>
+              </tr>
+              <tr>
+                <td>Discount reason</td>
+                <td>{{ v.discountReason }}</td>
+              </tr>
+            }
+            <tr class="fee-total">
+              <td>Total due</td>
+              <td><strong>{{ formatMoney(v.totalDue) }}</strong></td>
+            </tr>
+            <tr>
+              <td>Collected</td>
+              <td>{{ formatMoney(v.totalCollected) }}</td>
+            </tr>
+            <tr>
+              <td>Balance due</td>
+              <td><strong class="balance-due">{{ formatMoney(v.balanceDue) }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
 
-      @if (canEdit() && v.visitStatusCode === 1) {
-        <div class="payment-actions">
-          @if (!showDiscountForm()) {
-            <button type="button" class="btn-secondary" (click)="openDiscountForm()">
-              {{ v.discountAmount && v.discountAmount > 0 ? 'Update discount' : 'Apply discount' }}
+        @if (canManageDiscount()) {
+          <div class="payment-actions">
+            @if (!showDiscountForm()) {
+              <button type="button" class="btn-secondary" (click)="openDiscountForm()">
+                {{ v.discountAmount && v.discountAmount > 0 ? 'Update discount' : 'Apply discount' }}
+              </button>
+            }
+          </div>
+        } @else if (isStaffUser() && canEdit() && v.visitStatusCode === 1) {
+          <p class="field-hint fee-lock-hint">Fee and price changes are only allowed on the day of the visit.</p>
+        }
+
+        @if (canManagePayments() && hasBalanceDue()) {
+          <div class="payment-actions">
+            @if (!showAddPayment()) {
+              <button type="button" class="btn-primary" (click)="openAddPayment(false)">Add payment</button>
+              <button type="button" class="btn-secondary" (click)="openAddPayment(true)">Collect full balance</button>
+            }
+          </div>
+        }
+      </section>
+
+      @if (showDiscountForm() && canManageDiscount()) {
+        <section class="card add-payment-card">
+          <h2>{{ v.discountAmount && v.discountAmount > 0 ? 'Update discount' : 'Apply discount' }}</h2>
+          <div class="add-payment-form">
+            <label>
+              Discount amount (₹)
+              <input
+                type="number"
+                name="discountEditAmount"
+                [(ngModel)]="discountEditAmount"
+                min="0"
+                [max]="v.grossSubtotal"
+                step="0.01"
+                [disabled]="savingDiscount()"
+              />
+              <span class="field-hint">Subtotal: {{ formatMoney(v.grossSubtotal) }}</span>
+            </label>
+            @if (discountEditAmount && discountEditAmount > 0) {
+              <label class="full">
+                Discount reason *
+                <input
+                  type="text"
+                  name="discountEditReason"
+                  [(ngModel)]="discountEditReason"
+                  maxlength="500"
+                  placeholder="Required when a discount is applied"
+                  [disabled]="savingDiscount()"
+                />
+              </label>
+            }
+            <div class="form-actions">
+              @if (v.discountAmount && v.discountAmount > 0) {
+                <button type="button" class="btn-text" [disabled]="savingDiscount()" (click)="clearDiscount()">Clear discount</button>
+              }
+              <button type="button" class="btn-secondary" [disabled]="savingDiscount()" (click)="cancelDiscountForm()">Cancel</button>
+              <button type="button" class="btn-primary" [disabled]="savingDiscount()" (click)="submitDiscount()">
+                {{ savingDiscount() ? 'Saving…' : 'Save discount' }}
+              </button>
+            </div>
+          </div>
+        </section>
+      }
+
+      @if (showAddPayment() && canManagePayments()) {
+        <section class="card add-payment-card">
+          <h2>Add payment</h2>
+          <div class="add-payment-form">
+            <label>
+              Amount *
+              <input
+                type="number"
+                name="paymentAmount"
+                [(ngModel)]="paymentAmount"
+                min="0.01"
+                [max]="v.balanceDue"
+                step="0.01"
+                [disabled]="addingPayment()"
+              />
+              <span class="field-hint">Remaining balance: {{ formatMoney(v.balanceDue) }}</span>
+            </label>
+            <label>
+              Payment collected by *
+              <select name="paymentCollectedByUserId" [(ngModel)]="paymentCollectedByUserId" [disabled]="addingPayment()">
+                <option value="">Select staff</option>
+                @for (c of collectors(); track c.id) {
+                  <option [value]="c.id">{{ c.fullName }}</option>
+                }
+              </select>
+            </label>
+            <label class="full">
+              Notes
+              <input
+                type="text"
+                name="paymentNotes"
+                [(ngModel)]="paymentNotes"
+                maxlength="500"
+                placeholder="Optional"
+                [disabled]="addingPayment()"
+              />
+            </label>
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" [disabled]="addingPayment()" (click)="cancelAddPayment()">Cancel</button>
+              <button type="button" class="btn-primary" [disabled]="addingPayment()" (click)="submitPayment()">
+                {{ addingPayment() ? 'Recording…' : 'Record payment' }}
+              </button>
+            </div>
+          </div>
+        </section>
+      }
+
+      <section class="card notes-card">
+        <div class="notes-header">
+          <h2>Visit notes</h2>
+          @if (canEdit() && v.visitStatusCode === 1) {
+            <button type="button" class="btn-primary" [disabled]="savingNotes()" (click)="saveNotes()">
+              {{ savingNotes() ? 'Saving…' : 'Save notes' }}
             </button>
           }
         </div>
-      }
-
-      @if (canManagePayments() && hasBalanceDue()) {
-        <div class="payment-actions">
-          @if (!showAddPayment()) {
-            <button type="button" class="btn-primary" (click)="openAddPayment(false)">Add payment</button>
-            <button type="button" class="btn-secondary" (click)="openAddPayment(true)">Collect full balance</button>
-          }
-        </div>
-      }
-    </section>
-  </div>
-
-  @if (showDiscountForm() && canEdit() && v.visitStatusCode === 1) {
-    <section class="card add-payment-card">
-      <h2>{{ v.discountAmount && v.discountAmount > 0 ? 'Update discount' : 'Apply discount' }}</h2>
-      <div class="add-payment-form">
-        <label>
-          Discount amount (₹)
-          <input
-            type="number"
-            name="discountEditAmount"
-            [(ngModel)]="discountEditAmount"
-            min="0"
-            [max]="v.grossSubtotal"
-            step="0.01"
-            [disabled]="savingDiscount()"
-          />
-          <span class="field-hint">Subtotal: {{ formatMoney(v.grossSubtotal) }}</span>
-        </label>
-        @if (discountEditAmount && discountEditAmount > 0) {
-          <label class="full">
-            Discount reason *
-            <input
-              type="text"
-              name="discountEditReason"
-              [(ngModel)]="discountEditReason"
-              maxlength="500"
-              placeholder="Required when a discount is applied"
-              [disabled]="savingDiscount()"
-            />
-          </label>
+        @if (canEdit() && v.visitStatusCode === 1) {
+          <textarea rows="6" [(ngModel)]="visitNotes" maxlength="1000" placeholder="Add visit notes…"></textarea>
+        } @else {
+          <p class="notes-readonly">{{ v.visitNotes || 'No notes.' }}</p>
         }
-        <div class="form-actions">
-          @if (v.discountAmount && v.discountAmount > 0) {
-            <button type="button" class="btn-text" [disabled]="savingDiscount()" (click)="clearDiscount()">Clear discount</button>
-          }
-          <button type="button" class="btn-secondary" [disabled]="savingDiscount()" (click)="cancelDiscountForm()">Cancel</button>
-          <button type="button" class="btn-primary" [disabled]="savingDiscount()" (click)="submitDiscount()">
-            {{ savingDiscount() ? 'Saving…' : 'Save discount' }}
-          </button>
-        </div>
-      </div>
-    </section>
-  }
-
-  @if (showAddPayment() && canManagePayments()) {
-    <section class="card add-payment-card">
-      <h2>Add payment</h2>
-      <div class="add-payment-form">
-        <label>
-          Amount *
-          <input
-            type="number"
-            name="paymentAmount"
-            [(ngModel)]="paymentAmount"
-            min="0.01"
-            [max]="v.balanceDue"
-            step="0.01"
-            [disabled]="addingPayment()"
-          />
-          <span class="field-hint">Remaining balance: {{ formatMoney(v.balanceDue) }}</span>
-        </label>
-        <label>
-          Payment collected by *
-          <select name="paymentCollectedByUserId" [(ngModel)]="paymentCollectedByUserId" [disabled]="addingPayment()">
-            <option value="">Select staff</option>
-            @for (c of collectors(); track c.id) {
-              <option [value]="c.id">{{ c.fullName }}</option>
-            }
-          </select>
-        </label>
-        <label class="full">
-          Notes
-          <input
-            type="text"
-            name="paymentNotes"
-            [(ngModel)]="paymentNotes"
-            maxlength="500"
-            placeholder="Optional"
-            [disabled]="addingPayment()"
-          />
-        </label>
-        <div class="form-actions">
-          <button type="button" class="btn-secondary" [disabled]="addingPayment()" (click)="cancelAddPayment()">Cancel</button>
-          <button type="button" class="btn-primary" [disabled]="addingPayment()" (click)="submitPayment()">
-            {{ addingPayment() ? 'Recording…' : 'Record payment' }}
-          </button>
-        </div>
-      </div>
-    </section>
-  }
-
-  <section class="card">
-    <h2>Payment collections</h2>
-    @if (v.paymentCollections.length === 0) {
-      <p class="status">No payments collected yet.</p>
-    } @else {
-      <table>
-        <thead>
-          <tr>
-            <th>Receipt</th>
-            <th>Amount</th>
-            <th>Collected by</th>
-            <th>Date</th>
-            <th>Notes</th>
-            @if (canManagePayments()) {
-              <th class="actions-col">Actions</th>
-            }
-          </tr>
-        </thead>
-        <tbody>
-          @for (c of v.paymentCollections; track c.id) {
-            <tr>
-              <td>{{ c.receiptNumber ?? '—' }}</td>
-              <td>{{ formatMoney(c.amount) }}</td>
-              <td>{{ c.collectedByName ?? '—' }}</td>
-              <td>{{ c.collectionDateTime ? (c.collectionDateTime | date: 'medium') : '—' }}</td>
-              <td>{{ c.notes ?? '—' }}</td>
-              @if (canManagePayments()) {
-                <td class="actions-cell">
-                  <button
-                    type="button"
-                    class="btn-text btn-danger"
-                    [disabled]="voidingPaymentId() === c.id"
-                    (click)="voidCollection(c)"
-                  >
-                    {{ voidingPaymentId() === c.id ? 'Voiding…' : 'Void' }}
-                  </button>
-                </td>
-              }
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
-  </section>
-
-  <section class="card">
-    <div class="section-header">
-      <h2>Lab agencies</h2>
-      @if (canManageLab() && v.visitStatusCode === 1 && availableLabAgencies().length > 0 && !showAssignLab()) {
-        <button type="button" class="btn-text" (click)="openAssignLab()">Assign agency</button>
-      }
+      </section>
     </div>
-
-    @if (canManageLab() && v.visitStatusCode === 1 && activeLabAgencies().length === 0) {
-      <p class="status">
-        No active lab agencies.
-        <a routerLink="/lab-tests" class="link">Add agencies</a>
-      </p>
-    } @else if (showAssignLab() && canManageLab()) {
-      <div class="add-payment-form">
-        <label>
-          Lab agency *
-          <select name="selectedLabAgencyId" [(ngModel)]="selectedLabAgencyId" [disabled]="assigningLab()">
-            <option value="">Select agency</option>
-            @for (a of availableLabAgencies(); track a.id) {
-              <option [value]="a.id">{{ a.name }}</option>
-            }
-          </select>
-        </label>
-        <label class="full">
-          Notes
-          <input type="text" name="labAssignmentNotes" [(ngModel)]="labAssignmentNotes" maxlength="500" placeholder="Optional" [disabled]="assigningLab()" />
-        </label>
-        <div class="form-actions">
-          <button type="button" class="btn-secondary" [disabled]="assigningLab()" (click)="cancelAssignLab()">Cancel</button>
-          <button type="button" class="btn-primary" [disabled]="assigningLab()" (click)="submitLabAssignment()">
-            {{ assigningLab() ? 'Assigning…' : 'Assign' }}
-          </button>
-        </div>
-      </div>
-    } @else if (v.labAgencies.length === 0) {
-      <p class="status">No lab agencies assigned.</p>
-    } @else {
-      <table>
-        <thead>
-          <tr>
-            <th>Agency</th>
-            <th>Assigned by</th>
-            <th>Assigned on</th>
-            <th>Notes</th>
-            @if (canManageLab() && v.visitStatusCode === 1) {
-              <th class="actions-col">Actions</th>
-            }
-          </tr>
-        </thead>
-        <tbody>
-          @for (la of v.labAgencies; track la.id) {
-            <tr>
-              <td>{{ la.agencyName }}</td>
-              <td>{{ la.assignedByName ?? '—' }}</td>
-              <td>{{ la.assignedAt | date: 'medium' }}</td>
-              <td>{{ la.notes ?? '—' }}</td>
-              @if (canManageLab() && v.visitStatusCode === 1) {
-                <td class="actions-cell">
-                  <button
-                    type="button"
-                    class="btn-text btn-danger"
-                    [disabled]="removingLabId() === la.id"
-                    (click)="removeLabAssignment(la)"
-                  >
-                    {{ removingLabId() === la.id ? 'Removing…' : 'Remove' }}
-                  </button>
-                </td>
-              }
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
-  </section>
-
-  <section class="card">
-    <h2>Visit notes</h2>
-    @if (canEdit() && v.visitStatusCode === 1) {
-      <textarea rows="4" [(ngModel)]="visitNotes" maxlength="1000"></textarea>
-      <button type="button" class="btn-primary" [disabled]="savingNotes()" (click)="saveNotes()">
-        {{ savingNotes() ? 'Saving…' : 'Save notes' }}
-      </button>
-    } @else {
-      <p>{{ v.visitNotes || 'No notes.' }}</p>
-    }
-  </section>
+  </div>
   }
 }

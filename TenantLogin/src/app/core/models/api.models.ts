@@ -4,6 +4,7 @@ export interface LoginResponse {
   fullName: string;
   role: string;
   userType: number;
+  designation?: string | null;
   tenantId?: string;
   tenantName?: string;
   subdomain?: string;

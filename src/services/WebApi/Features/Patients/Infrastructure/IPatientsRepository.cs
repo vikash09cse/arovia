@@ -45,7 +45,8 @@ public record EncryptedPatientPayload(
 public interface IPatientsRepository
 {
     Task<(IEnumerable<PatientRow> Items, int Total)> GetPatientsAsync(
-        Guid tenantId, int page, int pageSize, string? patientCode, byte[]? phoneBlindIndex, byte? status, byte? gender, CancellationToken ct);
+        Guid tenantId, int page, int pageSize, string? patientCode, byte[]? phoneBlindIndex, byte? status, byte? gender,
+        DateOnly? dateFrom, DateOnly? dateTo, CancellationToken ct);
 
     Task<PatientRow?> GetByIdAsync(Guid tenantId, Guid patientId, CancellationToken ct);
 

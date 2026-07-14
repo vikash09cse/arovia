@@ -11,6 +11,7 @@ BEGIN
         u.passwordhash,
         u.firstname,
         u.lastname,
+        u.designation,
         u.usertype,
         u.userstatus AS status,
         t.hospitalname,

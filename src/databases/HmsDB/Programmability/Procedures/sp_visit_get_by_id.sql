@@ -164,6 +164,8 @@ BEGIN
 
         u.lastname AS assignerlastname,
 
+        vla.testname,
+
         vla.notes
 
     FROM dbo.visit_lab_agencies vla

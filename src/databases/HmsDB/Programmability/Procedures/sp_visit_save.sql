@@ -8,7 +8,7 @@ CREATE OR ALTER PROCEDURE dbo.sp_visit_save
 
     @visittype                  TINYINT,
 
-    @purpose                    NVARCHAR(300),
+    @purpose                    NVARCHAR(300) = NULL,
 
     @visitnotes                 NVARCHAR(1000) = NULL,
 
@@ -172,7 +172,9 @@ BEGIN
 
     DECLARE @seq INT;
 
-    DECLARE @visitcode NVARCHAR(20);
+    DECLARE @visitcode NVARCHAR(30);
+
+    DECLARE @regDate DATE;
 
 
 
@@ -426,43 +428,40 @@ BEGIN
 
 
 
-    IF NOT EXISTS (SELECT 1 FROM dbo.visit_sequences WITH (UPDLOCK, ROWLOCK) WHERE tenantid = @tenantid)
+    SET @regDate = CAST((@visitUtc AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE);
 
-    BEGIN
-
-        INSERT INTO dbo.visit_sequences (tenantid, nextsequencenumber)
-
-        VALUES (@tenantid, 2);
-
-        SET @seq = 1;
-
-    END
-
-    ELSE
-
-    BEGIN
-
-        SELECT @seq = nextsequencenumber
-
+    IF NOT EXISTS (
+        SELECT 1
         FROM dbo.visit_sequences WITH (UPDLOCK, ROWLOCK)
-
-        WHERE tenantid = @tenantid;
-
-
+        WHERE tenantid = @tenantid
+          AND sequencedate = @regDate)
+    BEGIN
+        INSERT INTO dbo.visit_sequences (tenantid, sequencedate, nextsequencenumber)
+        VALUES (@tenantid, @regDate, 2);
+        SET @seq = 1;
+    END
+    ELSE
+    BEGIN
+        SELECT @seq = nextsequencenumber
+        FROM dbo.visit_sequences WITH (UPDLOCK, ROWLOCK)
+        WHERE tenantid = @tenantid
+          AND sequencedate = @regDate;
 
         UPDATE dbo.visit_sequences
-
         SET nextsequencenumber = @seq + 1,
-
             updatedat = SYSUTCDATETIME()
-
-        WHERE tenantid = @tenantid;
-
+        WHERE tenantid = @tenantid
+          AND sequencedate = @regDate;
     END
 
-
-
-    SET @visitcode = N'VIS-' + RIGHT(REPLICATE(N'0', 7) + CAST(@seq AS NVARCHAR(10)), 7);
+    -- Format: VIS-YYYYMMDD-Serial (e.g. VIS-20260714-01); serial pads to 2 digits, then grows.
+    SET @visitcode = N'VIS-'
+        + CONVERT(CHAR(8), @regDate, 112)
+        + N'-'
+        + CASE
+            WHEN @seq < 100 THEN RIGHT(N'00' + CAST(@seq AS NVARCHAR(10)), 2)
+            ELSE CAST(@seq AS NVARCHAR(10))
+          END;
 
 
 

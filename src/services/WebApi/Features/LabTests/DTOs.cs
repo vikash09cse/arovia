@@ -43,6 +43,7 @@ public record LabAgencyLookupItem(
 
 public record AssignVisitLabAgencyRequest(
     Guid LabAgencyId,
+    string? TestName = null,
     string? Notes = null);
 
 public record VisitLabAgencyResponse(
@@ -52,4 +53,18 @@ public record VisitLabAgencyResponse(
     DateTime AssignedAt,
     Guid AssignedByUserId,
     string? AssignedByName,
+    string? TestName,
     string? Notes);
+
+public record LabAgencyAssignmentReportItem(
+    Guid Id,
+    string Name,
+    string? ContactPerson,
+    string? Phone,
+    string Status,
+    byte StatusCode,
+    int VisitCount);
+
+public record LabAgencyAssignmentReportResponse(
+    IEnumerable<LabAgencyAssignmentReportItem> Items,
+    int TotalVisitAssignments);

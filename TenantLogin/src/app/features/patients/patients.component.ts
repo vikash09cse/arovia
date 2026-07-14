@@ -6,6 +6,8 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ApiResult } from '../../core/models/api.models';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
+type PatientFilterType = 'date' | 'phone' | 'patientCode';
+
 interface PatientListItem {
   id: string;
   patientCode: string;
@@ -42,7 +44,10 @@ export class PatientsComponent implements OnInit {
   readonly totalCount = signal(0);
   readonly page = signal(1);
   readonly pageSize = 10;
+  filterType: PatientFilterType = 'date';
   searchTerm = '';
+  dateFrom = this.todayIso();
+  dateTo = this.todayIso();
   readonly Math = Math;
 
   readonly canEdit = signal(false);
@@ -56,29 +61,66 @@ export class PatientsComponent implements OnInit {
     return `Patient ${patient.patientCode} (${name}) will be removed from the list. The record is kept in the system (soft delete).`;
   });
 
+  filtersAreActive(): boolean {
+    if (this.filterType !== 'date') return true;
+    const today = this.todayIso();
+    return this.dateFrom !== today || this.dateTo !== today;
+  }
+
   ngOnInit() {
     const user = this.auth.currentUser();
     this.canEdit.set(user?.role === 'TenantSuperAdmin' || user?.role === 'Staff');
     this.loadPatients();
   }
 
+  onFilterTypeChange() {
+    this.searchTerm = '';
+    this.dateFrom = this.todayIso();
+    this.dateTo = this.todayIso();
+    this.page.set(1);
+    this.error.set('');
+
+    if (this.filterType === 'date') {
+      this.loadPatients();
+    } else {
+      this.patients.set([]);
+      this.totalCount.set(0);
+      this.loading.set(false);
+    }
+  }
+
   loadPatients() {
     this.loading.set(true);
     this.error.set('');
 
-    const term = this.searchTerm.trim();
     const query = new URLSearchParams({
       page: String(this.page()),
       pageSize: String(this.pageSize)
     });
 
-    if (term) {
-      const digits = term.replace(/\D/g, '');
-      if (digits.length >= 10 && digits.length <= 15 && /^[\d\s\-+()]+$/.test(term)) {
-        query.set('phone', digits);
-      } else {
-        query.set('patientCode', term);
+    if (this.filterType === 'date') {
+      if (this.dateFrom) query.set('dateFrom', this.dateFrom);
+      if (this.dateTo) query.set('dateTo', this.dateTo);
+    } else if (this.filterType === 'phone') {
+      const digits = this.searchTerm.replace(/\D/g, '');
+      if (digits.length < 10 || digits.length > 15) {
+        this.error.set('Enter a valid phone number (10–15 digits).');
+        this.patients.set([]);
+        this.totalCount.set(0);
+        this.loading.set(false);
+        return;
       }
+      query.set('phone', digits);
+    } else {
+      const code = this.searchTerm.trim();
+      if (!code) {
+        this.error.set('Enter a patient number.');
+        this.patients.set([]);
+        this.totalCount.set(0);
+        this.loading.set(false);
+        return;
+      }
+      query.set('patientCode', code);
     }
 
     this.api.get<ApiResult<PatientList>>(`/patients?${query}`).subscribe({
@@ -99,8 +141,11 @@ export class PatientsComponent implements OnInit {
     this.loadPatients();
   }
 
-  clearSearch() {
+  clearFilters() {
+    this.filterType = 'date';
     this.searchTerm = '';
+    this.dateFrom = this.todayIso();
+    this.dateTo = this.todayIso();
     this.page.set(1);
     this.loadPatients();
   }
@@ -118,6 +163,15 @@ export class PatientsComponent implements OnInit {
       this.page.update(p => p + 1);
       this.loadPatients();
     }
+  }
+
+  formatRegistrationDate(iso: string): string {
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      hour12: true
+    });
   }
 
   deletePatient(patient: PatientListItem) {
@@ -148,5 +202,9 @@ export class PatientsComponent implements OnInit {
         this.deletingId.set(null);
       }
     });
+  }
+
+  private todayIso(): string {
+    return new Date().toLocaleDateString('en-CA');
   }
 }

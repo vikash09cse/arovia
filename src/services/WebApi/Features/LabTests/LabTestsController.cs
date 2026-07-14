@@ -11,7 +11,7 @@ namespace WebApi.Features.LabTests;
 public class LabTestsController(LabTestsService service) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Roles = RoleNames.TenantSuperAdmin)]
+    [Authorize(Roles = $"{RoleNames.TenantSuperAdmin},{RoleNames.Staff},{RoleNames.Doctor}")]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -24,6 +24,16 @@ public class LabTestsController(LabTestsService service) : ControllerBase
     [Authorize(Roles = $"{RoleNames.TenantSuperAdmin},{RoleNames.Staff},{RoleNames.Doctor}")]
     public async Task<IActionResult> GetActive(CancellationToken ct) =>
         (await service.GetActiveAsync(ct)).ToActionResult();
+
+    [HttpGet("assignment-report")]
+    [Authorize(Roles = $"{RoleNames.TenantSuperAdmin},{RoleNames.Staff},{RoleNames.Doctor}")]
+    public async Task<IActionResult> GetAssignmentReport(
+        [FromQuery] DateOnly? dateFrom = null,
+        [FromQuery] DateOnly? dateTo = null,
+        [FromQuery] string? phone = null,
+        [FromQuery] string? patientCode = null,
+        CancellationToken ct = default) =>
+        (await service.GetAssignmentReportAsync(dateFrom, dateTo, phone, patientCode, ct)).ToActionResult();
 
     [HttpGet("{id:guid}")]
     [Authorize(Roles = RoleNames.TenantSuperAdmin)]

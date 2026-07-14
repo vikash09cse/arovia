@@ -1,10 +1,10 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, catchError, finalize, map, of, shareReplay, tap, throwError } from 'rxjs';
+import { Observable, catchError, finalize, map, of, shareReplay, tap, throwError, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResult, LoginResponse } from '../models/api.models';
-import { getApiErrorMessage, unwrapApiResult } from '../api/api.util';
+import { unwrapApiResult } from '../api/api.util';
 import { isJwtExpired } from './jwt.util';
 import { TokenStorageService } from './token-storage.service';
 
@@ -20,6 +20,7 @@ export class AuthService {
 
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http.post<ApiResult<LoginResponse>>(`${environment.apiUrl}/auth/tenant-login`, { email, password }).pipe(
+      timeout({ first: 20_000 }),
       map(unwrapApiResult),
       tap(res => this.persistSession(res))
     );
@@ -37,6 +38,7 @@ export class AuthService {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       ).pipe(
+        timeout({ first: 10_000 }),
         map(unwrapApiResult),
         tap(res => {
           this.tokens.updateTokens(res);
@@ -81,14 +83,26 @@ export class AuthService {
     return !!token && isJwtExpired(token, 300);
   }
 
+  /**
+   * Clears a stored session when the access token is missing or expired.
+   * Used by guards so navigation never waits on a hung refresh call.
+   */
+  discardInvalidSession(): void {
+    const token = this.getToken();
+    if (!token || isJwtExpired(token)) {
+      this.clearSession();
+    }
+  }
+
   ensureValidToken(): Observable<boolean> {
     const token = this.getToken();
     if (!token) return of(false);
     if (!isJwtExpired(token)) return of(true);
-    return this.refreshAccessToken().pipe(
-      map(() => true),
-      catchError(() => of(false))
-    );
+
+    // Access JWT is already expired — refresh endpoint also requires a valid JWT today,
+    // so do not round-trip the API (that only delays showing login).
+    this.clearSession();
+    return of(false);
   }
 
   private persistSession(res: LoginResponse): void {

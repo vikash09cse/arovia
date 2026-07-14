@@ -32,7 +32,18 @@ public class VisitLabAgencyRow
     public Guid AssignedByUserId { get; set; }
     public string? AssignerFirstName { get; set; }
     public string? AssignerLastName { get; set; }
+    public string? TestName { get; set; }
     public string? Notes { get; set; }
+}
+
+public class LabAgencyAssignmentReportRow
+{
+    public Guid LabAgencyId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? ContactPerson { get; set; }
+    public string? Phone { get; set; }
+    public byte AgencyStatus { get; set; }
+    public int VisitCount { get; set; }
 }
 
 public interface ILabTestsRepository
@@ -41,6 +52,14 @@ public interface ILabTestsRepository
         Guid tenantId, int page, int pageSize, string? filter, byte? status, CancellationToken ct);
 
     Task<IEnumerable<LabAgencyLookupRow>> GetActiveAsync(Guid tenantId, CancellationToken ct);
+
+    Task<IEnumerable<LabAgencyAssignmentReportRow>> GetAssignmentReportAsync(
+        Guid tenantId,
+        DateOnly? dateFrom,
+        DateOnly? dateTo,
+        string? patientCode,
+        byte[]? phoneBlindIndex,
+        CancellationToken ct);
 
     Task<LabAgencyRow?> GetByIdAsync(Guid tenantId, Guid labAgencyId, CancellationToken ct);
 
@@ -59,7 +78,7 @@ public interface ILabTestsRepository
     Task SetStatusAsync(Guid tenantId, Guid labAgencyId, byte status, Guid actorId, CancellationToken ct);
 
     Task<VisitLabAgencyRow?> AssignToVisitAsync(
-        Guid tenantId, Guid visitId, Guid labAgencyId, string? notes, Guid actorId, CancellationToken ct);
+        Guid tenantId, Guid visitId, Guid labAgencyId, string? testName, string? notes, Guid actorId, CancellationToken ct);
 
     Task RemoveFromVisitAsync(
         Guid tenantId, Guid visitId, Guid visitLabAgencyId, Guid actorId, CancellationToken ct);

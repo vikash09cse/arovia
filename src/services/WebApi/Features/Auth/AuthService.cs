@@ -46,7 +46,7 @@ public class AuthService(
 
         var userType = (UserType)user.UserType;
         var context = BuildContext(user.UserId, user.Email, $"{user.FirstName} {user.LastName}".Trim(),
-            userType, Guid.Empty, string.Empty, string.Empty);
+            userType, user.Designation, Guid.Empty, string.Empty, string.Empty);
 
         jwtHelper.CreateToken(context);
         await repository.SaveRefreshTokenAsync(context.UserId, null, HashToken(context.RefreshToken), context.RefreshTokenExpiry, ct);
@@ -96,6 +96,7 @@ public class AuthService(
             user.Email,
             $"{user.FirstName} {user.LastName}".Trim(),
             userType,
+            user.Designation,
             user.TenantId!.Value,
             user.HospitalName ?? string.Empty,
             user.Subdomain ?? string.Empty);
@@ -112,7 +113,8 @@ public class AuthService(
     {
         try
         {
-            var context = jwtHelper.ValidateAndCreateTenantContext(bearerToken);
+            // Allow expired access tokens within the configured refresh window.
+            var context = jwtHelper.ValidateAndCreateTenantContextAllowExpired(bearerToken);
             jwtHelper.CreateToken(context);
             await repository.SaveRefreshTokenAsync(
                 context.UserId,
@@ -144,13 +146,14 @@ public class AuthService(
     }
 
     private static TenantContext BuildContext(
-        Guid userId, string email, string fullName, UserType userType,
+        Guid userId, string email, string fullName, UserType userType, string? designation,
         Guid tenantId, string tenantName, string subdomain) => new()
     {
         UserId = userId,
         Email = email,
         UserName = email,
         FullName = fullName,
+        Designation = string.IsNullOrWhiteSpace(designation) ? null : designation.Trim(),
         UserType = (byte)userType,
         Role = RoleNames.FromUserType(userType),
         TenantId = tenantId,
@@ -159,7 +162,7 @@ public class AuthService(
     };
 
     private static LoginResponse ToLoginResponse(TenantContext c) => new(
-        c.UserId, c.Email, c.FullName, c.Role, c.UserType,
+        c.UserId, c.Email, c.FullName, c.Role, c.UserType, c.Designation,
         c.TenantId == Guid.Empty ? null : c.TenantId,
         string.IsNullOrEmpty(c.TenantName) ? null : c.TenantName,
         string.IsNullOrEmpty(c.Subdomain) ? null : c.Subdomain,

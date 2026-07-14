@@ -131,6 +131,62 @@ td {
   color: #0f766e;
 }
 
+.actions-col {
+  width: 96px;
+  text-align: right;
+}
+
+.actions-cell {
+  text-align: right;
+}
+
+.actions-muted {
+  color: #cbd5e1;
+}
+
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.icon-btn-edit {
+  color: #0f766e;
+}
+
+.icon-btn-edit:hover {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+}
+
+.icon-btn-delete {
+  color: #b91c1c;
+}
+
+.icon-btn-delete:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .drawer-backdrop {
   position: fixed;
   inset: 0;
@@ -213,15 +269,18 @@ td {
   color: #64748b;
 }
 
-.drawer-form input {
+.drawer-form input,
+.drawer-form select {
   padding: 0.625rem 0.875rem;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   font-size: 0.95rem;
   color: #0f172a;
+  background: #fff;
 }
 
-.drawer-form input:disabled {
+.drawer-form input:disabled,
+.drawer-form select:disabled {
   opacity: 0.6;
 }
 
@@ -267,6 +326,14 @@ td {
     color: #64748b;
     font-size: 0.8rem;
     flex-shrink: 0;
+  }
+
+  .actions-cell {
+    justify-content: flex-end;
+  }
+
+  .actions-cell::before {
+    display: none;
   }
 
   .drawer-panel {

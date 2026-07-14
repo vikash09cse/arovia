@@ -44,8 +44,9 @@ public class UsersService(
             return Result<TenantUserResponse>.Fail(ErrorCode.AlreadyExists, "Email is already in use.");
 
         var password = request.TemporaryPassword ?? PasswordHelper.GenerateTemporaryPassword();
+        var designation = string.IsNullOrWhiteSpace(request.Designation) ? null : request.Designation.Trim();
         var id = await repository.CreateAsync(
-            tenantId, request.Email.Trim(), request.FirstName, request.LastName,
+            tenantId, request.Email.Trim(), request.FirstName, request.LastName, designation,
             request.Role, PasswordHelper.Hash(password), GetUserId(), ct);
 
         var created = await repository.GetByIdAsync(tenantId, id, ct);
@@ -57,15 +58,29 @@ public class UsersService(
         if (request.Role is not ((byte)UserType.Staff) and not ((byte)UserType.Doctor))
             return Result<TenantUserResponse>.Fail(ErrorCode.Validation, "Only Staff and Doctor roles are allowed.");
 
+        if (string.IsNullOrWhiteSpace(request.FirstName) || request.FirstName.Trim().Length < 2)
+            return Result<TenantUserResponse>.Fail(ErrorCode.Validation, "First name must be at least 2 characters.");
+
+        if (string.IsNullOrWhiteSpace(request.LastName) || request.LastName.Trim().Length < 2)
+            return Result<TenantUserResponse>.Fail(ErrorCode.Validation, "Last name must be at least 2 characters.");
+
         var tenantError = RequireTenantContext<TenantUserResponse>();
         if (tenantError != null) return tenantError;
+
+        if (userId == GetUserId())
+            return Result<TenantUserResponse>.Fail(ErrorCode.Validation, "You cannot edit your own account here.");
 
         var tenantId = httpContextAccessor.GetTenantContext().TenantId;
         var existing = await repository.GetByIdAsync(tenantId, userId, ct);
         if (existing == null)
             return Result<TenantUserResponse>.Fail(ErrorCode.NotFound, "User not found.");
 
-        await repository.UpdateAsync(tenantId, userId, request.FirstName, request.LastName, request.Role, GetUserId(), ct);
+        if (existing.Role is ((byte)UserType.TenantSuperAdmin) or ((byte)UserType.PlatformAdmin))
+            return Result<TenantUserResponse>.Fail(ErrorCode.Forbidden, "Admin accounts cannot be edited here.");
+
+        var designation = string.IsNullOrWhiteSpace(request.Designation) ? null : request.Designation.Trim();
+        await repository.UpdateAsync(
+            tenantId, userId, request.FirstName.Trim(), request.LastName.Trim(), designation, request.Role, GetUserId(), ct);
         var updated = await repository.GetByIdAsync(tenantId, userId, ct);
         return Result<TenantUserResponse>.Ok(Map(updated!), "User updated successfully.");
     }
@@ -75,17 +90,43 @@ public class UsersService(
         var tenantError = RequireTenantContext<bool>();
         if (tenantError != null) return tenantError;
 
+        if (userId == GetUserId())
+            return Result<bool>.Fail(ErrorCode.Validation, "You cannot change your own status here.");
+
         var tenantId = httpContextAccessor.GetTenantContext().TenantId;
         var existing = await repository.GetByIdAsync(tenantId, userId, ct);
         if (existing == null)
             return Result<bool>.Fail(ErrorCode.NotFound, "User not found.");
 
+        if (existing.Role is ((byte)UserType.TenantSuperAdmin) or ((byte)UserType.PlatformAdmin))
+            return Result<bool>.Fail(ErrorCode.Forbidden, "Admin accounts cannot be modified here.");
+
         await repository.SetStatusAsync(tenantId, userId, status, GetUserId(), ct);
         return Result<bool>.Ok(true, "User status updated.");
     }
 
+    public async Task<Result<bool>> DeleteUserAsync(Guid userId, CancellationToken ct)
+    {
+        var tenantError = RequireTenantContext<bool>();
+        if (tenantError != null) return tenantError;
+
+        if (userId == GetUserId())
+            return Result<bool>.Fail(ErrorCode.Validation, "You cannot delete your own account.");
+
+        var tenantId = httpContextAccessor.GetTenantContext().TenantId;
+        var existing = await repository.GetByIdAsync(tenantId, userId, ct);
+        if (existing == null)
+            return Result<bool>.Fail(ErrorCode.NotFound, "User not found.");
+
+        if (existing.Role is not ((byte)UserType.Staff) and not ((byte)UserType.Doctor))
+            return Result<bool>.Fail(ErrorCode.Forbidden, "Only Staff and Doctor accounts can be deleted.");
+
+        await repository.DeleteAsync(tenantId, userId, GetUserId(), ct);
+        return Result<bool>.Ok(true, "User deleted successfully.");
+    }
+
     private static TenantUserResponse Map(TenantUserRow row) => new(
-        row.UserId, row.Email, row.FirstName, row.LastName,
+        row.UserId, row.Email, row.FirstName, row.LastName, row.Designation,
         RoleNames.FromUserType((UserType)row.Role), row.Role,
         row.Status == (byte)UserStatus.Active ? "Active" : "Inactive", row.Status,
         row.LastLoginAt, row.CreatedAt);

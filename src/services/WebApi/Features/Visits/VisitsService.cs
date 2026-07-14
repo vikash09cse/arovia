@@ -1,6 +1,7 @@
 using SharedKernel.Enums;
 using SharedKernel.Utilities;
 using SharedKernel.Utilities.Extensions;
+using SharedKernel.Utilities.Helpers;
 using WebApi.Features.LabTests;
 using WebApi.Features.VisitAddons;
 using WebApi.Features.Visits.Infrastructure;
@@ -9,6 +10,7 @@ namespace WebApi.Features.Visits;
 
 public class VisitsService(
     IVisitsRepository repository,
+    PhiEncryptionHelper encryption,
     IHttpContextAccessor httpContextAccessor)
 {
     private Result<T>? RequireTenantContext<T>()
@@ -69,7 +71,7 @@ public class VisitsService(
     };
 
     public async Task<Result<VisitListResponse>> GetVisitsAsync(
-        int page, int pageSize, Guid? patientId, string? patientCode, Guid? consultingDoctorId,
+        int page, int pageSize, Guid? patientId, string? patientCode, string? visitCode, string? phone, Guid? consultingDoctorId,
         byte? visitType, byte? feeStatus, byte? visitStatus, DateOnly? dateFrom, DateOnly? dateTo, CancellationToken ct)
     {
         var tenantError = RequireTenantContext<VisitListResponse>();
@@ -79,9 +81,21 @@ public class VisitsService(
         pageSize = Math.Clamp(pageSize, 1, 100);
 
         var tenantId = httpContextAccessor.GetTenantContext().TenantId;
+
+        byte[]? phoneBlindIndex = null;
+        if (!string.IsNullOrWhiteSpace(phone))
+        {
+            var normalized = PhiEncryptionHelper.NormalizePhone(phone);
+            if (normalized.Length is < 10 or > 15)
+                return Result<VisitListResponse>.Fail(ErrorCode.Validation, "Phone search must be 10–15 digits.");
+            phoneBlindIndex = encryption.ComputeBlindIndex(tenantId, normalized);
+        }
+
         var (items, total) = await repository.GetListAsync(
             tenantId, page, pageSize, patientId,
             string.IsNullOrWhiteSpace(patientCode) ? null : patientCode.Trim(),
+            string.IsNullOrWhiteSpace(visitCode) ? null : visitCode.Trim(),
+            phoneBlindIndex,
             consultingDoctorId, visitType, feeStatus, visitStatus, dateFrom, dateTo, ct);
 
         var mapped = items.Select(MapListItem);
@@ -159,7 +173,7 @@ public class VisitsService(
             request.PatientId,
             request.ConsultingDoctorId,
             request.VisitType,
-            request.Purpose.Trim(),
+            string.IsNullOrWhiteSpace(request.Purpose) ? null : request.Purpose.Trim(),
             string.IsNullOrWhiteSpace(request.VisitNotes) ? null : request.VisitNotes.Trim(),
             request.ProcedureChargeAmount,
             request.ScheduledSurgeryDate,
@@ -219,6 +233,13 @@ public class VisitsService(
         if (tenantError != null) return tenantError;
 
         var tenantId = httpContextAccessor.GetTenantContext().TenantId;
+        var (visitRow, _, _, _) = await repository.GetByIdAsync(tenantId, visitId, ct);
+        if (visitRow == null)
+            return Result<VisitResponse>.Fail(ErrorCode.NotFound, "Visit not found.");
+
+        var sameDayError = ValidateStaffSameDayFeeChange<VisitResponse>(visitRow.VisitDateTime);
+        if (sameDayError != null) return sameDayError;
+
         var reason = request.DiscountAmount > 0
             ? request.DiscountReason!.Trim()
             : null;
@@ -273,10 +294,7 @@ public class VisitsService(
             and not ((byte)VisitType.PreOp) and not ((byte)VisitType.Surgery))
             return Result<VisitResponse>.Fail(ErrorCode.Validation, "Invalid visit type.");
 
-        if (string.IsNullOrWhiteSpace(request.Purpose))
-            return Result<VisitResponse>.Fail(ErrorCode.Validation, "Purpose is required.");
-
-        if (request.Purpose.Trim().Length > 300)
+        if (!string.IsNullOrWhiteSpace(request.Purpose) && request.Purpose.Trim().Length > 300)
             return Result<VisitResponse>.Fail(ErrorCode.Validation, "Purpose cannot exceed 300 characters.");
 
         if (request.VisitNotes?.Length > 1000)
@@ -436,6 +454,7 @@ public class VisitsService(
                     la.AssignedAt,
                     la.AssignedByUserId,
                     assignerName,
+                    la.TestName,
                     la.Notes);
             }),
             addonList.Select(a => new VisitAddonLineResponse(
@@ -443,7 +462,57 @@ public class VisitsService(
                 a.VisitAddonId,
                 a.AddonName,
                 a.Amount,
-                a.CreatedAt)));
+                a.CreatedAt)),
+            CanEditFeesOnVisit(visit.VisitDateTime));
+    }
+
+    private bool CanEditFeesOnVisit(DateTime visitDateTimeUtc) =>
+        httpContextAccessor.GetTenantContext().Role switch
+        {
+            RoleNames.TenantSuperAdmin => true,
+            RoleNames.Staff => IsSameHospitalCalendarDay(visitDateTimeUtc, DateTime.UtcNow),
+            _ => false
+        };
+
+    private Result<T>? ValidateStaffSameDayFeeChange<T>(DateTime visitDateTimeUtc)
+    {
+        if (httpContextAccessor.GetTenantContext().Role != RoleNames.Staff)
+            return null;
+
+        if (IsSameHospitalCalendarDay(visitDateTimeUtc, DateTime.UtcNow))
+            return null;
+
+        return Result<T>.Fail(
+            ErrorCode.Validation,
+            "Staff can only change fees and prices on the same day as the visit.");
+    }
+
+    private static bool IsSameHospitalCalendarDay(DateTime visitUtc, DateTime referenceUtc)
+    {
+        var tz = GetHospitalTimeZone();
+        var visitLocal = TimeZoneInfo.ConvertTimeFromUtc(NormalizeUtc(visitUtc), tz);
+        var referenceLocal = TimeZoneInfo.ConvertTimeFromUtc(NormalizeUtc(referenceUtc), tz);
+        return visitLocal.Date == referenceLocal.Date;
+    }
+
+    private static DateTime NormalizeUtc(DateTime value) =>
+        value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
+
+    private static TimeZoneInfo GetHospitalTimeZone()
+    {
+        foreach (var id in new[] { "India Standard Time", "Asia/Kolkata" })
+        {
+            try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
+            catch (TimeZoneNotFoundException) { }
+            catch (InvalidTimeZoneException) { }
+        }
+
+        return TimeZoneInfo.Utc;
     }
 
     private static byte ComputeAggregatedStatus(decimal totalDue, decimal totalCollected)

@@ -74,7 +74,7 @@
               <td>{{ v.visitCode }}</td>
               <td>{{ v.visitType }}</td>
               <td>{{ v.doctorFullName }}</td>
-              <td>{{ v.purpose }}</td>
+              <td>{{ v.purpose || '—' }}</td>
               <td>{{ v.feeStatus === 'Free' ? 'Free' : formatMoney(v.feeAmount) }}</td>
               <td>{{ v.aggregatedPaymentStatus }}</td>
               <td><a [routerLink]="['/visits', v.id]">View</a></td>

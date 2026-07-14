@@ -332,10 +332,6 @@ export class VisitFormComponent implements OnInit {
       this.error.set('Please select a consulting doctor.');
       return;
     }
-    if (!this.purpose.trim()) {
-      this.error.set('Purpose is required.');
-      return;
-    }
     if (this.consultationFeeStatus === 1 && (this.consultationFeeAmount == null || this.consultationFeeAmount < 0)) {
       this.error.set('Consultation fee amount is required when charged.');
       return;
@@ -380,7 +376,7 @@ export class VisitFormComponent implements OnInit {
       patientId: patient.id,
       consultingDoctorId: this.consultingDoctorId,
       visitType: this.visitType,
-      purpose: this.purpose.trim(),
+      purpose: this.purpose.trim() || null,
       visitNotes: this.visitNotes.trim() || null,
       procedureChargeAmount: this.procedureChargeAmount && this.procedureChargeAmount > 0
         ? this.procedureChargeAmount : null,

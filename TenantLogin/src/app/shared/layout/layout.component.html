@@ -50,8 +50,9 @@
         </a>
       }
 
-      <span class="nav-section">Administration</span>
-      @for (item of adminNav(); track item.route) {
+      @if (showAdminSection()) {
+        <span class="nav-section">Administration</span>
+        @for (item of adminNav(); track item.route) {
         <a [routerLink]="item.route" routerLinkActive="active" class="nav-link"
            [title]="item.label" (click)="onNavClick()">
           <span class="nav-icon">@switch (item.icon) {
@@ -70,6 +71,7 @@
           }</span>
           <span class="nav-label">{{ item.label }}</span>
         </a>
+        }
       }
     </nav>
 
@@ -98,7 +100,9 @@
       @if (user(); as u) {
         <div class="topbar-user">
           <span class="topbar-name">{{ u.fullName }}</span>
-          <span class="topbar-role">{{ u.role }}</span>
+          @if (u.designation) {
+            <span class="topbar-role">{{ u.designation }}</span>
+          }
         </div>
       }
     </header>

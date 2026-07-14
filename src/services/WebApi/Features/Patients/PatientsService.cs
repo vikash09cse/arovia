@@ -22,13 +22,17 @@ public class PatientsService(
     private Guid GetUserId() => httpContextAccessor.GetTenantContext().UserId;
 
     public async Task<Result<PatientListResponse>> GetPatientsAsync(
-        int page, int pageSize, string? patientCode, string? phone, byte? status, byte? gender, CancellationToken ct)
+        int page, int pageSize, string? patientCode, string? phone, byte? status, byte? gender,
+        DateOnly? dateFrom, DateOnly? dateTo, CancellationToken ct)
     {
         var tenantError = RequireTenantContext<PatientListResponse>();
         if (tenantError != null) return tenantError;
 
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
+
+        if (dateFrom.HasValue && dateTo.HasValue && dateFrom > dateTo)
+            return Result<PatientListResponse>.Fail(ErrorCode.Validation, "From date cannot be after To date.");
 
         var tenantId = httpContextAccessor.GetTenantContext().TenantId;
 
@@ -44,7 +48,7 @@ public class PatientsService(
         var (items, total) = await repository.GetPatientsAsync(
             tenantId, page, pageSize,
             string.IsNullOrWhiteSpace(patientCode) ? null : patientCode.Trim(),
-            phoneBlindIndex, status, gender, ct);
+            phoneBlindIndex, status, gender, dateFrom, dateTo, ct);
 
         var mapped = items.Select(row => MapListItem(row));
         return Result<PatientListResponse>.Ok(new PatientListResponse(mapped, total, page, pageSize));

@@ -1,0 +1,42 @@
+@import '../patients/patients.component.scss';
+
+.summary-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  background: #ccfbf1;
+  color: #0f766e;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.count-col,
+.count-cell {
+  text-align: right;
+}
+
+.visit-count {
+  display: inline-flex;
+  min-width: 2rem;
+  justify-content: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #ecfeff;
+  color: #0e7490;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.visit-count.zero {
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .count-cell {
+    justify-content: space-between;
+    text-align: left;
+  }
+}

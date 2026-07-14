@@ -5,30 +5,165 @@ h1 { margin: 0; font-size: clamp(1.35rem, 3vw, 1.75rem); color: #0f172a; }
 .status { color: #64748b; }
 .error { background: #fee2e2; color: #b91c1c; padding: 0.75rem 1rem; border-radius: 10px; }
 
-.detail-grid {
+.visit-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
   gap: 1rem;
-  margin-bottom: 1rem;
+  align-items: start;
+}
+
+.visit-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.visit-column > .card {
+  margin-bottom: 0;
+}
+
+.notes-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-card textarea {
+  flex: 1;
+  min-height: 140px;
+  resize: vertical;
 }
 
 .card {
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 1.25rem;
+  padding: 1rem 1.25rem;
   margin-bottom: 1rem;
 }
 
 .card h2 {
-  margin: 0 0 1rem;
+  margin: 0 0 0.75rem;
   font-size: 1rem;
   color: #334155;
 }
 
-dl { margin: 0; }
-dt { font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem; }
-dd { margin: 0.25rem 0 0; color: #0f172a; }
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1.25rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.info-item-wide {
+  grid-column: 1 / -1;
+}
+
+.info-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.info-value {
+  color: #0f172a;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.fees-header {
+  margin-bottom: 0.5rem;
+}
+
+.fees-header h2 {
+  margin: 0;
+}
+
+.fee-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.fee-table td {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.fee-table td:first-child {
+  color: #64748b;
+  width: 42%;
+  padding-right: 0.75rem;
+}
+
+.fee-table td:last-child {
+  text-align: right;
+  color: #0f172a;
+}
+
+.fee-table tr.fee-subtotal td {
+  padding-top: 0.6rem;
+  font-weight: 600;
+}
+
+.fee-table tr.fee-total td {
+  font-weight: 600;
+}
+
+.notes-card textarea {
+  margin-bottom: 0;
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.notes-header h2 {
+  margin: 0;
+}
+
+.notes-readonly {
+  margin: 0;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.panel-card table {
+  font-size: 0.85rem;
+}
+
+.panel-card th,
+.panel-card td {
+  padding: 0.45rem 0.35rem;
+}
+
+@media (max-width: 1024px) {
+  .visit-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-item-wide {
+    grid-column: auto;
+  }
+}
 
 .discount-amount { color: #b45309; }
 
@@ -37,6 +172,11 @@ dd { margin: 0.25rem 0 0; color: #0f172a; }
 table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 th, td { padding: 0.5rem; text-align: left; border-bottom: 1px solid #f1f5f9; }
 th { color: #64748b; font-size: 0.8rem; }
+
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
 textarea {
   width: 100%;
@@ -105,11 +245,17 @@ textarea {
 
 .balance-due { color: #b45309; }
 
+.fee-lock-hint {
+  margin: 0.65rem 0 0;
+}
+
 .payment-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.75rem;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #f1f5f9;
 }
 
 .payment-actions .btn-primary,
@@ -136,11 +282,76 @@ textarea {
 }
 
 .add-payment-form input,
-.add-payment-form select {
+.add-payment-form select,
+.add-payment-form textarea {
   padding: 0.5rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 0.9rem;
+}
+
+.test-name-cell {
+  max-width: 220px;
+  word-break: break-word;
+}
+
+.lab-assign-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.lab-assign-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.lab-assign-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.lab-assign-form input,
+.lab-assign-form select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.lab-assign-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 2.25rem;
+}
+
+.lab-assign-actions .btn-primary,
+.lab-assign-actions .btn-secondary {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .lab-assign-row {
+    grid-template-columns: 1fr;
+  }
+
+  .lab-assign-actions {
+    justify-content: stretch;
+  }
+
+  .lab-assign-actions .btn-primary,
+  .lab-assign-actions .btn-secondary {
+    flex: 1;
+  }
 }
 
 .field-hint {

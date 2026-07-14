@@ -10,15 +10,46 @@
 </header>
 
 <form class="search-bar" (ngSubmit)="onSearch()">
-  <input
-    type="text"
-    name="searchTerm"
-    placeholder="Search by patient code or phone number"
-    [(ngModel)]="searchTerm"
-  />
+  <label class="filter-type">
+    <span>Filter by</span>
+    <select name="filterType" [(ngModel)]="filterType" (ngModelChange)="onFilterTypeChange()">
+      <option value="date">Date</option>
+      <option value="phone">Phone Number</option>
+      <option value="patientCode">Patient Number</option>
+    </select>
+  </label>
+
+  @if (filterType === 'date') {
+    <label class="date-filter">
+      <span>From</span>
+      <input type="date" name="dateFrom" [(ngModel)]="dateFrom" />
+    </label>
+    <label class="date-filter">
+      <span>To</span>
+      <input type="date" name="dateTo" [(ngModel)]="dateTo" />
+    </label>
+  } @else if (filterType === 'phone') {
+    <input
+      type="text"
+      name="searchTerm"
+      placeholder="Enter phone number"
+      [(ngModel)]="searchTerm"
+      inputmode="tel"
+      autocomplete="tel"
+    />
+  } @else {
+    <input
+      type="text"
+      name="searchTerm"
+      placeholder="Enter patient number (e.g. 20260714-01)"
+      [(ngModel)]="searchTerm"
+      autocomplete="off"
+    />
+  }
+
   <button type="submit" class="btn-secondary">Search</button>
-  @if (searchTerm) {
-    <button type="button" class="btn-text" (click)="clearSearch()">Clear</button>
+  @if (filtersAreActive()) {
+    <button type="button" class="btn-text" (click)="clearFilters()">Clear</button>
   }
 </form>
 
@@ -26,15 +57,16 @@
   <p class="status">Loading patients…</p>
 } @else if (error()) {
   <div class="error">{{ error() }}</div>
-} @else if (patients().length === 0) {
+  } @else if (patients().length === 0) {
   <div class="empty">
-    @if (searchTerm) {
-      No patients found for "{{ searchTerm }}".
+    @if (filterType === 'date') {
+      No patients found for the selected dates.
+    } @else if (searchTerm.trim()) {
+      No patients found for the selected filters.
+    } @else if (filterType === 'phone') {
+      Enter a phone number and search to find patients.
     } @else {
-      No patients registered yet.
-      @if (canEdit()) {
-        <a routerLink="/patients/new">Register the first patient</a>
-      }
+      Enter a patient number and search to find patients.
     }
   </div>
 } @else {
@@ -46,6 +78,7 @@
           <th>Name</th>
           <th>Phone</th>
           <th>Gender</th>
+          <th>Registered</th>
           <th>Status</th>
           @if (canEdit()) {
             <th class="actions-col">Actions</th>
@@ -59,6 +92,7 @@
             <td data-label="Name">{{ p.firstName }} {{ p.lastName }}</td>
             <td data-label="Phone">{{ p.phone }}</td>
             <td data-label="Gender">{{ p.gender }}</td>
+            <td data-label="Registered">{{ formatRegistrationDate(p.createdAt) }}</td>
             <td data-label="Status">
               <span class="badge" [class.active]="p.statusCode === 1">{{ p.status }}</span>
             </td>
@@ -83,7 +117,7 @@
                     title="Record visit"
                     aria-label="Record visit"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true">
                       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                       <line x1="16" y1="2" x2="16" y2="6"/>
                       <line x1="8" y1="2" x2="8" y2="6"/>
@@ -91,6 +125,7 @@
                       <line x1="12" y1="14" x2="12" y2="18"/>
                       <line x1="10" y1="16" x2="14" y2="16"/>
                     </svg>
+                    <span>Visit</span>
                   </a>
                   <a
                     [routerLink]="['/patients', p.id, 'edit']"

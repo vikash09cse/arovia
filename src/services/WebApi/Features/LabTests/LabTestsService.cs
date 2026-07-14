@@ -1,12 +1,14 @@
 using SharedKernel.Enums;
 using SharedKernel.Utilities;
 using SharedKernel.Utilities.Extensions;
+using SharedKernel.Utilities.Helpers;
 using WebApi.Features.LabTests.Infrastructure;
 
 namespace WebApi.Features.LabTests;
 
 public class LabTestsService(
     ILabTestsRepository repository,
+    PhiEncryptionHelper encryption,
     IHttpContextAccessor httpContextAccessor)
 {
     private Result<T>? RequireTenantContext<T>()
@@ -47,6 +49,50 @@ public class LabTestsService(
         var mapped = rows.Select(r => new LabAgencyLookupItem(
             r.LabAgencyId, r.Name, r.ContactPerson, r.Phone));
         return Result<IEnumerable<LabAgencyLookupItem>>.Ok(mapped);
+    }
+
+    public async Task<Result<LabAgencyAssignmentReportResponse>> GetAssignmentReportAsync(
+        DateOnly? dateFrom,
+        DateOnly? dateTo,
+        string? phone,
+        string? patientCode,
+        CancellationToken ct)
+    {
+        var tenantError = RequireTenantContext<LabAgencyAssignmentReportResponse>();
+        if (tenantError != null) return tenantError;
+
+        if (dateFrom.HasValue && dateTo.HasValue && dateFrom > dateTo)
+            return Result<LabAgencyAssignmentReportResponse>.Fail(ErrorCode.Validation, "From date cannot be after To date.");
+
+        var tenantId = GetTenantId();
+        byte[]? phoneBlindIndex = null;
+        if (!string.IsNullOrWhiteSpace(phone))
+        {
+            var normalized = PhiEncryptionHelper.NormalizePhone(phone);
+            if (normalized.Length is < 10 or > 15)
+                return Result<LabAgencyAssignmentReportResponse>.Fail(ErrorCode.Validation, "Phone search must be 10–15 digits.");
+            phoneBlindIndex = encryption.ComputeBlindIndex(tenantId, normalized);
+        }
+
+        var rows = await repository.GetAssignmentReportAsync(
+            tenantId,
+            dateFrom,
+            dateTo,
+            string.IsNullOrWhiteSpace(patientCode) ? null : patientCode.Trim(),
+            phoneBlindIndex,
+            ct);
+
+        var items = rows.Select(r => new LabAgencyAssignmentReportItem(
+            r.LabAgencyId,
+            r.Name,
+            r.ContactPerson,
+            r.Phone,
+            r.AgencyStatus == (byte)LabAgencyStatus.Active ? "Active" : "Inactive",
+            r.AgencyStatus,
+            r.VisitCount)).ToList();
+
+        return Result<LabAgencyAssignmentReportResponse>.Ok(
+            new LabAgencyAssignmentReportResponse(items, items.Sum(i => i.VisitCount)));
     }
 
     public async Task<Result<LabAgencyResponse>> GetByIdAsync(Guid labAgencyId, CancellationToken ct)
@@ -130,12 +176,15 @@ public class LabTestsService(
         if (request.Notes?.Length > 500)
             return Result<VisitLabAgencyResponse>.Fail(ErrorCode.Validation, "Notes cannot exceed 500 characters.");
 
+        if (request.TestName?.Length > 250)
+            return Result<VisitLabAgencyResponse>.Fail(ErrorCode.Validation, "Test name cannot exceed 250 characters.");
+
         var tenantError = RequireTenantContext<VisitLabAgencyResponse>();
         if (tenantError != null) return tenantError;
 
         var row = await repository.AssignToVisitAsync(
             GetTenantId(), visitId, request.LabAgencyId,
-            TrimOrNull(request.Notes), GetUserId(), ct);
+            TrimOrNull(request.TestName), TrimOrNull(request.Notes), GetUserId(), ct);
 
         if (row == null)
             return Result<VisitLabAgencyResponse>.Fail(ErrorCode.Validation, "Unable to assign lab agency.");
@@ -166,6 +215,7 @@ public class LabTestsService(
             row.AssignedAt,
             row.AssignedByUserId,
             assignerName,
+            row.TestName,
             row.Notes);
     }
 

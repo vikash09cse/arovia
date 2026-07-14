@@ -11,18 +11,54 @@
 </header>
 
 <form class="search-bar" (ngSubmit)="onSearch()">
-  <input type="text" name="searchTerm" placeholder="Search by patient code" [(ngModel)]="searchTerm" />
-  <input type="date" name="dateFrom" [(ngModel)]="dateFrom" title="From date" />
-  <input type="date" name="dateTo" [(ngModel)]="dateTo" title="To date" />
-  <select name="visitTypeFilter" [(ngModel)]="visitTypeFilter">
-    <option value="">All types</option>
-    <option value="1">OPD</option>
-    <option value="2">Follow-up</option>
-    <option value="3">Pre-op</option>
-    <option value="4">Surgery</option>
-  </select>
+  <label class="filter-type">
+    <span>Filter by</span>
+    <select name="filterType" [(ngModel)]="filterType" (ngModelChange)="onFilterTypeChange()">
+      <option value="date">Date</option>
+      <option value="phone">Phone Number</option>
+      <option value="patientCode">Patient Number</option>
+      <option value="visitCode">Visit</option>
+    </select>
+  </label>
+
+  @if (filterType === 'date') {
+    <label class="date-filter">
+      <span>From</span>
+      <input type="date" name="dateFrom" [(ngModel)]="dateFrom" />
+    </label>
+    <label class="date-filter">
+      <span>To</span>
+      <input type="date" name="dateTo" [(ngModel)]="dateTo" />
+    </label>
+  } @else if (filterType === 'phone') {
+    <input
+      type="text"
+      name="searchTerm"
+      placeholder="Enter phone number"
+      [(ngModel)]="searchTerm"
+      inputmode="tel"
+      autocomplete="tel"
+    />
+  } @else if (filterType === 'patientCode') {
+    <input
+      type="text"
+      name="searchTerm"
+      placeholder="Enter patient number (e.g. 20260714-01)"
+      [(ngModel)]="searchTerm"
+      autocomplete="off"
+    />
+  } @else {
+    <input
+      type="text"
+      name="searchTerm"
+      placeholder="Enter visit ID (e.g. VIS-20260714-01)"
+      [(ngModel)]="searchTerm"
+      autocomplete="off"
+    />
+  }
+
   <button type="submit" class="btn-secondary">Search</button>
-  @if (searchTerm || dateFrom || dateTo || visitTypeFilter) {
+  @if (filtersAreActive()) {
     <button type="button" class="btn-text" (click)="clearFilters()">Clear</button>
   }
 </form>
@@ -33,9 +69,16 @@
   <div class="error">{{ error() }}</div>
 } @else if (visits().length === 0) {
   <div class="empty">
-    No visits found.
-    @if (canEdit()) {
-      <a routerLink="/visits/new">Record the first visit</a>
+    @if (filterType === 'date') {
+      No visits found for the selected dates.
+    } @else if (searchTerm.trim()) {
+      No visits found for the selected filters.
+    } @else if (filterType === 'phone') {
+      Enter a phone number and search to find visits.
+    } @else if (filterType === 'patientCode') {
+      Enter a patient number and search to find visits.
+    } @else {
+      Enter a visit ID and search to find visits.
     }
   </div>
 } @else {

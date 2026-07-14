@@ -27,6 +27,28 @@ public class LabTestsRepository(DbHelper dbHelper) : ILabTestsRepository
             commandType: CommandType.StoredProcedure);
     }
 
+    public async Task<IEnumerable<LabAgencyAssignmentReportRow>> GetAssignmentReportAsync(
+        Guid tenantId,
+        DateOnly? dateFrom,
+        DateOnly? dateTo,
+        string? patientCode,
+        byte[]? phoneBlindIndex,
+        CancellationToken ct)
+    {
+        using var conn = dbHelper.GetConnection();
+        return await conn.QueryAsync<LabAgencyAssignmentReportRow>(
+            "dbo.sp_lab_agency_assignment_report",
+            new
+            {
+                tenantid = tenantId,
+                datefrom = dateFrom?.ToDateTime(TimeOnly.MinValue),
+                dateto = dateTo?.ToDateTime(TimeOnly.MinValue),
+                patientcode = patientCode,
+                phoneblindindex = phoneBlindIndex
+            },
+            commandType: CommandType.StoredProcedure);
+    }
+
     public async Task<LabAgencyRow?> GetByIdAsync(Guid tenantId, Guid labAgencyId, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
@@ -77,7 +99,7 @@ public class LabTestsRepository(DbHelper dbHelper) : ILabTestsRepository
     }
 
     public async Task<VisitLabAgencyRow?> AssignToVisitAsync(
-        Guid tenantId, Guid visitId, Guid labAgencyId, string? notes, Guid actorId, CancellationToken ct)
+        Guid tenantId, Guid visitId, Guid labAgencyId, string? testName, string? notes, Guid actorId, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
         return await conn.QueryFirstOrDefaultAsync<VisitLabAgencyRow>(
@@ -87,6 +109,7 @@ public class LabTestsRepository(DbHelper dbHelper) : ILabTestsRepository
                 tenantid = tenantId,
                 visitid = visitId,
                 labagencyid = labAgencyId,
+                testname = testName,
                 notes,
                 actorid = actorId
             },

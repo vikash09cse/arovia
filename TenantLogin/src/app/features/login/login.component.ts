@@ -32,7 +32,12 @@ export class LoginComponent {
     this.auth.login(email!, password!).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: err => {
-        this.error.set(getApiErrorMessage(err, 'Invalid email or password.'));
+        const timedOut = err?.name === 'TimeoutError';
+        this.error.set(
+          timedOut
+            ? 'Login is taking too long. Please try again.'
+            : getApiErrorMessage(err, 'Invalid email or password.')
+        );
         this.loading.set(false);
       },
       complete: () => this.loading.set(false)

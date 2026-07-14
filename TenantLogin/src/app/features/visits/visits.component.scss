@@ -29,17 +29,37 @@ h1 {
   margin-bottom: 1rem;
 }
 
-.search-bar input,
-.search-bar select {
+.search-bar input[type='text'] {
+  flex: 1;
+  min-width: 160px;
   padding: 0.625rem 0.875rem;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   font-size: 0.95rem;
 }
 
-.search-bar input[type='text'] {
-  flex: 1;
-  min-width: 160px;
+.filter-type,
+.date-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.filter-type select,
+.date-filter input[type='date'] {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #334155;
+  background: #fff;
+}
+
+.filter-type select {
+  min-width: 10rem;
+  cursor: pointer;
 }
 
 .btn-primary,

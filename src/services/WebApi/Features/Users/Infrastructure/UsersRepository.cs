@@ -11,6 +11,7 @@ public class TenantUserRow
     public string Email { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
+    public string? Designation { get; set; }
     public byte Role { get; set; }
     public byte Status { get; set; }
     public DateTime? LastLoginAt { get; set; }
@@ -53,7 +54,7 @@ public class UsersRepository(DbHelper dbHelper) : IUsersRepository
     }
 
     public async Task<Guid> CreateAsync(
-        Guid tenantId, string email, string firstName, string lastName, byte role, string passwordHash,
+        Guid tenantId, string email, string firstName, string lastName, string? designation, byte role, string passwordHash,
         Guid createdBy, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
@@ -67,6 +68,7 @@ public class UsersRepository(DbHelper dbHelper) : IUsersRepository
                 passwordhash = passwordHash,
                 firstname = firstName,
                 lastname = lastName,
+                designation,
                 usertype = role,
                 userstatus = (byte)UserStatus.Active,
                 createdby = createdBy
@@ -74,7 +76,8 @@ public class UsersRepository(DbHelper dbHelper) : IUsersRepository
             commandType: CommandType.StoredProcedure);
     }
 
-    public async Task UpdateAsync(Guid tenantId, Guid userId, string firstName, string lastName, byte role, Guid updatedBy, CancellationToken ct)
+    public async Task UpdateAsync(
+        Guid tenantId, Guid userId, string firstName, string lastName, string? designation, byte role, Guid updatedBy, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
         await conn.ExecuteAsync(
@@ -85,6 +88,8 @@ public class UsersRepository(DbHelper dbHelper) : IUsersRepository
                 userid = userId,
                 firstname = firstName,
                 lastname = lastName,
+                designation,
+                updatedesignation = true,
                 usertype = role,
                 updatedby = updatedBy
             },
@@ -103,6 +108,15 @@ public class UsersRepository(DbHelper dbHelper) : IUsersRepository
                 userstatus = (byte)status,
                 updatedby = updatedBy
             },
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task DeleteAsync(Guid tenantId, Guid userId, Guid updatedBy, CancellationToken ct)
+    {
+        using var conn = dbHelper.GetConnection();
+        await conn.ExecuteAsync(
+            "dbo.sp_delete_tenant_user",
+            new { tenantid = tenantId, userid = userId, updatedby = updatedBy },
             commandType: CommandType.StoredProcedure);
     }
 }

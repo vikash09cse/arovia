@@ -34,7 +34,9 @@ BEGIN
 
       AND v.tenantid = @tenantid
 
-      AND v.visitstatus = 1;
+      AND v.visitstatus = 1
+
+      AND v.isdeleted = 0;
 
 
 

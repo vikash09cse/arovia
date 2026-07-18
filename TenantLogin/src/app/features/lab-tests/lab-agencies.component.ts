@@ -1,8 +1,9 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiResult } from '../../core/models/api.models';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
 interface LabAgency {
   id: string;
@@ -24,7 +25,7 @@ interface LabAgencyList {
 @Component({
   selector: 'app-lab-agencies',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ConfirmDialogComponent],
   templateUrl: './lab-agencies.component.html',
   styleUrl: './lab-agencies.component.scss'
 })
@@ -41,9 +42,11 @@ export class LabAgenciesComponent implements OnInit {
   readonly formError = signal('');
   readonly editingId = signal<string | null>(null);
   readonly updatingStatusId = signal<string | null>(null);
+  readonly deletingId = signal<string | null>(null);
+  readonly confirmTarget = signal<LabAgency | null>(null);
 
   searchTerm = '';
-  statusFilter: number | null = null;
+  statusFilter: number | null = 1;
 
   name = '';
   contactPerson = '';
@@ -51,6 +54,12 @@ export class LabAgenciesComponent implements OnInit {
   email = '';
   address = '';
   notes = '';
+
+  readonly confirmMessage = computed(() => {
+    const agency = this.confirmTarget();
+    if (!agency) return '';
+    return `"${agency.name}" will be deleted and will no longer appear in the active list or be assignable to visits.`;
+  });
 
   ngOnInit() {
     const user = this.auth.currentUser();
@@ -85,7 +94,7 @@ export class LabAgenciesComponent implements OnInit {
 
   clearSearch() {
     this.searchTerm = '';
-    this.statusFilter = null;
+    this.statusFilter = 1;
     this.loadAgencies();
   }
 
@@ -179,6 +188,37 @@ export class LabAgenciesComponent implements OnInit {
       error: err => {
         this.error.set(err.error?.message ?? 'Unable to update status.');
         this.updatingStatusId.set(null);
+      }
+    });
+  }
+
+  deleteAgency(agency: LabAgency) {
+    if (!this.canManage()) return;
+    this.confirmTarget.set(agency);
+  }
+
+  cancelDelete() {
+    if (!this.deletingId()) {
+      this.confirmTarget.set(null);
+    }
+  }
+
+  confirmDelete() {
+    const agency = this.confirmTarget();
+    if (!agency) return;
+
+    this.deletingId.set(agency.id);
+    this.error.set('');
+
+    this.api.delete<ApiResult<boolean>>(`/lab-agencies/${agency.id}`).subscribe({
+      next: () => {
+        this.deletingId.set(null);
+        this.confirmTarget.set(null);
+        this.loadAgencies();
+      },
+      error: err => {
+        this.error.set(err.error?.message ?? 'Unable to delete lab agency.');
+        this.deletingId.set(null);
       }
     });
   }

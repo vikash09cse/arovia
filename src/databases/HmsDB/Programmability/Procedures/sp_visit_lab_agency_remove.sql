@@ -11,7 +11,8 @@ BEGIN
         SELECT 1 FROM dbo.visits v
         WHERE v.tenantid = @tenantid
           AND v.visitid = @visitid
-          AND v.visitstatus = 1)
+          AND v.visitstatus = 1
+          AND v.isdeleted = 0)
         THROW 50400, 'Visit not found or not active.', 1;
 
     IF NOT EXISTS (

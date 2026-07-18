@@ -13,7 +13,8 @@ BEGIN
         updatedat = SYSUTCDATETIME()
     WHERE visitid = @visitid
       AND tenantid = @tenantid
-      AND visitstatus = 1;
+      AND visitstatus = 1
+      AND isdeleted = 0;
 
     IF @@ROWCOUNT = 0
         THROW 50404, 'Visit not found or cancelled.', 1;

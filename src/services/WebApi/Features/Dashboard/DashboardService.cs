@@ -16,13 +16,14 @@ public class DashboardService(
         return null;
     }
 
-    public async Task<Result<TenantDashboardResponse>> GetDashboardAsync(CancellationToken ct)
+    public async Task<Result<TenantDashboardResponse>> GetDashboardAsync(
+        DateOnly? dateFrom, DateOnly? dateTo, CancellationToken ct)
     {
         var tenantError = RequireTenantContext<TenantDashboardResponse>();
         if (tenantError != null) return tenantError;
 
         var tenantId = httpContextAccessor.GetTenantContext().TenantId;
-        var row = await repository.GetTenantDashboardAsync(tenantId, ct);
+        var row = await repository.GetTenantDashboardAsync(tenantId, dateFrom, dateTo, ct);
 
         return Result<TenantDashboardResponse>.Ok(new TenantDashboardResponse(
             row.TotalPatientCount,
@@ -31,6 +32,7 @@ public class DashboardService(
             row.TodayRevenue,
             row.CurrentMonthRevenue,
             row.TotalPendingAmount,
+            row.TodayPendingAmount,
             row.TodayLabAssignCount,
             row.CurrentMonthLabAssignCount));
     }

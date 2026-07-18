@@ -104,7 +104,9 @@ BEGIN
 
     WHERE v.tenantid = @tenantid
 
-      AND v.visitid = @visitid;
+      AND v.visitid = @visitid
+
+      AND v.isdeleted = 0;
 
 
 

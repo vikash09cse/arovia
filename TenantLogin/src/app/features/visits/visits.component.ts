@@ -53,6 +53,7 @@ export class VisitsComponent implements OnInit {
   readonly page = signal(1);
   readonly pageSize = 10;
   readonly canEdit = signal(false);
+  readonly canDelete = signal(false);
   readonly deletingId = signal<string | null>(null);
   readonly confirmTarget = signal<VisitListItem | null>(null);
   readonly Math = Math;
@@ -65,7 +66,7 @@ export class VisitsComponent implements OnInit {
   readonly confirmMessage = computed(() => {
     const visit = this.confirmTarget();
     if (!visit) return '';
-    return `Visit ${visit.visitCode} for ${visit.patientFirstName} ${visit.patientLastName} will be cancelled. Any collected payments for this visit will remain on record.`;
+    return `Visit ${visit.visitCode} for ${visit.patientFirstName} ${visit.patientLastName} will be deleted and removed from the visits list and dashboard. Collected payments for this visit will remain on record.`;
   });
 
   filtersAreActive(): boolean {
@@ -77,6 +78,7 @@ export class VisitsComponent implements OnInit {
   ngOnInit() {
     const user = this.auth.currentUser();
     this.canEdit.set(user?.role === 'TenantSuperAdmin' || user?.role === 'Staff');
+    this.canDelete.set(user?.role === 'TenantSuperAdmin');
     this.loadVisits();
   }
 
@@ -182,8 +184,7 @@ export class VisitsComponent implements OnInit {
     }
   }
 
-  cancelVisit(visit: VisitListItem) {
-    if (visit.visitStatusCode !== 1) return;
+  deleteVisit(visit: VisitListItem) {
     this.confirmTarget.set(visit);
   }
 
@@ -200,14 +201,14 @@ export class VisitsComponent implements OnInit {
     this.deletingId.set(visit.id);
     this.error.set('');
 
-    this.api.patch<ApiResult<boolean>>(`/visits/${visit.id}/cancel`, { reason: null }).subscribe({
+    this.api.delete<ApiResult<boolean>>(`/visits/${visit.id}`).subscribe({
       next: () => {
         this.deletingId.set(null);
         this.confirmTarget.set(null);
         this.loadVisits();
       },
       error: err => {
-        this.error.set(err.error?.message ?? 'Unable to cancel visit.');
+        this.error.set(err.error?.message ?? 'Unable to delete visit.');
         this.deletingId.set(null);
       }
     });

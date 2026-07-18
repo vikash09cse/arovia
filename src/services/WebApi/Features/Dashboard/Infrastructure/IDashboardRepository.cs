@@ -8,11 +8,13 @@ public class TenantDashboardRow
     public decimal TodayRevenue { get; set; }
     public decimal CurrentMonthRevenue { get; set; }
     public decimal TotalPendingAmount { get; set; }
+    public decimal TodayPendingAmount { get; set; }
     public int TodayLabAssignCount { get; set; }
     public int CurrentMonthLabAssignCount { get; set; }
 }
 
 public interface IDashboardRepository
 {
-    Task<TenantDashboardRow> GetTenantDashboardAsync(Guid tenantId, CancellationToken ct);
+    Task<TenantDashboardRow> GetTenantDashboardAsync(
+        Guid tenantId, DateOnly? dateFrom, DateOnly? dateTo, CancellationToken ct);
 }

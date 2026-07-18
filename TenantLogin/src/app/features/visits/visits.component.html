@@ -132,14 +132,14 @@
                     <circle cx="12" cy="12" r="3"/>
                   </svg>
                 </a>
-                @if (canEdit() && v.visitStatusCode === 1) {
+                @if (canDelete()) {
                   <button
                     type="button"
                     class="icon-btn icon-btn-delete"
-                    title="Cancel visit"
-                    aria-label="Cancel visit"
+                    title="Delete visit"
+                    aria-label="Delete visit"
                     [disabled]="deletingId() === v.id"
-                    (click)="cancelVisit(v)"
+                    (click)="deleteVisit(v)"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                       <polyline points="3 6 5 6 21 6"/>
@@ -166,9 +166,9 @@
 
 <app-confirm-dialog
   [open]="confirmTarget() !== null"
-  title="Cancel visit?"
+  title="Delete visit?"
   [message]="confirmMessage()"
-  confirmLabel="Cancel visit"
+  confirmLabel="Delete visit"
   cancelLabel="Keep visit"
   variant="danger"
   [loading]="deletingId() !== null"

@@ -42,6 +42,8 @@ BEGIN
 
         WHERE v.tenantid = @tenantid
 
+          AND v.isdeleted = 0
+
         GROUP BY v.visitid, v.totalchargeamount
 
     )
@@ -100,7 +102,7 @@ BEGIN
 
     INNER JOIN dbo.visits v
 
-        ON v.visitid = p.visitid AND v.tenantid = p.tenantid
+        ON v.visitid = p.visitid AND v.tenantid = p.tenantid AND v.isdeleted = 0
 
     INNER JOIN dbo.patients pt
 

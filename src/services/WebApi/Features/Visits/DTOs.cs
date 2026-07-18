@@ -26,8 +26,6 @@ public record ApplyDiscountRequest(decimal DiscountAmount, string? DiscountReaso
 
 public record FeeOverrideRequest(byte FeeStatus, string Reason);
 
-public record CancelVisitRequest(string? Reason);
-
 public record FeePreviewResponse(
     string ProposedFeeStatus,
     byte ProposedFeeStatusCode,

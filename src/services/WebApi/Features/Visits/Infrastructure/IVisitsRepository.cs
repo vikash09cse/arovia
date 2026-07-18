@@ -180,7 +180,7 @@ public interface IVisitsRepository
         Guid actorId,
         CancellationToken ct);
 
-    Task CancelAsync(Guid tenantId, Guid visitId, string? reason, Guid actorId, CancellationToken ct);
+    Task DeleteAsync(Guid tenantId, Guid visitId, Guid actorId, CancellationToken ct);
 
     Task<IEnumerable<DoctorRow>> GetActiveDoctorsAsync(Guid tenantId, CancellationToken ct);
 

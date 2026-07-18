@@ -25,7 +25,8 @@ BEGIN
     FROM dbo.visits v
     WHERE v.visitid = @visitid
       AND v.tenantid = @tenantid
-      AND v.visitstatus = 1;
+      AND v.visitstatus = 1
+      AND v.isdeleted = 0;
 
     IF @subtotal IS NULL
         THROW 50404, 'Visit not found or cancelled.', 1;

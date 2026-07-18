@@ -68,8 +68,8 @@ public class VisitsController(VisitsService service) : ControllerBase
     public async Task<IActionResult> ApplyDiscount(Guid id, [FromBody] ApplyDiscountRequest request, CancellationToken ct) =>
         (await service.ApplyDiscountAsync(id, request, ct)).ToActionResult();
 
-    [HttpPatch("{id:guid}/cancel")]
-    [Authorize(Roles = $"{RoleNames.TenantSuperAdmin},{RoleNames.Staff}")]
-    public async Task<IActionResult> Cancel(Guid id, [FromBody] CancelVisitRequest request, CancellationToken ct) =>
-        (await service.CancelAsync(id, request, ct)).ToActionResult();
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = RoleNames.TenantSuperAdmin)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct) =>
+        (await service.DeleteAsync(id, ct)).ToActionResult();
 }

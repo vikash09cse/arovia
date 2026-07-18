@@ -7,5 +7,6 @@ public record TenantDashboardResponse(
     decimal TodayRevenue,
     decimal CurrentMonthRevenue,
     decimal TotalPendingAmount,
+    decimal TodayPendingAmount,
     int TodayLabAssignCount,
     int CurrentMonthLabAssignCount);

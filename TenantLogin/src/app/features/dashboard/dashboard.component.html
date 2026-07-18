@@ -14,56 +14,86 @@
   </div>
 } @else {
   @if (metrics(); as m) {
-    <div class="cards">
-      <a class="card card-link" routerLink="/patients">
-        <span class="card-label">Total patients</span>
-        <strong class="card-value">{{ formatCount(m.totalPatientCount) }}</strong>
-        <span class="card-note">All registered patients</span>
-      </a>
-
-      <a class="card card-link" routerLink="/patients">
-        <span class="card-label">Today new patients</span>
-        <strong class="card-value">{{ formatCount(m.todayNewPatientCount) }}</strong>
-        <span class="card-note">Registered today</span>
-      </a>
-
-      <a class="card card-link" routerLink="/visits">
-        <span class="card-label">Today visits</span>
-        <strong class="card-value">{{ formatCount(m.todayVisitCount) }}</strong>
-        <span class="card-note">Visits recorded today</span>
-      </a>
-
-      @if (isTenantAdmin()) {
-        <a class="card card-link" routerLink="/payments">
-          <span class="card-label">Today revenue</span>
-          <strong class="card-value">{{ formatMoney(m.todayRevenue) }}</strong>
-          <span class="card-note">Confirmed collections</span>
+    <section class="cards-section">
+      <div class="cards">
+        <a class="card card-link" routerLink="/patients">
+          <span class="card-label">Total patients</span>
+          <strong class="card-value">{{ formatCount(m.totalPatientCount) }}</strong>
+          <span class="card-note">All registered patients</span>
         </a>
 
-        <a class="card card-link" routerLink="/payments">
-          <span class="card-label">Month revenue</span>
-          <strong class="card-value">{{ formatMoney(m.currentMonthRevenue) }}</strong>
-          <span class="card-note">Confirmed collections this month</span>
-        </a>
+        @if (isTenantAdmin()) {
+          <a class="card card-link" routerLink="/payments">
+            <span class="card-label">Month revenue</span>
+            <strong class="card-value">{{ formatMoney(m.currentMonthRevenue) }}</strong>
+            <span class="card-note">Confirmed collections this month</span>
+          </a>
 
-        <a class="card card-link" routerLink="/payments" [queryParams]="{ filter: 'open' }">
-          <span class="card-label">Pending amount</span>
-          <strong class="card-value">{{ formatMoney(m.totalPendingAmount) }}</strong>
-          <span class="card-note">Unpaid balance on active visits</span>
+          <a class="card card-link" routerLink="/payments" [queryParams]="{ filter: 'open' }">
+            <span class="card-label">Pending amount</span>
+            <strong class="card-value">{{ formatMoney(m.totalPendingAmount) }}</strong>
+            <span class="card-note">Unpaid balance on active visits</span>
+          </a>
+        }
+
+        <a class="card card-link" routerLink="/lab-report">
+          <span class="card-label">Month lab assigns</span>
+          <strong class="card-value">{{ formatCount(m.currentMonthLabAssignCount) }}</strong>
+          <span class="card-note">Labs assigned this month</span>
         </a>
+      </div>
+    </section>
+
+    <form class="search-bar" (ngSubmit)="onSearch()">
+      <label class="date-filter">
+        <span>From</span>
+        <input type="date" name="dateFrom" [(ngModel)]="dateFrom" />
+      </label>
+      <label class="date-filter">
+        <span>To</span>
+        <input type="date" name="dateTo" [(ngModel)]="dateTo" />
+      </label>
+      <button type="submit" class="btn-secondary">Search</button>
+      @if (filtersAreActive()) {
+        <button type="button" class="btn-text" (click)="clearFilters()">Clear</button>
       }
+    </form>
 
-      <a class="card card-link" routerLink="/lab-report">
-        <span class="card-label">Today lab assigns</span>
-        <strong class="card-value">{{ formatCount(m.todayLabAssignCount) }}</strong>
-        <span class="card-note">Labs assigned today</span>
-      </a>
+    <section class="cards-section">
+      <h2 class="section-title">Filtered by From/To</h2>
+      <div class="cards">
+        <a class="card card-link" routerLink="/patients">
+          <span class="card-label">{{ filtersAreActive() ? 'New patients' : 'Today new patients' }}</span>
+          <strong class="card-value">{{ formatCount(m.todayNewPatientCount) }}</strong>
+          <span class="card-note">{{ filtersAreActive() ? 'Registered in From–To range' : 'Registered today' }}</span>
+        </a>
 
-      <a class="card card-link" routerLink="/lab-report">
-        <span class="card-label">Month lab assigns</span>
-        <strong class="card-value">{{ formatCount(m.currentMonthLabAssignCount) }}</strong>
-        <span class="card-note">Labs assigned this month</span>
-      </a>
-    </div>
+        <a class="card card-link" routerLink="/visits">
+          <span class="card-label">{{ filtersAreActive() ? 'Visits' : 'Today visits' }}</span>
+          <strong class="card-value">{{ formatCount(m.todayVisitCount) }}</strong>
+          <span class="card-note">{{ filtersAreActive() ? 'Visits in From–To range' : 'Visits recorded today' }}</span>
+        </a>
+
+        <a class="card card-link" routerLink="/lab-report">
+          <span class="card-label">{{ filtersAreActive() ? 'Lab assigns' : 'Today lab assigns' }}</span>
+          <strong class="card-value">{{ formatCount(m.todayLabAssignCount) }}</strong>
+          <span class="card-note">{{ filtersAreActive() ? 'Labs assigned in From–To range' : 'Labs assigned today' }}</span>
+        </a>
+
+        @if (isTenantAdmin()) {
+          <a class="card card-link" routerLink="/payments">
+            <span class="card-label">{{ filtersAreActive() ? 'Revenue' : 'Today revenue' }}</span>
+            <strong class="card-value">{{ formatMoney(m.todayRevenue) }}</strong>
+            <span class="card-note">{{ filtersAreActive() ? 'Collections in From–To range' : 'Confirmed collections today' }}</span>
+          </a>
+
+          <a class="card card-link" routerLink="/payments" [queryParams]="{ filter: 'open' }">
+            <span class="card-label">{{ filtersAreActive() ? 'Pending' : 'Today pending' }}</span>
+            <strong class="card-value">{{ formatMoney(m.todayPendingAmount) }}</strong>
+            <span class="card-note">{{ filtersAreActive() ? 'Unpaid on visits in From–To range' : 'Unpaid on today’s visits' }}</span>
+          </a>
+        }
+      </div>
+    </section>
   }
 }

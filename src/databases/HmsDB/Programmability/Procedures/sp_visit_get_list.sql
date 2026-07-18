@@ -58,6 +58,7 @@ BEGIN
     INNER JOIN dbo.users d ON d.userid = v.consultingdoctorid
     LEFT JOIN collection_totals ct ON ct.visitid = v.visitid
     WHERE v.tenantid = @tenantid
+      AND v.isdeleted = 0
       AND (@patientid IS NULL OR v.patientid = @patientid)
       AND (@patientcode IS NULL OR p.patientcode = @patientcode)
       AND (@visitcode IS NULL OR v.visitcode = @visitcode)

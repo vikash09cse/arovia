@@ -15,6 +15,7 @@ BEGIN
             WHERE v2.tenantid = @tenantid
               AND v2.patientid = @patientid
               AND v2.visitstatus = 1
+              AND v2.isdeleted = 0
               AND v2.scheduledsurgerydate IS NOT NULL
               AND v2.scheduledsurgerydate >= CAST(SYSUTCDATETIME() AS DATE)
             ORDER BY v2.visitdatetime DESC
@@ -22,6 +23,7 @@ BEGIN
     FROM dbo.visits v
     WHERE v.tenantid = @tenantid
       AND v.patientid = @patientid
-      AND v.visitstatus = 1;
+      AND v.visitstatus = 1
+      AND v.isdeleted = 0;
 END
 GO

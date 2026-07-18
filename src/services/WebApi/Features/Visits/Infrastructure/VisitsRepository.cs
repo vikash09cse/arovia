@@ -171,12 +171,12 @@ public class VisitsRepository(DbHelper dbHelper) : IVisitsRepository
             commandType: CommandType.StoredProcedure);
     }
 
-    public async Task CancelAsync(Guid tenantId, Guid visitId, string? reason, Guid actorId, CancellationToken ct)
+    public async Task DeleteAsync(Guid tenantId, Guid visitId, Guid actorId, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
         await conn.ExecuteAsync(
-            "dbo.sp_visit_cancel",
-            new { tenantid = tenantId, visitid = visitId, cancellationreason = reason, actorid = actorId },
+            "dbo.sp_visit_delete",
+            new { tenantid = tenantId, visitid = visitId, actorid = actorId },
             commandType: CommandType.StoredProcedure);
     }
 

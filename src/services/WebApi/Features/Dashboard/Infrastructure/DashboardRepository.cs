@@ -6,12 +6,18 @@ namespace WebApi.Features.Dashboard.Infrastructure;
 
 public class DashboardRepository(DbHelper dbHelper) : IDashboardRepository
 {
-    public async Task<TenantDashboardRow> GetTenantDashboardAsync(Guid tenantId, CancellationToken ct)
+    public async Task<TenantDashboardRow> GetTenantDashboardAsync(
+        Guid tenantId, DateOnly? dateFrom, DateOnly? dateTo, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
         var row = await conn.QueryFirstOrDefaultAsync<TenantDashboardRow>(
             "dbo.sp_get_tenant_dashboard",
-            new { tenantid = tenantId },
+            new
+            {
+                tenantid = tenantId,
+                datefrom = dateFrom?.ToDateTime(TimeOnly.MinValue),
+                dateto = dateTo?.ToDateTime(TimeOnly.MinValue)
+            },
             commandType: CommandType.StoredProcedure);
 
         return row ?? new TenantDashboardRow();

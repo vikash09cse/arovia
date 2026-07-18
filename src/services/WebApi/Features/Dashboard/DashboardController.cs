@@ -11,6 +11,9 @@ namespace WebApi.Features.Dashboard;
 public class DashboardController(DashboardService service) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> Get(CancellationToken ct) =>
-        (await service.GetDashboardAsync(ct)).ToActionResult();
+    public async Task<IActionResult> Get(
+        [FromQuery] DateOnly? dateFrom = null,
+        [FromQuery] DateOnly? dateTo = null,
+        CancellationToken ct = default) =>
+        (await service.GetDashboardAsync(dateFrom, dateTo, ct)).ToActionResult();
 }

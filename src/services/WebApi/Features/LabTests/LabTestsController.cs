@@ -60,6 +60,11 @@ public class LabTestsController(LabTestsService service) : ControllerBase
         return (await service.SetStatusAsync(id, (LabAgencyStatus)status, ct)).ToActionResult();
     }
 
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = RoleNames.TenantSuperAdmin)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct) =>
+        (await service.DeleteAsync(id, ct)).ToActionResult();
+
     [HttpPost("/api/visits/{visitId:guid}/lab-agencies")]
     [Authorize(Roles = $"{RoleNames.TenantSuperAdmin},{RoleNames.Staff},{RoleNames.Doctor}")]
     public async Task<IActionResult> AssignToVisit(

@@ -39,6 +39,7 @@ BEGIN
     WHERE v.tenantid = @tenantid
       AND v.patientid = @patientid
       AND v.visitstatus = 1
+      AND v.isdeleted = 0
       AND v.feestatus = 1
     ORDER BY v.visitdatetime DESC;
 

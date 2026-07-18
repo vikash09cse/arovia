@@ -22,6 +22,7 @@ BEGIN
         isfeeoverridden             BIT              NOT NULL CONSTRAINT DF_visits_isfeeoverridden DEFAULT (0),
         feeoverridereason           NVARCHAR(500)    NULL,
         cancellationreason          NVARCHAR(500)    NULL,
+        isdeleted                   BIT              NOT NULL CONSTRAINT DF_visits_isdeleted DEFAULT (0),
         freevisitwindowdayssnapshot INT              NOT NULL,
         dayssincelastcharged        INT              NULL,
         lastchargedvisitdatetime    DATETIME2        NULL,
@@ -40,8 +41,11 @@ BEGIN
     CREATE INDEX IX_visits_tenant_patient_datetime
         ON dbo.visits (tenantid, patientid, visitdatetime DESC);
 
-    CREATE INDEX IX_visits_tenant_patient_feestatus
-        ON dbo.visits (tenantid, patientid, feestatus, visitdatetime DESC)
-        WHERE visitstatus = 1;
+    -- Dynamic SQL avoids compile-time binding against an existing visits table without isdeleted.
+    EXEC(N'
+        CREATE INDEX IX_visits_tenant_patient_feestatus
+            ON dbo.visits (tenantid, patientid, feestatus, visitdatetime DESC)
+            WHERE visitstatus = 1 AND isdeleted = 0;
+    ');
 END
 GO

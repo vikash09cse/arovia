@@ -167,6 +167,19 @@ public class LabTestsService(
         return Result<bool>.Ok(true, "Lab agency status updated.");
     }
 
+    public async Task<Result<bool>> DeleteAsync(Guid labAgencyId, CancellationToken ct)
+    {
+        var tenantError = RequireTenantContext<bool>();
+        if (tenantError != null) return tenantError;
+
+        var existing = await repository.GetByIdAsync(GetTenantId(), labAgencyId, ct);
+        if (existing == null)
+            return Result<bool>.Fail(ErrorCode.NotFound, "Lab agency not found.");
+
+        await repository.SetStatusAsync(GetTenantId(), labAgencyId, (byte)LabAgencyStatus.Inactive, GetUserId(), ct);
+        return Result<bool>.Ok(true, "Lab agency deleted.");
+    }
+
     public async Task<Result<VisitLabAgencyResponse>> AssignToVisitAsync(
         Guid visitId, AssignVisitLabAgencyRequest request, CancellationToken ct)
     {

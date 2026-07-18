@@ -27,7 +27,8 @@ BEGIN
     FROM dbo.visits v
     WHERE v.visitid = @visitid
       AND v.tenantid = @tenantid
-      AND v.visitstatus = 1;
+      AND v.visitstatus = 1
+      AND v.isdeleted = 0;
 
     IF @patientid IS NULL
     BEGIN

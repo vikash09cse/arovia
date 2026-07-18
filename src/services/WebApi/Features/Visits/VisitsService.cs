@@ -250,18 +250,14 @@ public class VisitsService(
         return await GetByIdAsync(visitId, ct);
     }
 
-    public async Task<Result<bool>> CancelAsync(Guid visitId, CancelVisitRequest request, CancellationToken ct)
+    public async Task<Result<bool>> DeleteAsync(Guid visitId, CancellationToken ct)
     {
         var tenantError = RequireTenantContext<bool>();
         if (tenantError != null) return tenantError;
 
-        if (request.Reason?.Length > 500)
-            return Result<bool>.Fail(ErrorCode.Validation, "Cancellation reason cannot exceed 500 characters.");
-
         var tenantId = httpContextAccessor.GetTenantContext().TenantId;
-        var reason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
-        await repository.CancelAsync(tenantId, visitId, reason, GetUserId(), ct);
-        return Result<bool>.Ok(true, "Visit cancelled.");
+        await repository.DeleteAsync(tenantId, visitId, GetUserId(), ct);
+        return Result<bool>.Ok(true, "Visit deleted.");
     }
 
     public async Task<Result<VisitSummaryResponse>> GetPatientSummaryAsync(Guid patientId, CancellationToken ct)

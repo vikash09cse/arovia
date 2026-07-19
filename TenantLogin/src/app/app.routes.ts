@@ -59,6 +59,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/lab-tests/lab-report.component').then(m => m.LabReportComponent)
       },
       {
+        path: 'common-files',
+        loadComponent: () => import('./features/common-files/common-files.component').then(m => m.CommonFilesComponent)
+      },
+      {
         path: 'visit-addons',
         canActivate: [tenantSuperAdminGuard],
         loadComponent: () => import('./features/visit-addons/visit-addons.component').then(m => m.VisitAddonsComponent)

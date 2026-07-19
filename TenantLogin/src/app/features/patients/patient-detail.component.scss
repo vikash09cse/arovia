@@ -10,9 +10,137 @@ h1 { margin: 0; font-size: clamp(1.35rem, 3vw, 1.75rem); color: #0f172a; }
 .btn-primary, .btn-secondary {
   border: none; border-radius: 10px; padding: 0.625rem 1rem;
   font-size: 0.9rem; text-decoration: none; display: inline-flex; align-items: center;
+  cursor: pointer;
 }
 .btn-primary { background: #0f766e; color: #fff; }
 .btn-secondary { background: #f1f5f9; color: #334155; }
+.btn-primary:disabled, .btn-secondary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.success {
+  background: #ecfdf5;
+  color: #065f46;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+}
+
+.upload-panel {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 1rem;
+}
+
+.upload-panel h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.upload-hint {
+  margin: 0 0 0.75rem;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.upload-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.selected-name {
+  margin: 0.65rem 0 0;
+  color: #334155;
+  font-size: 0.85rem;
+}
+
+.actions-col {
+  width: 1%;
+  min-width: 22rem;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.actions-cell {
+  text-align: right;
+}
+
+.row-actions {
+  display: inline-flex;
+  gap: 0.45rem;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-action-view {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.btn-action-view:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.btn-action-print {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+  color: #0f766e;
+}
+
+.btn-action-print:hover:not(:disabled) {
+  background: #ccfbf1;
+}
+
+.btn-action-download {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #fff;
+}
+
+.btn-action-download:hover:not(:disabled) {
+  background: #0d9488;
+}
+
+.btn-action-delete {
+  background: #fff;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.btn-action-delete:hover:not(:disabled) {
+  background: #fef2f2;
+}
 
 .surgery-banner {
   background: #fef3c7;

@@ -1,0 +1,110 @@
+<header class="page-header">
+  <div class="header-row">
+    <div>
+      <h1>Common Files</h1>
+      <p class="subtitle">Shared hospital documents. Everyone can download and print; Tenant Admin can upload and delete.</p>
+    </div>
+  </div>
+</header>
+
+@if (message()) {
+  <div class="success">{{ message() }}</div>
+}
+@if (error()) {
+  <div class="error">{{ error() }}</div>
+}
+
+@if (isAdmin()) {
+  <section class="upload-card">
+    <h2>Upload file</h2>
+    <p class="upload-hint">PDF, images (PNG, JPG, WebP, GIF), or Word (DOC, DOCX). Max 10 MB.</p>
+    <div class="upload-row">
+      <input
+        id="common-file-input"
+        type="file"
+        accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,application/pdf,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        (change)="onFileSelected($event)"
+      />
+      <button
+        type="button"
+        class="btn-primary"
+        [disabled]="!selectedFile || uploading()"
+        (click)="upload()"
+      >
+        {{ uploading() ? 'Uploading…' : 'Upload' }}
+      </button>
+    </div>
+    @if (selectedFile) {
+      <p class="selected-name">Selected: {{ selectedFile.name }}</p>
+    }
+  </section>
+}
+
+@if (loading()) {
+  <p class="status">Loading files…</p>
+} @else if (items().length === 0) {
+  <div class="empty">No common files uploaded yet.</div>
+} @else {
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Uploaded</th>
+          <th class="actions-col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td data-label="Name">{{ item.displayName }}</td>
+            <td data-label="Type">{{ item.fileType }}</td>
+            <td data-label="Uploaded">{{ item.createdAt | date: 'medium' }}</td>
+            <td data-label="Actions" class="actions-cell">
+              <div class="row-actions">
+                @if (canPrint(item)) {
+                  <button
+                    type="button"
+                    class="btn-action btn-action-print"
+                    title="Print"
+                    [disabled]="busyId() === item.id"
+                    (click)="print(item)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                    </svg>
+                    Print
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="btn-action btn-action-download"
+                  title="Download"
+                  [disabled]="busyId() === item.id"
+                  (click)="download(item)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Download
+                </button>
+                @if (isAdmin()) {
+                  <button
+                    type="button"
+                    class="btn-action btn-action-delete"
+                    title="Delete"
+                    [disabled]="busyId() === item.id"
+                    (click)="remove(item)"
+                  >
+                    Delete
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

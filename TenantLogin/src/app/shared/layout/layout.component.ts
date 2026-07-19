@@ -7,7 +7,7 @@ import { AuthService } from '../../core/auth/auth.service';
 interface NavItem {
   label: string;
   route: string;
-  icon: 'dashboard' | 'patients' | 'visits' | 'payments' | 'lab' | 'doctors' | 'users' | 'settings' | 'addons' | 'templates';
+  icon: 'dashboard' | 'patients' | 'visits' | 'payments' | 'lab' | 'doctors' | 'users' | 'settings' | 'addons' | 'templates' | 'files';
 }
 
 const SIDEBAR_COLLAPSED_KEY = 'tenant_sidebar_collapsed';
@@ -33,7 +33,8 @@ export class LayoutComponent {
     { label: 'Visits', route: '/visits', icon: 'visits' },
     { label: 'Payments', route: '/payments', icon: 'payments' },
     { label: 'Lab Agencies', route: '/lab-tests', icon: 'lab' },
-    { label: 'Lab Report', route: '/lab-report', icon: 'lab' }
+    { label: 'Lab Report', route: '/lab-report', icon: 'lab' },
+    { label: 'Common Files', route: '/common-files', icon: 'files' }
   ];
 
   readonly adminNav = computed<NavItem[]>(() => {

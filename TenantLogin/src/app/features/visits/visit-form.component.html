@@ -197,6 +197,16 @@
                   </label>
 
                   <label>
+                    Payment mode *
+                    <select name="paymentMethod" [(ngModel)]="paymentMethod" required>
+                      <option [ngValue]="1">Cash</option>
+                      <option [ngValue]="2">UPI</option>
+                      <option [ngValue]="3">Bank Account</option>
+                      <option [ngValue]="4">Cheque</option>
+                    </select>
+                  </label>
+
+                  <label>
                     Payment collected by *
                     <select
                       name="collectedByUserId"

@@ -44,7 +44,7 @@ export class PatientsComponent implements OnInit {
   readonly totalCount = signal(0);
   readonly page = signal(1);
   readonly pageSize = 10;
-  filterType: PatientFilterType = 'date';
+  filterType: PatientFilterType = 'phone';
   searchTerm = '';
   dateFrom = this.todayIso();
   dateTo = this.todayIso();
@@ -62,6 +62,9 @@ export class PatientsComponent implements OnInit {
   });
 
   filtersAreActive(): boolean {
+    if (this.filterType === 'phone') {
+      return this.searchTerm.trim().length > 0;
+    }
     if (this.filterType !== 'date') return true;
     const today = this.todayIso();
     return this.dateFrom !== today || this.dateTo !== today;
@@ -80,7 +83,7 @@ export class PatientsComponent implements OnInit {
     this.page.set(1);
     this.error.set('');
 
-    if (this.filterType === 'date') {
+    if (this.filterType === 'date' || this.filterType === 'phone') {
       this.loadPatients();
     } else {
       this.patients.set([]);
@@ -103,14 +106,21 @@ export class PatientsComponent implements OnInit {
       if (this.dateTo) query.set('dateTo', this.dateTo);
     } else if (this.filterType === 'phone') {
       const digits = this.searchTerm.replace(/\D/g, '');
-      if (digits.length < 10 || digits.length > 15) {
+      if (!digits) {
+        const today = this.todayIso();
+        this.dateFrom = today;
+        this.dateTo = today;
+        query.set('dateFrom', today);
+        query.set('dateTo', today);
+      } else if (digits.length < 10 || digits.length > 15) {
         this.error.set('Enter a valid phone number (10–15 digits).');
         this.patients.set([]);
         this.totalCount.set(0);
         this.loading.set(false);
         return;
+      } else {
+        query.set('phone', digits);
       }
-      query.set('phone', digits);
     } else {
       const code = this.searchTerm.trim();
       if (!code) {
@@ -142,7 +152,7 @@ export class PatientsComponent implements OnInit {
   }
 
   clearFilters() {
-    this.filterType = 'date';
+    this.filterType = 'phone';
     this.searchTerm = '';
     this.dateFrom = this.todayIso();
     this.dateTo = this.todayIso();

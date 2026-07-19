@@ -55,6 +55,7 @@
                 <tr>
                   <th>Receipt</th>
                   <th>Amount</th>
+                  <th>Mode</th>
                   <th>Collected by</th>
                   <th>Date</th>
                   <th>Notes</th>
@@ -68,6 +69,7 @@
                   <tr>
                     <td>{{ c.receiptNumber ?? '—' }}</td>
                     <td>{{ formatMoney(c.amount) }}</td>
+                    <td>{{ c.paymentMethod ?? '—' }}</td>
                     <td>{{ c.collectedByName ?? '—' }}</td>
                     <td>{{ c.collectionDateTime ? (c.collectionDateTime | date: 'medium') : '—' }}</td>
                     <td>{{ c.notes ?? '—' }}</td>
@@ -95,7 +97,7 @@
         <div class="section-header">
           <h2>Lab agencies</h2>
           @if (canManageLab() && v.visitStatusCode === 1 && availableLabAgencies().length > 0 && !showAssignLab()) {
-            <button type="button" class="btn-text" (click)="openAssignLab()">Assign Lab</button>
+            <button type="button" class="btn-primary" (click)="openAssignLab()">Assign Lab</button>
           }
         </div>
 
@@ -328,6 +330,15 @@
                 [disabled]="addingPayment()"
               />
               <span class="field-hint">Remaining balance: {{ formatMoney(v.balanceDue) }}</span>
+            </label>
+            <label>
+              Payment mode *
+              <select name="paymentMethod" [(ngModel)]="paymentMethod" [disabled]="addingPayment()">
+                <option [ngValue]="1">Cash</option>
+                <option [ngValue]="2">UPI</option>
+                <option [ngValue]="3">Bank Account</option>
+                <option [ngValue]="4">Cheque</option>
+              </select>
             </label>
             <label>
               Payment collected by *

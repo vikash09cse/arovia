@@ -19,6 +19,8 @@ interface PaymentCollection {
   collectedByUserId?: string | null;
   collectedByName?: string | null;
   notes?: string | null;
+  paymentMethod?: string | null;
+  paymentMethodCode?: number | null;
 }
 
 interface LabAgencyLookup {
@@ -115,6 +117,7 @@ export class VisitDetailComponent implements OnInit {
   paymentAmount: number | null = null;
   paymentCollectedByUserId = '';
   paymentNotes = '';
+  paymentMethod = 1;
   selectedLabAgencyId = '';
   labAssignmentTestName = '';
   labAssignmentNotes = '';
@@ -288,6 +291,7 @@ export class VisitDetailComponent implements OnInit {
     if (!v) return;
     this.paymentAmount = fullBalance ? v.balanceDue : v.balanceDue;
     this.paymentNotes = '';
+    this.paymentMethod = 1;
     this.showAddPayment.set(true);
     this.error.set('');
   }
@@ -388,7 +392,8 @@ export class VisitDetailComponent implements OnInit {
     const body: Record<string, unknown> = {
       amount,
       collectedByUserId: this.paymentCollectedByUserId,
-      notes: this.paymentNotes.trim() || null
+      notes: this.paymentNotes.trim() || null,
+      paymentMethod: this.paymentMethod
     };
 
     this.api.post<ApiResult<unknown>>(`/visits/${v.id}/payments`, body).subscribe({

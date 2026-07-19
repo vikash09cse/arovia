@@ -77,6 +77,7 @@ export class VisitFormComponent implements OnInit {
   collectAtCreate = false;
   initialCollectionAmount: number | null = null;
   collectedByUserId = '';
+  paymentMethod = 1;
   readonly selectedAddonIds = signal<Set<string>>(new Set());
   discountAmount: number | null = null;
   discountReason = '';
@@ -386,6 +387,7 @@ export class VisitFormComponent implements OnInit {
       feeNote: this.feeNote.trim() || null,
       initialCollectionAmount: this.collectAtCreate && collectionAmount > 0 ? collectionAmount : null,
       collectedByUserId: this.collectAtCreate && collectionAmount > 0 ? this.collectedByUserId : null,
+      paymentMethod: this.collectAtCreate && collectionAmount > 0 ? this.paymentMethod : null,
       addonIds: [...this.selectedAddonIds()],
       discountAmount: discount > 0 ? discount : null,
       discountReason: discount > 0 ? discountReasonText : null

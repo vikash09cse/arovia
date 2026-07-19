@@ -14,8 +14,8 @@
   <label class="filter-type">
     <span>Filter by</span>
     <select name="filterType" [(ngModel)]="filterType" (ngModelChange)="onFilterTypeChange()">
-      <option value="date">Date</option>
       <option value="phone">Phone Number</option>
+      <option value="date">Date</option>
       <option value="patientCode">Patient Number</option>
       <option value="visitCode">Visit</option>
     </select>
@@ -71,10 +71,10 @@
   <div class="empty">
     @if (filterType === 'date') {
       No visits found for the selected dates.
+    } @else if (filterType === 'phone' && !searchTerm.trim()) {
+      No visits recorded today.
     } @else if (searchTerm.trim()) {
       No visits found for the selected filters.
-    } @else if (filterType === 'phone') {
-      Enter a phone number and search to find visits.
     } @else if (filterType === 'patientCode') {
       Enter a patient number and search to find visits.
     } @else {

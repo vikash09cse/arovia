@@ -38,6 +38,18 @@ BEGIN
         @userid, @tenantid, @primarycontactemail, @passwordhash,
         @primarycontactfirstname, @primarycontactlastname, 1, 1);
 
+    -- Copy all global document templates into the new tenant
+    INSERT INTO dbo.document_templates (
+        documenttemplateid, tenantid, globaldocumenttemplateid,
+        templatetype, name, subject, bodyhtml, isdefault,
+        createdby, updatedby)
+    SELECT
+        NEWID(), @tenantid, g.globaldocumenttemplateid,
+        g.templatetype, g.name, g.subject, g.bodyhtml, g.isdefault,
+        @userid, @userid
+    FROM dbo.global_document_templates g
+    WHERE g.isdeleted = 0;
+
     COMMIT TRAN;
 
     SELECT @tenantid AS tenantid;

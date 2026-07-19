@@ -45,7 +45,35 @@
       </section>
 
       <section class="card panel-card">
-        <h2>Payment collections</h2>
+        <div class="panel-header-row">
+          <h2>Payment collections</h2>
+          @if (v.paymentCollections.length > 0) {
+            <div class="receipt-actions">
+              <button
+                type="button"
+                class="btn-action btn-action-print"
+                [disabled]="receiptBusyId() === v.paymentCollections[v.paymentCollections.length - 1].id"
+                (click)="printReceipt(v.paymentCollections[v.paymentCollections.length - 1].id)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                </svg>
+                Print latest
+              </button>
+              <button
+                type="button"
+                class="btn-action btn-action-pdf"
+                [disabled]="receiptBusyId() === v.paymentCollections[v.paymentCollections.length - 1].id"
+                (click)="downloadReceiptPdf(v.paymentCollections[v.paymentCollections.length - 1].id)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/>
+                </svg>
+                PDF latest
+              </button>
+            </div>
+          }
+        </div>
         @if (v.paymentCollections.length === 0) {
           <p class="status">No payments collected yet.</p>
         } @else {
@@ -58,10 +86,7 @@
                   <th>Mode</th>
                   <th>Collected by</th>
                   <th>Date</th>
-                  <th>Notes</th>
-                  @if (canManagePayments()) {
-                    <th class="actions-col">Actions</th>
-                  }
+                  <th class="actions-col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -72,19 +97,42 @@
                     <td>{{ c.paymentMethod ?? '—' }}</td>
                     <td>{{ c.collectedByName ?? '—' }}</td>
                     <td>{{ c.collectionDateTime ? (c.collectionDateTime | date: 'medium') : '—' }}</td>
-                    <td>{{ c.notes ?? '—' }}</td>
-                    @if (canManagePayments()) {
-                      <td class="actions-cell">
+                    <td class="actions-cell">
+                      <button
+                        type="button"
+                        class="btn-action btn-action-print"
+                        title="Print receipt"
+                        [disabled]="receiptBusyId() === c.id"
+                        (click)="printReceipt(c.id)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                          <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                        Print
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-action btn-action-pdf"
+                        title="Download PDF receipt"
+                        [disabled]="receiptBusyId() === c.id"
+                        (click)="downloadReceiptPdf(c.id)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/>
+                        </svg>
+                        Print PDF
+                      </button>
+                      @if (canManagePayments()) {
                         <button
                           type="button"
-                          class="btn-text btn-danger"
+                          class="btn-action btn-action-void"
                           [disabled]="voidingPaymentId() === c.id"
                           (click)="voidCollection(c)"
                         >
                           {{ voidingPaymentId() === c.id ? 'Voiding…' : 'Void' }}
                         </button>
-                      </td>
-                    }
+                      }
+                    </td>
                   </tr>
                 }
               </tbody>

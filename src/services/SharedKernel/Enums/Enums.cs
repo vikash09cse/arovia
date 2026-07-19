@@ -114,6 +114,12 @@ public enum VisitAddonStatus : byte
     Inactive = 2
 }
 
+public enum DocumentTemplateType : byte
+{
+    Receipt = 1,
+    Email = 2
+}
+
 public static class RoleNames
 {
     public const string PlatformAdmin = "PlatformAdmin";

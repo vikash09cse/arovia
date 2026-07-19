@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiResult } from '../../core/models/api.models';
+import { downloadPaymentReceiptPdf, printPaymentReceipt } from '../../shared/receipt/receipt.util';
 
 interface LookupItem {
   id: string;
@@ -104,6 +105,7 @@ export class VisitDetailComponent implements OnInit {
   readonly savingNotes = signal(false);
   readonly addingPayment = signal(false);
   readonly voidingPaymentId = signal<string | null>(null);
+  readonly receiptBusyId = signal<string | null>(null);
   readonly showAddPayment = signal(false);
   readonly assigningLab = signal(false);
   readonly removingLabId = signal<string | null>(null);
@@ -431,6 +433,30 @@ export class VisitDetailComponent implements OnInit {
         this.voidingPaymentId.set(null);
       }
     });
+  }
+
+  async printReceipt(paymentId: string) {
+    this.receiptBusyId.set(paymentId);
+    this.error.set('');
+    try {
+      await printPaymentReceipt(this.api, paymentId);
+    } catch (err: unknown) {
+      this.error.set(err instanceof Error ? err.message : 'Unable to print receipt.');
+    } finally {
+      this.receiptBusyId.set(null);
+    }
+  }
+
+  async downloadReceiptPdf(paymentId: string) {
+    this.receiptBusyId.set(paymentId);
+    this.error.set('');
+    try {
+      await downloadPaymentReceiptPdf(this.api, paymentId);
+    } catch (err: unknown) {
+      this.error.set(err instanceof Error ? err.message : 'Unable to download PDF.');
+    } finally {
+      this.receiptBusyId.set(null);
+    }
   }
 
   saveNotes() {

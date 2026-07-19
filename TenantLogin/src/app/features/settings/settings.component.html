@@ -1,0 +1,111 @@
+<header class="page-header">
+  <div class="header-row">
+    <div>
+      <h1>Tenant Settings</h1>
+      <p class="subtitle">Update hospital profile and logo for this tenant</p>
+    </div>
+  </div>
+</header>
+
+@if (loading()) {
+  <p class="status">Loading settings…</p>
+} @else {
+  @if (error()) {
+    <div class="error">{{ error() }}</div>
+  }
+  @if (message()) {
+    <div class="success">{{ message() }}</div>
+  }
+
+  <form class="form-card" (ngSubmit)="save()">
+    <section>
+      <h2>Hospital profile</h2>
+      <div class="grid">
+        <label>
+          Hospital Name
+          <input type="text" name="hospitalName" [(ngModel)]="hospitalName" required maxlength="200" />
+        </label>
+
+        <label>
+          Subdomain
+          <input type="text" name="subdomain" [ngModel]="subdomain" disabled />
+        </label>
+
+        <label>
+          Contact First Name
+          <input type="text" name="primaryContactFirstName" [(ngModel)]="primaryContactFirstName" required maxlength="100" />
+        </label>
+
+        <label>
+          Contact Last Name
+          <input type="text" name="primaryContactLastName" [(ngModel)]="primaryContactLastName" required maxlength="100" />
+        </label>
+
+        <label>
+          Contact Email
+          <input type="email" name="primaryContactEmail" [(ngModel)]="primaryContactEmail" required maxlength="100" />
+        </label>
+
+        <label>
+          Contact Phone
+          <input type="text" name="primaryContactPhone" [(ngModel)]="primaryContactPhone" required maxlength="15" />
+        </label>
+
+        <label>
+          Timezone
+          <input type="text" name="timezone" [(ngModel)]="timezone" required maxlength="50" />
+        </label>
+
+        <label>
+          Website
+          <input
+            type="text"
+            name="website"
+            [(ngModel)]="website"
+            maxlength="200"
+            placeholder="www.example.com"
+          />
+        </label>
+
+        <label class="full">
+          Address
+          <textarea name="address" [(ngModel)]="address" rows="3" required maxlength="500"></textarea>
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Tenant Logo</h2>
+      <div class="logo-row">
+        <div class="logo-preview">
+          @if (logoPreview()) {
+            <img [src]="logoPreview()" alt="Tenant logo preview" />
+          } @else {
+            <span class="logo-placeholder">No logo</span>
+          }
+        </div>
+        <div class="logo-controls">
+          <label class="file-label">
+            Choose image
+            <input
+              #logoInput
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              (change)="onLogoSelected($event)"
+            />
+          </label>
+          @if (selectedLogoFile) {
+            <button type="button" class="btn-text" (click)="clearSelectedLogo(logoInput)">Clear selection</button>
+          }
+          <p class="field-hint">PNG, JPG, or WebP. Max 2 MB. Used on printed receipts.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" [disabled]="saving() || uploadingLogo()">
+        {{ saving() || uploadingLogo() ? 'Saving…' : 'Save changes' }}
+      </button>
+    </div>
+  </form>
+}

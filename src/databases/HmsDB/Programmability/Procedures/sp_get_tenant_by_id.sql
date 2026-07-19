@@ -16,6 +16,7 @@ BEGIN
         t.tenantaddress AS address,
         t.timezone,
         t.logourl,
+        t.website,
         t.createdat,
         t.updatedat
     FROM dbo.tenants t

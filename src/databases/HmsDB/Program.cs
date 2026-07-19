@@ -20,7 +20,9 @@ static class Program
         "visit_sequences.sql",
         "visits.sql",
         "receipt_sequences.sql",
-        "payments.sql"
+        "payments.sql",
+        "global_document_templates.sql",
+        "document_templates.sql"
     ];
 
     static int Main(string[] args)

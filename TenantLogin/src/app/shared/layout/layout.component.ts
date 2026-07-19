@@ -7,7 +7,7 @@ import { AuthService } from '../../core/auth/auth.service';
 interface NavItem {
   label: string;
   route: string;
-  icon: 'dashboard' | 'patients' | 'visits' | 'payments' | 'lab' | 'doctors' | 'users' | 'settings' | 'addons';
+  icon: 'dashboard' | 'patients' | 'visits' | 'payments' | 'lab' | 'doctors' | 'users' | 'settings' | 'addons' | 'templates';
 }
 
 const SIDEBAR_COLLAPSED_KEY = 'tenant_sidebar_collapsed';
@@ -43,6 +43,7 @@ export class LayoutComponent {
       { label: 'Doctors', route: '/doctors', icon: 'doctors' },
       { label: 'Visit Add-ons', route: '/visit-addons', icon: 'addons' },
       { label: 'Users', route: '/users', icon: 'users' },
+      { label: 'Templates', route: '/document-templates', icon: 'templates' },
       { label: 'Tenant Settings', route: '/settings', icon: 'settings' }
     ];
   });

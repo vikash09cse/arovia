@@ -100,4 +100,20 @@ public class PaymentsRepository(DbHelper dbHelper) : IPaymentsRepository
             },
             commandType: CommandType.StoredProcedure);
     }
+
+    public async Task<(PaymentReceiptRow? Receipt, IReadOnlyList<PaymentReceiptAddonRow> Addons)> GetReceiptAsync(
+        Guid tenantId,
+        Guid paymentId,
+        CancellationToken ct)
+    {
+        using var conn = dbHelper.GetConnection();
+        using var multi = await conn.QueryMultipleAsync(
+            "dbo.sp_payment_get_receipt",
+            new { tenantid = tenantId, paymentid = paymentId },
+            commandType: CommandType.StoredProcedure);
+
+        var receipt = await multi.ReadFirstOrDefaultAsync<PaymentReceiptRow>();
+        var addons = (await multi.ReadAsync<PaymentReceiptAddonRow>()).ToList();
+        return (receipt, addons);
+    }
 }

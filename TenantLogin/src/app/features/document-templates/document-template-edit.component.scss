@@ -1,0 +1,52 @@
+@import '../patients/patient-form.component.scss';
+
+.subtitle {
+  margin: 0.35rem 0 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.success {
+  background: #ecfdf5;
+  color: #065f46;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+label.full {
+  grid-column: 1 / -1;
+}
+
+.body-field {
+  min-width: 0;
+}
+
+.body-field app-html-editor {
+  display: block;
+  width: 100%;
+}
+
+input:disabled {
+  background: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.hint {
+  margin: 0.75rem 0 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+  align-items: center;
+}
+
+.form-actions .btn-secondary {
+  text-decoration: none;
+}

@@ -51,3 +51,8 @@ public record PaymentListResponse(
     int PageSize);
 
 public record CollectVisitPendingRequest(Guid? CollectedByUserId = null);
+
+public record PaymentReceiptHtmlResponse(
+    Guid PaymentId,
+    string ReceiptNumber,
+    string Html);

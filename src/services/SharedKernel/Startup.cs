@@ -113,6 +113,7 @@ public static class DependencyInjection
 
         app.UseHttpsRedirection();
         app.UseCors("AllowAngularApps");
+        app.UseStaticFiles();
         app.UseMiddleware<GlobalExceptionMiddleware>();
         app.UseAuthentication();
         app.UseAuthorization();

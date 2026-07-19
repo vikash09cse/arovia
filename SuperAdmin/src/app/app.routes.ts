@@ -13,6 +13,7 @@ export const routes: Routes = [
       { path: 'tenants', loadComponent: () => import('./features/tenants/tenants.component').then(m => m.TenantsComponent) },
       { path: 'platform-users', loadComponent: () => import('./features/platform-users/platform-users.component').then(m => m.PlatformUsersComponent) },
       { path: 'portal-users', loadComponent: () => import('./features/portal-users/portal-users.component').then(m => m.PortalUsersComponent) },
+      { path: 'document-templates', loadComponent: () => import('./features/document-templates/document-templates.component').then(m => m.DocumentTemplatesComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

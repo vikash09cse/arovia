@@ -5,7 +5,7 @@ import { AuthService } from '../../core/auth/auth.service';
 interface NavItem {
   label: string;
   route: string;
-  icon: 'dashboard' | 'tenants' | 'users' | 'portal';
+  icon: 'dashboard' | 'tenants' | 'users' | 'portal' | 'templates';
 }
 
 @Component({
@@ -27,7 +27,8 @@ export class LayoutComponent {
   readonly adminNav: NavItem[] = [
     { label: 'Tenants', route: '/tenants', icon: 'tenants' },
     { label: 'Portal Users', route: '/portal-users', icon: 'portal' },
-    { label: 'Platform Users', route: '/platform-users', icon: 'users' }
+    { label: 'Platform Users', route: '/platform-users', icon: 'users' },
+    { label: 'Templates', route: '/document-templates', icon: 'templates' }
   ];
 
   logout() {

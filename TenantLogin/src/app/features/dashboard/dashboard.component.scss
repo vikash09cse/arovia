@@ -130,3 +130,56 @@ h1 {
   border-color: #0f766e;
   box-shadow: 0 2px 8px rgba(15, 118, 110, 0.08);
 }
+
+.card-money {
+  gap: 0.35rem;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.card-value-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.card-value-link:hover .card-value:not(.card-value-muted) {
+  color: #0f766e;
+}
+
+.card-value-muted {
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+}
+
+.reveal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.reveal-btn:hover {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+  color: #0f766e;
+}
+
+.reveal-btn[aria-pressed="true"] {
+  background: #f0fdfa;
+  border-color: #5eead4;
+  color: #0f766e;
+}

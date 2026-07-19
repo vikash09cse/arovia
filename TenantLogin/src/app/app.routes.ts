@@ -84,10 +84,19 @@ export const routes: Routes = [
         loadComponent: () => import('./features/users/users.component').then(m => m.UsersComponent)
       },
       {
+        path: 'document-templates',
+        canActivate: [tenantSuperAdminGuard],
+        loadComponent: () => import('./features/document-templates/document-templates.component').then(m => m.DocumentTemplatesComponent)
+      },
+      {
+        path: 'document-templates/:id/edit',
+        canActivate: [tenantSuperAdminGuard],
+        loadComponent: () => import('./features/document-templates/document-template-edit.component').then(m => m.DocumentTemplateEditComponent)
+      },
+      {
         path: 'settings',
         canActivate: [tenantSuperAdminGuard],
-        loadComponent: () => import('./shared/placeholder/placeholder.component').then(m => m.PlaceholderComponent),
-        data: { title: 'Tenant Settings', description: 'Configure hospital profile, timezone, and preferences.' }
+        loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent)
       }
     ]
   },

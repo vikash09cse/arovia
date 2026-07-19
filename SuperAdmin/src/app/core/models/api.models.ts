@@ -136,3 +136,23 @@ export interface PortalUserList {
   page: number;
   pageSize: number;
 }
+
+export interface GlobalDocumentTemplate {
+  id: string;
+  templateType: number;
+  templateTypeName: string;
+  name: string;
+  subject?: string | null;
+  bodyHtml: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SaveDocumentTemplateRequest {
+  templateType: number;
+  name: string;
+  subject?: string | null;
+  bodyHtml: string;
+  isDefault: boolean;
+}

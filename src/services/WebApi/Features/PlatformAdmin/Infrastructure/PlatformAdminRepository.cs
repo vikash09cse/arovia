@@ -168,7 +168,8 @@ public class PlatformAdminRepository(DbHelper dbHelper) : IPlatformAdminReposito
                 primarycontactphone = req.PrimaryContactPhone,
                 tenantaddress = req.Address,
                 timezone = req.Timezone,
-                logourl = req.LogoUrl
+                logourl = req.LogoUrl,
+                website = (string?)null
             },
             commandType: CommandType.StoredProcedure);
     }

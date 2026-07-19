@@ -33,12 +33,33 @@ export class DashboardComponent implements OnInit {
   readonly metrics = signal<TenantDashboard | null>(null);
   readonly loading = signal(true);
   readonly error = signal('');
+  readonly visibleRevenueCards = signal<ReadonlySet<string>>(new Set());
 
   dateFrom = this.todayIso();
   dateTo = this.todayIso();
 
   ngOnInit() {
     this.loadDashboard();
+  }
+
+  isRevenueVisible(cardKey: string): boolean {
+    return this.visibleRevenueCards().has(cardKey);
+  }
+
+  toggleRevenueVisibility(cardKey: string, event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.visibleRevenueCards.update(current => {
+      const next = new Set(current);
+      if (next.has(cardKey)) next.delete(cardKey);
+      else next.add(cardKey);
+      return next;
+    });
+  }
+
+  displayMoney(cardKey: string, value: number | null | undefined): string {
+    if (!this.isRevenueVisible(cardKey)) return '₹XX';
+    return this.formatMoney(value);
   }
 
   filtersAreActive(): boolean {

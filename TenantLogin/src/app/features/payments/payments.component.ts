@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { ApiResult } from '../../core/models/api.models';
+import { downloadPaymentReceiptPdf, printPaymentReceipt } from '../../shared/receipt/receipt.util';
 
 interface PaymentListItem {
   id: string;
@@ -50,6 +51,7 @@ export class PaymentsComponent implements OnInit {
   readonly page = signal(1);
   readonly pageSize = 10;
   readonly Math = Math;
+  readonly receiptBusyId = signal<string | null>(null);
 
   searchTerm = '';
   dateFrom = '';
@@ -137,5 +139,31 @@ export class PaymentsComponent implements OnInit {
     if (!iso) return '—';
     const d = new Date(iso);
     return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  async printReceipt(paymentId: string) {
+    this.receiptBusyId.set(paymentId);
+    this.error.set('');
+    try {
+      await printPaymentReceipt(this.api, paymentId);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unable to print receipt.';
+      this.error.set(message);
+    } finally {
+      this.receiptBusyId.set(null);
+    }
+  }
+
+  async downloadReceiptPdf(paymentId: string) {
+    this.receiptBusyId.set(paymentId);
+    this.error.set('');
+    try {
+      await downloadPaymentReceiptPdf(this.api, paymentId);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unable to download PDF.';
+      this.error.set(message);
+    } finally {
+      this.receiptBusyId.set(null);
+    }
   }
 }

@@ -120,3 +120,32 @@ export class PortalUserService {
     );
   }
 }
+
+@Injectable({ providedIn: 'root' })
+export class DocumentTemplateService {
+  private readonly api = inject(ApiService);
+
+  getTemplates(templateType?: number) {
+    const q = templateType != null ? `?templateType=${templateType}` : '';
+    return this.api.get<ApiResult<import('../models/api.models').GlobalDocumentTemplate[]>>(
+      `/platform/document-templates${q}`);
+  }
+
+  createTemplate(body: import('../models/api.models').SaveDocumentTemplateRequest) {
+    return this.api.post<ApiResult<import('../models/api.models').GlobalDocumentTemplate>>(
+      '/platform/document-templates', body);
+  }
+
+  updateTemplate(id: string, body: import('../models/api.models').SaveDocumentTemplateRequest) {
+    return this.api.put<ApiResult<import('../models/api.models').GlobalDocumentTemplate>>(
+      `/platform/document-templates/${id}`, body);
+  }
+
+  setDefault(id: string) {
+    return this.api.patch<ApiResult<boolean>>(`/platform/document-templates/${id}/default`);
+  }
+
+  deleteTemplate(id: string) {
+    return this.api.delete<ApiResult<boolean>>(`/platform/document-templates/${id}`);
+  }
+}

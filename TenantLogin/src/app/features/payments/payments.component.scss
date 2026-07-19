@@ -56,7 +56,20 @@
 }
 
 .actions-col {
-  width: 120px;
+  width: 1%;
+  min-width: 8.5rem;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.actions-cell {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  min-width: 8.5rem;
+  white-space: nowrap;
 }
 
 .collector-select {

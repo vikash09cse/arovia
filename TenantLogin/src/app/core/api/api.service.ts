@@ -11,8 +11,19 @@ export class ApiService {
     return this.http.get<T>(`${this.baseUrl}${path}`);
   }
 
+  getBlob(path: string) {
+    return this.http.get(`${this.baseUrl}${path}`, {
+      responseType: 'blob',
+      observe: 'response'
+    });
+  }
+
   post<T>(path: string, body: unknown) {
     return this.http.post<T>(`${this.baseUrl}${path}`, body);
+  }
+
+  postFormData<T>(path: string, formData: FormData) {
+    return this.http.post<T>(`${this.baseUrl}${path}`, formData);
   }
 
   put<T>(path: string, body: unknown) {

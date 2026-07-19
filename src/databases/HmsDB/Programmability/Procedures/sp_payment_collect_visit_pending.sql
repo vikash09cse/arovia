@@ -80,7 +80,7 @@ BEGIN
 
         @notes = NULL,
 
-        @paymentmethod = NULL,
+        @paymentmethod = 1,
 
         @actorid = @actorid;
 

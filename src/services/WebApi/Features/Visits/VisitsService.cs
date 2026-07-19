@@ -61,6 +61,15 @@ public class VisitsService(
         _ => "Unknown"
     };
 
+    private static string? FormatPaymentMethod(byte? code) => code switch
+    {
+        (byte)PaymentMethod.Cash => "Cash",
+        (byte)PaymentMethod.Upi => "UPI",
+        (byte)PaymentMethod.BankAccount => "Bank Account",
+        (byte)PaymentMethod.Cheque => "Cheque",
+        _ => null
+    };
+
     private static string FormatAggregatedPaymentStatus(byte code) => ((AggregatedPaymentStatus)code) switch
     {
         AggregatedPaymentStatus.None => "—",
@@ -182,6 +191,7 @@ public class VisitsService(
             string.IsNullOrWhiteSpace(request.FeeNote) ? null : request.FeeNote.Trim(),
             request.InitialCollectionAmount,
             request.CollectedByUserId,
+            request.PaymentMethod,
             request.AddonIds,
             request.DiscountAmount,
             string.IsNullOrWhiteSpace(request.DiscountReason) ? null : request.DiscountReason.Trim(),
@@ -317,6 +327,12 @@ public class VisitsService(
         if (request.InitialCollectionAmount > 0 && request.CollectedByUserId == null)
             return Result<VisitResponse>.Fail(ErrorCode.Validation, "Payment collector is required when collecting at visit create.");
 
+        if (request.InitialCollectionAmount > 0
+            && request.PaymentMethod is not null
+            && request.PaymentMethod is not ((byte)PaymentMethod.Cash) and not ((byte)PaymentMethod.Upi)
+                and not ((byte)PaymentMethod.BankAccount) and not ((byte)PaymentMethod.Cheque))
+            return Result<VisitResponse>.Fail(ErrorCode.Validation, "Invalid payment mode.");
+
         if (request.AddonIds != null)
         {
             if (request.AddonIds.Any(id => id == Guid.Empty))
@@ -435,7 +451,9 @@ public class VisitsService(
                     p.CollectionDateTime,
                     p.CollectedByUserId,
                     collectorName,
-                    p.Notes);
+                    p.Notes,
+                    FormatPaymentMethod(p.PaymentMethod),
+                    p.PaymentMethod);
             }),
             labAgencyList.Select(la =>
             {

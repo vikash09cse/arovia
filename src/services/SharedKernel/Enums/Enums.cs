@@ -86,6 +86,14 @@ public enum PaymentStatus : byte
     Refunded = 3
 }
 
+public enum PaymentMethod : byte
+{
+    Cash = 1,
+    Upi = 2,
+    BankAccount = 3,
+    Cheque = 4
+}
+
 public enum AggregatedPaymentStatus : byte
 {
     None = 0,

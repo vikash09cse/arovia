@@ -26,6 +26,8 @@ CREATE OR ALTER PROCEDURE dbo.sp_visit_save
 
     @collectedby                UNIQUEIDENTIFIER = NULL,
 
+    @paymentmethod              TINYINT = NULL,
+
     @actorid                    UNIQUEIDENTIFIER,
 
     @addonids                   NVARCHAR(MAX) = NULL,
@@ -522,6 +524,8 @@ BEGIN
 
     BEGIN
 
+        DECLARE @collectionpaymentmethod TINYINT = ISNULL(@paymentmethod, 1);
+
         EXEC dbo.sp_payment_add_collection
 
             @tenantid = @tenantid,
@@ -534,7 +538,7 @@ BEGIN
 
             @notes = NULL,
 
-            @paymentmethod = NULL,
+            @paymentmethod = @collectionpaymentmethod,
 
             @actorid = @actorid;
 

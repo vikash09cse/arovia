@@ -16,6 +16,7 @@ public record CreateVisitRequest(
     string? FeeNote,
     decimal? InitialCollectionAmount = null,
     Guid? CollectedByUserId = null,
+    byte? PaymentMethod = null,
     IReadOnlyList<Guid>? AddonIds = null,
     decimal? DiscountAmount = null,
     string? DiscountReason = null);
@@ -48,7 +49,9 @@ public record PaymentCollectionResponse(
     DateTime? CollectionDateTime,
     Guid? CollectedByUserId,
     string? CollectedByName,
-    string? Notes);
+    string? Notes,
+    string? PaymentMethod,
+    byte? PaymentMethodCode);
 
 public record VisitResponse(
     Guid Id,

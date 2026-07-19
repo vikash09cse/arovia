@@ -60,6 +60,8 @@ BEGIN
 
     EXEC dbo.sp_allocate_receipt_number @tenantid, @receiptnumber OUTPUT;
 
+    SET @paymentmethod = ISNULL(@paymentmethod, 1);
+
     INSERT INTO dbo.payments (
         paymentid, tenantid, visitid, patientid, paymentlinetype, feeamount, paymentstatus,
         receiptnumber, amountpaid, paymentmethod, collectedby, collectiondatetime, notes,

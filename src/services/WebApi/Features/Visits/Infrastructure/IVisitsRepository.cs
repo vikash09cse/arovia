@@ -141,6 +141,7 @@ public interface IVisitsRepository
         string? feeNote,
         decimal? initialCollectionAmount,
         Guid? collectedByUserId,
+        byte? paymentMethod,
         IReadOnlyList<Guid>? addonIds,
         decimal? discountAmount,
         string? discountReason,

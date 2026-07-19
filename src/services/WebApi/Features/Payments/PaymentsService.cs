@@ -1,3 +1,4 @@
+using SharedKernel.Enums;
 using SharedKernel.Utilities;
 using SharedKernel.Utilities.Extensions;
 using WebApi.Features.Payments.Infrastructure;
@@ -49,6 +50,11 @@ public class PaymentsService(
 
         if (request.Notes?.Length > 500)
             return Result<AddPaymentResponse>.Fail(ErrorCode.Validation, "Notes cannot exceed 500 characters.");
+
+        if (request.PaymentMethod is not null
+            && request.PaymentMethod is not ((byte)PaymentMethod.Cash) and not ((byte)PaymentMethod.Upi)
+                and not ((byte)PaymentMethod.BankAccount) and not ((byte)PaymentMethod.Cheque))
+            return Result<AddPaymentResponse>.Fail(ErrorCode.Validation, "Invalid payment mode.");
 
         var tenantError = RequireTenantContext<AddPaymentResponse>();
         if (tenantError != null) return tenantError;

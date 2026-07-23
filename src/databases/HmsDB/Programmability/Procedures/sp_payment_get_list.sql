@@ -40,9 +40,16 @@ BEGIN
 
         LEFT JOIN dbo.payments p ON p.visitid = v.visitid AND p.tenantid = v.tenantid
 
+        INNER JOIN dbo.patients pt
+            ON pt.patientid = v.patientid
+           AND pt.tenantid = v.tenantid
+           AND pt.isdeleted = 0
+
         WHERE v.tenantid = @tenantid
 
           AND v.isdeleted = 0
+
+          AND v.visitstatus = 1 -- Active only (exclude Cancelled)
 
         GROUP BY v.visitid, v.totalchargeamount
 

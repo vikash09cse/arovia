@@ -77,6 +77,8 @@ BEGIN
     FROM dbo.payments p
     INNER JOIN dbo.visits v
         ON v.visitid = p.visitid AND v.tenantid = p.tenantid AND v.isdeleted = 0
+    INNER JOIN dbo.patients pt
+        ON pt.patientid = p.patientid AND pt.tenantid = p.tenantid AND pt.isdeleted = 0
     WHERE p.tenantid = @tenantid
       AND p.paymentid = @paymentid
       AND p.paymentstatus = 2

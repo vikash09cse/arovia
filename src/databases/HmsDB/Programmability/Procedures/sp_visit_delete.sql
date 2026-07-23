@@ -11,6 +11,7 @@ BEGIN
 
     UPDATE dbo.visits
     SET isdeleted = 1,
+        visitstatus = 2, -- Cancelled so pending/revenue exclude even if isdeleted filter is missed
         updatedby = @actorid,
         updatedat = SYSUTCDATETIME()
     WHERE visitid = @visitid

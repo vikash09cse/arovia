@@ -58,7 +58,7 @@ export class PatientsComponent implements OnInit {
     const patient = this.confirmTarget();
     if (!patient) return '';
     const name = `${patient.firstName} ${patient.lastName}`.trim();
-    return `Patient ${patient.patientCode} (${name}) will be removed from the list. The record is kept in the system (soft delete).`;
+    return `Patient ${patient.patientCode} (${name}) will be removed from the list. Their visits and unpaid charges will also be removed from visits, payments, receipts, and the dashboard. Collected payments remain on record.`;
   });
 
   filtersAreActive(): boolean {

@@ -35,6 +35,33 @@ public class PaymentsRepository(DbHelper dbHelper) : IPaymentsRepository
         return (rows, total);
     }
 
+    public async Task<(IEnumerable<PendingVisitPaymentRow> Items, int Total)> GetPendingVisitsAsync(
+        Guid tenantId,
+        int page,
+        int pageSize,
+        string? patientCode,
+        DateOnly? dateFrom,
+        DateOnly? dateTo,
+        CancellationToken ct)
+    {
+        using var conn = dbHelper.GetConnection();
+        var rows = (await conn.QueryAsync<PendingVisitPaymentRow>(
+            "dbo.sp_payment_get_pending_visits",
+            new
+            {
+                tenantid = tenantId,
+                page,
+                pagesize = pageSize,
+                patientcode = patientCode,
+                datefrom = dateFrom?.ToDateTime(TimeOnly.MinValue),
+                dateto = dateTo?.ToDateTime(TimeOnly.MinValue)
+            },
+            commandType: CommandType.StoredProcedure)).ToList();
+
+        var total = rows.FirstOrDefault()?.TotalCount ?? 0;
+        return (rows, total);
+    }
+
     public async Task<AddCollectionResultRow?> AddCollectionAsync(
         Guid tenantId,
         Guid visitId,

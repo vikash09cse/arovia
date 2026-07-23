@@ -40,8 +40,17 @@ BEGIN
             p.visitid,
             SUM(p.amountpaid) AS totalcollected
         FROM dbo.payments p
+        INNER JOIN dbo.visits v
+            ON v.visitid = p.visitid
+           AND v.tenantid = p.tenantid
+        INNER JOIN dbo.patients pt
+            ON pt.patientid = v.patientid
+           AND pt.tenantid = v.tenantid
+           AND pt.isdeleted = 0
         WHERE p.tenantid = @tenantid
           AND p.paymentstatus = 2
+          AND v.isdeleted = 0
+          AND v.visitstatus = 1 -- Active only (exclude Cancelled)
         GROUP BY p.visitid
     )
     SELECT
@@ -64,8 +73,13 @@ BEGIN
         (
             SELECT COUNT(*)
             FROM dbo.visits v
+            INNER JOIN dbo.patients pt
+                ON pt.patientid = v.patientid
+               AND pt.tenantid = v.tenantid
+               AND pt.isdeleted = 0
             WHERE v.tenantid = @tenantid
               AND v.isdeleted = 0
+              AND v.visitstatus = 1
               AND CAST((v.visitdatetime AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) >= @filterFrom
               AND CAST((v.visitdatetime AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) <= @filterTo
         ) AS todayvisitcount,
@@ -76,6 +90,10 @@ BEGIN
             INNER JOIN dbo.visits v
                 ON v.visitid = p.visitid
                AND v.tenantid = p.tenantid
+            INNER JOIN dbo.patients pt
+                ON pt.patientid = v.patientid
+               AND pt.tenantid = v.tenantid
+               AND pt.isdeleted = 0
             WHERE p.tenantid = @tenantid
               AND p.paymentstatus = 2
               AND v.isdeleted = 0
@@ -90,6 +108,10 @@ BEGIN
             INNER JOIN dbo.visits v
                 ON v.visitid = p.visitid
                AND v.tenantid = p.tenantid
+            INNER JOIN dbo.patients pt
+                ON pt.patientid = v.patientid
+               AND pt.tenantid = v.tenantid
+               AND pt.isdeleted = 0
             WHERE p.tenantid = @tenantid
               AND p.paymentstatus = 2
               AND v.isdeleted = 0
@@ -98,6 +120,7 @@ BEGIN
               AND CAST((COALESCE(p.collectiondatetime, p.createdat) AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) <= @today
         ) AS currentmonthrevenue,
 
+        -- Pending = unpaid balance on Active visits for non-deleted patients only
         (
             SELECT ISNULL(SUM(
                 CASE
@@ -107,10 +130,15 @@ BEGIN
                 END
             ), 0)
             FROM dbo.visits v
+            INNER JOIN dbo.patients pt
+                ON pt.patientid = v.patientid
+               AND pt.tenantid = v.tenantid
+               AND pt.isdeleted = 0
             LEFT JOIN paid_collections pc ON pc.visitid = v.visitid
             WHERE v.tenantid = @tenantid
-              AND v.visitstatus = 1
-              AND v.isdeleted = 0
+              AND v.visitstatus = 1 -- Active (exclude Cancelled = 2)
+              AND v.isdeleted = 0  -- exclude soft-deleted visits
+              AND ISNULL(v.totalchargeamount, 0) > 0
         ) AS totalpendingamount,
 
         (
@@ -122,10 +150,15 @@ BEGIN
                 END
             ), 0)
             FROM dbo.visits v
+            INNER JOIN dbo.patients pt
+                ON pt.patientid = v.patientid
+               AND pt.tenantid = v.tenantid
+               AND pt.isdeleted = 0
             LEFT JOIN paid_collections pc ON pc.visitid = v.visitid
             WHERE v.tenantid = @tenantid
-              AND v.visitstatus = 1
-              AND v.isdeleted = 0
+              AND v.visitstatus = 1 -- Active (exclude Cancelled = 2)
+              AND v.isdeleted = 0  -- exclude soft-deleted visits
+              AND ISNULL(v.totalchargeamount, 0) > 0
               AND CAST((v.visitdatetime AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) >= @filterFrom
               AND CAST((v.visitdatetime AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) <= @filterTo
         ) AS todaypendingamount,

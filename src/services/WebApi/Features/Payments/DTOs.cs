@@ -50,6 +50,27 @@ public record PaymentListResponse(
     int Page,
     int PageSize);
 
+public record PendingVisitPaymentItemResponse(
+    Guid VisitId,
+    string VisitCode,
+    DateTime VisitDateTime,
+    byte VisitStatusCode,
+    Guid PatientId,
+    string PatientCode,
+    string PatientFirstName,
+    string PatientLastName,
+    string PatientFullName,
+    string? DoctorName,
+    decimal TotalDue,
+    decimal TotalCollected,
+    decimal BalanceDue);
+
+public record PendingVisitPaymentListResponse(
+    IEnumerable<PendingVisitPaymentItemResponse> Items,
+    int TotalCount,
+    int Page,
+    int PageSize);
+
 public record CollectVisitPendingRequest(Guid? CollectedByUserId = null);
 
 public record PaymentReceiptHtmlResponse(

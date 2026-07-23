@@ -73,7 +73,7 @@
                 }
               </button>
             </div>
-            <a class="card-value-link" routerLink="/payments" [queryParams]="{ filter: 'open' }">
+            <a class="card-value-link" routerLink="/payments" [queryParams]="{ filter: 'pending' }">
               <strong class="card-value" [class.card-value-muted]="!isRevenueVisible('pendingAmount')">{{ displayMoney('pendingAmount', m.totalPendingAmount) }}</strong>
             </a>
             <span class="card-note">Unpaid balance on active visits</span>
@@ -175,7 +175,7 @@
                 }
               </button>
             </div>
-            <a class="card-value-link" routerLink="/payments" [queryParams]="{ filter: 'open' }">
+            <a class="card-value-link" routerLink="/payments" [queryParams]="{ filter: 'pending' }">
               <strong class="card-value" [class.card-value-muted]="!isRevenueVisible('todayPending')">{{ displayMoney('todayPending', m.todayPendingAmount) }}</strong>
             </a>
             <span class="card-note">{{ filtersAreActive() ? 'Unpaid on visits in From–To range' : 'Unpaid on today’s visits' }}</span>

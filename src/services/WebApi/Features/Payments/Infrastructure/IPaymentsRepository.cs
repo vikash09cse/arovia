@@ -37,6 +37,25 @@ public class PaymentListRow
     public int TotalCount { get; set; }
 }
 
+public class PendingVisitPaymentRow
+{
+    public Guid VisitId { get; set; }
+    public string VisitCode { get; set; } = string.Empty;
+    public DateTime VisitDateTime { get; set; }
+    public byte VisitStatus { get; set; }
+    public Guid PatientId { get; set; }
+    public string PatientCode { get; set; } = string.Empty;
+    public string PatientFirstName { get; set; } = string.Empty;
+    public string PatientLastName { get; set; } = string.Empty;
+    public decimal TotalDue { get; set; }
+    public decimal TotalCollected { get; set; }
+    public decimal BalanceDue { get; set; }
+    public Guid? ConsultingDoctorId { get; set; }
+    public string? DoctorFirstName { get; set; }
+    public string? DoctorLastName { get; set; }
+    public int TotalCount { get; set; }
+}
+
 public class AddCollectionResultRow
 {
     public Guid PaymentId { get; set; }
@@ -102,6 +121,15 @@ public interface IPaymentsRepository
         int pageSize,
         string? patientCode,
         bool openVisitsOnly,
+        DateOnly? dateFrom,
+        DateOnly? dateTo,
+        CancellationToken ct);
+
+    Task<(IEnumerable<PendingVisitPaymentRow> Items, int Total)> GetPendingVisitsAsync(
+        Guid tenantId,
+        int page,
+        int pageSize,
+        string? patientCode,
         DateOnly? dateFrom,
         DateOnly? dateTo,
         CancellationToken ct);

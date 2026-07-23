@@ -84,7 +84,10 @@ BEGIN
 
     FROM dbo.visits v
 
-    INNER JOIN dbo.patients p ON p.patientid = v.patientid AND p.tenantid = v.tenantid
+    INNER JOIN dbo.patients p
+        ON p.patientid = v.patientid
+       AND p.tenantid = v.tenantid
+       AND p.isdeleted = 0
 
     INNER JOIN dbo.users d ON d.userid = v.consultingdoctorid
 

@@ -22,6 +22,18 @@ public class PaymentsController(PaymentsService service) : ControllerBase
         (await service.GetListAsync(
             page, pageSize, patientCode, openVisitsOnly, dateFrom, dateTo, ct)).ToActionResult();
 
+    [HttpGet("pending")]
+    [Authorize(Roles = $"{RoleNames.TenantSuperAdmin},{RoleNames.Staff}")]
+    public async Task<IActionResult> GetPending(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? patientCode = null,
+        [FromQuery] DateOnly? dateFrom = null,
+        [FromQuery] DateOnly? dateTo = null,
+        CancellationToken ct = default) =>
+        (await service.GetPendingVisitsAsync(
+            page, pageSize, patientCode, dateFrom, dateTo, ct)).ToActionResult();
+
     [HttpGet("{id:guid}/receipt")]
     [Authorize(Roles = $"{RoleNames.TenantSuperAdmin},{RoleNames.Staff},{RoleNames.Doctor}")]
     public async Task<IActionResult> GetReceiptHtml(Guid id, CancellationToken ct) =>

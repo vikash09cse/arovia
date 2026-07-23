@@ -5,6 +5,8 @@ import { ApiService } from '../../core/api/api.service';
 import { ApiResult } from '../../core/models/api.models';
 import { downloadPaymentReceiptPdf, printPaymentReceipt } from '../../shared/receipt/receipt.util';
 
+type PaymentsTab = 'all' | 'open' | 'pending';
+
 interface PaymentListItem {
   id: string;
   visitId: string;
@@ -33,6 +35,29 @@ interface PaymentList {
   pageSize: number;
 }
 
+interface PendingVisitItem {
+  visitId: string;
+  visitCode: string;
+  visitDateTime: string;
+  visitStatusCode: number;
+  patientId: string;
+  patientCode: string;
+  patientFirstName: string;
+  patientLastName: string;
+  patientFullName: string;
+  doctorName?: string | null;
+  totalDue: number;
+  totalCollected: number;
+  balanceDue: number;
+}
+
+interface PendingVisitList {
+  items: PendingVisitItem[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
 @Component({
   selector: 'app-payments',
   standalone: true,
@@ -45,6 +70,7 @@ export class PaymentsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
 
   readonly payments = signal<PaymentListItem[]>([]);
+  readonly pendingVisits = signal<PendingVisitItem[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
   readonly totalCount = signal(0);
@@ -56,15 +82,29 @@ export class PaymentsComponent implements OnInit {
   searchTerm = '';
   dateFrom = '';
   dateTo = '';
-  openVisitsOnly = false;
+  activeTab: PaymentsTab = 'all';
 
   ngOnInit() {
     const filter = this.route.snapshot.queryParamMap.get('filter');
     if (filter === 'open') {
-      this.openVisitsOnly = true;
+      this.activeTab = 'open';
+    } else if (filter === 'pending') {
+      this.activeTab = 'pending';
     }
 
-    this.loadPayments();
+    this.load();
+  }
+
+  get isPendingTab(): boolean {
+    return this.activeTab === 'pending';
+  }
+
+  load() {
+    if (this.activeTab === 'pending') {
+      this.loadPending();
+    } else {
+      this.loadPayments();
+    }
   }
 
   loadPayments() {
@@ -80,11 +120,12 @@ export class PaymentsComponent implements OnInit {
     if (term) query.set('patientCode', term);
     if (this.dateFrom) query.set('dateFrom', this.dateFrom);
     if (this.dateTo) query.set('dateTo', this.dateTo);
-    if (this.openVisitsOnly) query.set('openVisitsOnly', 'true');
+    if (this.activeTab === 'open') query.set('openVisitsOnly', 'true');
 
     this.api.get<ApiResult<PaymentList>>(`/payments?${query}`).subscribe({
       next: res => {
         this.payments.set(res.data?.items ?? []);
+        this.pendingVisits.set([]);
         this.totalCount.set(res.data?.totalCount ?? 0);
         this.loading.set(false);
       },
@@ -95,30 +136,58 @@ export class PaymentsComponent implements OnInit {
     });
   }
 
-  onSearch() {
-    this.page.set(1);
-    this.loadPayments();
+  loadPending() {
+    this.loading.set(true);
+    this.error.set('');
+
+    const query = new URLSearchParams({
+      page: String(this.page()),
+      pageSize: String(this.pageSize)
+    });
+
+    const term = this.searchTerm.trim();
+    if (term) query.set('patientCode', term);
+    if (this.dateFrom) query.set('dateFrom', this.dateFrom);
+    if (this.dateTo) query.set('dateTo', this.dateTo);
+
+    this.api.get<ApiResult<PendingVisitList>>(`/payments/pending?${query}`).subscribe({
+      next: res => {
+        this.pendingVisits.set(res.data?.items ?? []);
+        this.payments.set([]);
+        this.totalCount.set(res.data?.totalCount ?? 0);
+        this.loading.set(false);
+      },
+      error: err => {
+        this.error.set(err.error?.message ?? 'Unable to load pending payments.');
+        this.loading.set(false);
+      }
+    });
   }
 
-  setFilter(openOnly: boolean) {
-    this.openVisitsOnly = openOnly;
+  onSearch() {
     this.page.set(1);
-    this.loadPayments();
+    this.load();
+  }
+
+  setTab(tab: PaymentsTab) {
+    this.activeTab = tab;
+    this.page.set(1);
+    this.load();
   }
 
   clearFilters() {
     this.searchTerm = '';
     this.dateFrom = '';
     this.dateTo = '';
-    this.openVisitsOnly = false;
+    this.activeTab = 'all';
     this.page.set(1);
-    this.loadPayments();
+    this.load();
   }
 
   prevPage() {
     if (this.page() > 1) {
       this.page.update(p => p - 1);
-      this.loadPayments();
+      this.load();
     }
   }
 
@@ -126,7 +195,7 @@ export class PaymentsComponent implements OnInit {
     const maxPage = Math.ceil(this.totalCount() / this.pageSize);
     if (this.page() < maxPage) {
       this.page.update(p => p + 1);
-      this.loadPayments();
+      this.load();
     }
   }
 

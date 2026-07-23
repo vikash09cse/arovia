@@ -42,6 +42,57 @@ public class PaymentsService(
         return Result<PaymentListResponse>.Ok(new PaymentListResponse(mapped, total, page, pageSize));
     }
 
+    public async Task<Result<PendingVisitPaymentListResponse>> GetPendingVisitsAsync(
+        int page,
+        int pageSize,
+        string? patientCode,
+        DateOnly? dateFrom,
+        DateOnly? dateTo,
+        CancellationToken ct)
+    {
+        var tenantError = RequireTenantContext<PendingVisitPaymentListResponse>();
+        if (tenantError != null) return tenantError;
+
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var tenantId = httpContextAccessor.GetTenantContext().TenantId;
+        var (items, total) = await repository.GetPendingVisitsAsync(
+            tenantId,
+            page,
+            pageSize,
+            string.IsNullOrWhiteSpace(patientCode) ? null : patientCode.Trim(),
+            dateFrom,
+            dateTo,
+            ct);
+
+        var mapped = items.Select(row =>
+        {
+            var doctorName = string.Join(
+                " ",
+                new[] { row.DoctorFirstName, row.DoctorLastName }
+                    .Where(x => !string.IsNullOrWhiteSpace(x))).Trim();
+
+            return new PendingVisitPaymentItemResponse(
+                row.VisitId,
+                row.VisitCode,
+                row.VisitDateTime,
+                row.VisitStatus,
+                row.PatientId,
+                row.PatientCode,
+                row.PatientFirstName,
+                row.PatientLastName,
+                $"{row.PatientFirstName} {row.PatientLastName}".Trim(),
+                string.IsNullOrWhiteSpace(doctorName) ? null : doctorName,
+                row.TotalDue,
+                row.TotalCollected,
+                row.BalanceDue);
+        });
+
+        return Result<PendingVisitPaymentListResponse>.Ok(
+            new PendingVisitPaymentListResponse(mapped, total, page, pageSize));
+    }
+
     public async Task<Result<AddPaymentResponse>> AddCollectionAsync(
         Guid visitId, AddPaymentRequest request, CancellationToken ct)
     {

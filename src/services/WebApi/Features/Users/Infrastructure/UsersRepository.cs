@@ -14,6 +14,7 @@ public class TenantUserRow
     public string? Designation { get; set; }
     public byte Role { get; set; }
     public byte Status { get; set; }
+    public decimal? MonthlySalary { get; set; }
     public DateTime? LastLoginAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public int TotalCount { get; set; }

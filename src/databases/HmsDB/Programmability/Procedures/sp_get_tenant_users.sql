@@ -23,8 +23,14 @@ BEGIN
         u.userstatus AS status,
         u.lastloginat,
         u.createdat,
+        s.monthlysalary,
         COUNT(*) OVER() AS totalcount
     FROM dbo.users u
+    LEFT JOIN dbo.user_salaries s
+        ON s.tenantid = u.tenantid
+       AND s.userid = u.userid
+       AND s.isdeleted = 0
+       AND s.effectiveto IS NULL
     WHERE u.tenantid = @tenantid
       AND u.isdeleted = 0
       AND (@like IS NULL OR u.email LIKE @like OR u.firstname LIKE @like OR u.lastname LIKE @like OR u.designation LIKE @like)

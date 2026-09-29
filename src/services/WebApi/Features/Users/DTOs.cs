@@ -24,6 +24,7 @@ public record TenantUserResponse(
     byte RoleCode,
     string Status,
     byte StatusCode,
+    decimal? MonthlySalary,
     DateTime? LastLoginAt,
     DateTime CreatedAt);
 

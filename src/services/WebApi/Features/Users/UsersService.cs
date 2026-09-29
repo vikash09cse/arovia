@@ -129,5 +129,6 @@ public class UsersService(
         row.UserId, row.Email, row.FirstName, row.LastName, row.Designation,
         RoleNames.FromUserType((UserType)row.Role), row.Role,
         row.Status == (byte)UserStatus.Active ? "Active" : "Inactive", row.Status,
+        row.MonthlySalary,
         row.LastLoginAt, row.CreatedAt);
 }

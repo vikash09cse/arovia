@@ -16,6 +16,7 @@
       <option value="phone">Phone Number</option>
       <option value="date">Date</option>
       <option value="patientCode">Patient Number</option>
+      <option value="name">Patient Name</option>
     </select>
   </label>
 
@@ -36,6 +37,14 @@
       [(ngModel)]="searchTerm"
       inputmode="tel"
       autocomplete="tel"
+    />
+  } @else if (filterType === 'name') {
+    <input
+      type="text"
+      name="searchTerm"
+      placeholder="Enter patient name"
+      [(ngModel)]="searchTerm"
+      autocomplete="name"
     />
   } @else {
     <input
@@ -65,6 +74,8 @@
       No patients registered today.
     } @else if (searchTerm.trim()) {
       No patients found for the selected filters.
+    } @else if (filterType === 'name') {
+      Enter a patient name and search to find patients.
     } @else {
       Enter a patient number and search to find patients.
     }

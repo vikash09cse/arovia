@@ -22,7 +22,7 @@ public class PatientsService(
     private Guid GetUserId() => httpContextAccessor.GetTenantContext().UserId;
 
     public async Task<Result<PatientListResponse>> GetPatientsAsync(
-        int page, int pageSize, string? patientCode, string? phone, byte? status, byte? gender,
+        int page, int pageSize, string? patientCode, string? phone, string? name, byte? status, byte? gender,
         DateOnly? dateFrom, DateOnly? dateTo, CancellationToken ct)
     {
         var tenantError = RequireTenantContext<PatientListResponse>();
@@ -33,6 +33,14 @@ public class PatientsService(
 
         if (dateFrom.HasValue && dateTo.HasValue && dateFrom > dateTo)
             return Result<PatientListResponse>.Fail(ErrorCode.Validation, "From date cannot be after To date.");
+
+        string? trimmedName = null;
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            trimmedName = name.Trim();
+            if (trimmedName.Length < 2)
+                return Result<PatientListResponse>.Fail(ErrorCode.Validation, "Name search must be at least 2 characters.");
+        }
 
         var tenantId = httpContextAccessor.GetTenantContext().TenantId;
 
@@ -48,7 +56,7 @@ public class PatientsService(
         var (items, total) = await repository.GetPatientsAsync(
             tenantId, page, pageSize,
             string.IsNullOrWhiteSpace(patientCode) ? null : patientCode.Trim(),
-            phoneBlindIndex, status, gender, dateFrom, dateTo, ct);
+            phoneBlindIndex, trimmedName, status, gender, dateFrom, dateTo, ct);
 
         var mapped = items.Select(row => MapListItem(row));
         return Result<PatientListResponse>.Ok(new PatientListResponse(mapped, total, page, pageSize));

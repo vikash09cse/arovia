@@ -6,7 +6,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ApiResult } from '../../core/models/api.models';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
-type PatientFilterType = 'date' | 'phone' | 'patientCode';
+type PatientFilterType = 'date' | 'phone' | 'patientCode' | 'name';
 
 interface PatientListItem {
   id: string;
@@ -65,6 +65,9 @@ export class PatientsComponent implements OnInit {
     if (this.filterType === 'phone') {
       return this.searchTerm.trim().length > 0;
     }
+    if (this.filterType === 'name' || this.filterType === 'patientCode') {
+      return this.searchTerm.trim().length > 0;
+    }
     if (this.filterType !== 'date') return true;
     const today = this.todayIso();
     return this.dateFrom !== today || this.dateTo !== today;
@@ -121,6 +124,23 @@ export class PatientsComponent implements OnInit {
       } else {
         query.set('phone', digits);
       }
+    } else if (this.filterType === 'name') {
+      const name = this.searchTerm.trim();
+      if (!name) {
+        this.error.set('Enter a patient name.');
+        this.patients.set([]);
+        this.totalCount.set(0);
+        this.loading.set(false);
+        return;
+      }
+      if (name.length < 2) {
+        this.error.set('Name search must be at least 2 characters.');
+        this.patients.set([]);
+        this.totalCount.set(0);
+        this.loading.set(false);
+        return;
+      }
+      query.set('name', name);
     } else {
       const code = this.searchTerm.trim();
       if (!code) {

@@ -4,6 +4,7 @@ CREATE OR ALTER PROCEDURE dbo.sp_get_patients
     @pagesize           INT = 10,
     @patientcode        NVARCHAR(20) = NULL,
     @phoneblindindex    BINARY(32) = NULL,
+    @name               NVARCHAR(200) = NULL,
     @patientstatus      TINYINT = NULL,
     @gender             TINYINT = NULL,
     @datefrom           DATE = NULL,
@@ -13,6 +14,10 @@ BEGIN
     SET NOCOUNT ON;
 
     DECLARE @offset INT = (@page - 1) * @pagesize;
+    DECLARE @namelike NVARCHAR(202) = NULL;
+
+    IF @name IS NOT NULL AND LTRIM(RTRIM(@name)) <> N''
+        SET @namelike = N'%' + LTRIM(RTRIM(@name)) + N'%';
 
     SELECT
         p.patientid,
@@ -40,6 +45,12 @@ BEGIN
       AND p.isdeleted = 0
       AND (@patientcode IS NULL OR p.patientcode = @patientcode)
       AND (@phoneblindindex IS NULL OR p.phoneblindindex = @phoneblindindex)
+      AND (
+            @namelike IS NULL
+            OR p.firstname LIKE @namelike
+            OR p.lastname LIKE @namelike
+            OR (p.firstname + N' ' + p.lastname) LIKE @namelike
+          )
       AND (@patientstatus IS NULL OR p.patientstatus = @patientstatus)
       AND (@gender IS NULL OR p.gender = @gender)
       AND (@datefrom IS NULL OR CAST(p.createdat AS DATE) >= @datefrom)

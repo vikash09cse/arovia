@@ -18,12 +18,13 @@ public class PatientsController(PatientsService service, VisitsService visitsSer
         [FromQuery] int pageSize = 10,
         [FromQuery] string? patientCode = null,
         [FromQuery] string? phone = null,
+        [FromQuery] string? name = null,
         [FromQuery] byte? status = null,
         [FromQuery] byte? gender = null,
         [FromQuery] DateOnly? dateFrom = null,
         [FromQuery] DateOnly? dateTo = null,
         CancellationToken ct = default) =>
-        (await service.GetPatientsAsync(page, pageSize, patientCode, phone, status, gender, dateFrom, dateTo, ct)).ToActionResult();
+        (await service.GetPatientsAsync(page, pageSize, patientCode, phone, name, status, gender, dateFrom, dateTo, ct)).ToActionResult();
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct) =>

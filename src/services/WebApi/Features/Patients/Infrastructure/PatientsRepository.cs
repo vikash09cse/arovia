@@ -7,8 +7,8 @@ namespace WebApi.Features.Patients.Infrastructure;
 public class PatientsRepository(DbHelper dbHelper) : IPatientsRepository
 {
     public async Task<(IEnumerable<PatientRow> Items, int Total)> GetPatientsAsync(
-        Guid tenantId, int page, int pageSize, string? patientCode, byte[]? phoneBlindIndex, byte? status, byte? gender,
-        DateOnly? dateFrom, DateOnly? dateTo, CancellationToken ct)
+        Guid tenantId, int page, int pageSize, string? patientCode, byte[]? phoneBlindIndex, string? name,
+        byte? status, byte? gender, DateOnly? dateFrom, DateOnly? dateTo, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
         var rows = await conn.QueryAsync<PatientRow>(
@@ -20,6 +20,7 @@ public class PatientsRepository(DbHelper dbHelper) : IPatientsRepository
                 pagesize = pageSize,
                 patientcode = patientCode,
                 phoneblindindex = phoneBlindIndex,
+                name,
                 patientstatus = status,
                 gender,
                 datefrom = dateFrom?.ToDateTime(TimeOnly.MinValue),

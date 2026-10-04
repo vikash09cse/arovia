@@ -10,7 +10,8 @@ public class PaymentsService(
     IPaymentsRepository repository,
     IHttpContextAccessor httpContextAccessor,
     IWebHostEnvironment environment,
-    PhiEncryptionHelper encryption)
+    PhiEncryptionHelper encryption,
+    PublicUrlHelper publicUrls)
 {
     public async Task<Result<PaymentListResponse>> GetListAsync(
         int page,
@@ -241,7 +242,7 @@ public class PaymentsService(
             _ => ""
         };
 
-        var logoAbsoluteUrl = ToAbsoluteUrl(row.LogoUrl);
+        var logoAbsoluteUrl = publicUrls.ToPublicUrl(row.LogoUrl);
         var logoBytes = TryReadLogoBytes(row.LogoUrl);
         string logoHtml;
         if (logoBytes is { Length: > 0 })
@@ -339,42 +340,11 @@ public class PaymentsService(
         };
     }
 
-    private string? ToAbsoluteUrl(string? relativeOrAbsolute)
-    {
-        if (string.IsNullOrWhiteSpace(relativeOrAbsolute)) return null;
-        var value = relativeOrAbsolute.Trim();
-        if (value.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-            || value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-            return value;
-
-        var request = httpContextAccessor.HttpContext?.Request;
-        if (request == null) return value;
-
-        var path = value.StartsWith('/') ? value : "/" + value;
-        return $"{request.Scheme}://{request.Host}{path}";
-    }
-
     private byte[]? TryReadLogoBytes(string? logoUrl)
     {
-        if (string.IsNullOrWhiteSpace(logoUrl)) return null;
+        var relative = publicUrls.ToWebRootRelativePath(logoUrl);
+        if (string.IsNullOrWhiteSpace(relative)) return null;
 
-        var relative = logoUrl.Trim();
-        if (relative.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || relative.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-        {
-            try
-            {
-                var uri = new Uri(relative);
-                relative = uri.AbsolutePath;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        relative = relative.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
         var webRoot = environment.WebRootPath;
         if (string.IsNullOrWhiteSpace(webRoot)) return null;
 

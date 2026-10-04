@@ -14,7 +14,8 @@ namespace WebApi.Features.Auth;
 public class AuthService(
     IAuthRepository repository,
     JwtHelper jwtHelper,
-    IHttpContextAccessor httpContextAccessor)
+    IHttpContextAccessor httpContextAccessor,
+    PublicUrlHelper publicUrls)
 {
     private const string InvalidCredentials = "Invalid email or password.";
     private const string LoginSuccessMessage = "Login successful.";
@@ -27,7 +28,7 @@ public class AuthService(
 
         return Result<TenantBySubdomainResponse>.Ok(new TenantBySubdomainResponse(
             tenant.TenantId, tenant.HospitalName, tenant.Subdomain, tenant.Status,
-            tenant.LogoUrl, tenant.Timezone));
+            publicUrls.ToPublicUrl(tenant.LogoUrl), tenant.Timezone));
     }
 
     public async Task<Result<LoginResponse>> PlatformLoginAsync(PlatformLoginRequest request, CancellationToken ct)

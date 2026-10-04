@@ -1,6 +1,7 @@
 using SharedKernel.Enums;
 using SharedKernel.Utilities;
 using SharedKernel.Utilities.Extensions;
+using SharedKernel.Utilities.Helpers;
 using WebApi.Features.TenantSettings.Infrastructure;
 
 namespace WebApi.Features.TenantSettings;
@@ -8,7 +9,8 @@ namespace WebApi.Features.TenantSettings;
 public class TenantSettingsService(
     ITenantSettingsRepository repository,
     IHttpContextAccessor httpContextAccessor,
-    IWebHostEnvironment environment)
+    IWebHostEnvironment environment,
+    PublicUrlHelper publicUrls)
 {
     private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -45,7 +47,7 @@ public class TenantSettingsService(
 
         var logoUrl = string.IsNullOrWhiteSpace(request.LogoUrl)
             ? existing.LogoUrl
-            : request.LogoUrl.Trim();
+            : PublicUrlHelper.ExtractUploadsRelativePath(request.LogoUrl) ?? request.LogoUrl.Trim();
 
         var website = string.IsNullOrWhiteSpace(request.Website)
             ? null
@@ -109,7 +111,6 @@ public class TenantSettingsService(
             await file.CopyToAsync(stream, ct);
 
         var relativeUrl = $"/uploads/tenants/{tenantId:N}/{fileName}";
-        var publicUrl = ToAbsoluteUrl(relativeUrl);
 
         await repository.UpdateAsync(
             tenantId,
@@ -121,7 +122,7 @@ public class TenantSettingsService(
             existing.Address,
             existing.Timezone,
             existing.Website,
-            publicUrl,
+            relativeUrl,
             ct);
 
         var updated = await repository.GetAsync(tenantId, ct);
@@ -163,20 +164,6 @@ public class TenantSettingsService(
 
     private Guid GetTenantId() => httpContextAccessor.GetTenantContext().TenantId;
 
-    private string ToAbsoluteUrl(string relativeOrAbsolute)
-    {
-        if (string.IsNullOrWhiteSpace(relativeOrAbsolute)) return relativeOrAbsolute;
-        if (relativeOrAbsolute.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || relativeOrAbsolute.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            return relativeOrAbsolute;
-
-        var request = httpContextAccessor.HttpContext?.Request;
-        if (request == null) return relativeOrAbsolute;
-
-        var path = relativeOrAbsolute.StartsWith('/') ? relativeOrAbsolute : "/" + relativeOrAbsolute;
-        return $"{request.Scheme}://{request.Host}{path}";
-    }
-
     private TenantSettingsResponse Map(TenantSettingsRow row) => new(
         row.TenantId,
         row.HospitalName,
@@ -188,6 +175,6 @@ public class TenantSettingsService(
         row.Address,
         row.Timezone,
         string.IsNullOrWhiteSpace(row.Website) ? null : row.Website.Trim(),
-        string.IsNullOrWhiteSpace(row.LogoUrl) ? null : ToAbsoluteUrl(row.LogoUrl),
+        string.IsNullOrWhiteSpace(row.LogoUrl) ? null : publicUrls.ToPublicUrl(row.LogoUrl),
         row.UpdatedAt);
 }

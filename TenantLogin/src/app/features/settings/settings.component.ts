@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
+import { resolveFileUrl } from '../../core/api/api.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiResult } from '../../core/models/api.models';
 
@@ -74,7 +75,7 @@ export class SettingsComponent implements OnInit {
         this.timezone = s.timezone || 'Asia/Kolkata';
         this.website = s.website ?? '';
         this.logoUrl = s.logoUrl ?? null;
-        this.logoPreview.set(this.logoUrl);
+        this.logoPreview.set(resolveFileUrl(this.logoUrl));
         this.selectedLogoFile = null;
         this.loading.set(false);
       },
@@ -93,7 +94,7 @@ export class SettingsComponent implements OnInit {
     this.error.set('');
 
     if (!file) {
-      this.logoPreview.set(this.logoUrl);
+      this.logoPreview.set(resolveFileUrl(this.logoUrl));
       return;
     }
 
@@ -119,7 +120,7 @@ export class SettingsComponent implements OnInit {
   clearSelectedLogo(input: HTMLInputElement) {
     this.selectedLogoFile = null;
     input.value = '';
-    this.logoPreview.set(this.logoUrl);
+    this.logoPreview.set(resolveFileUrl(this.logoUrl));
   }
 
   async save() {
@@ -151,7 +152,7 @@ export class SettingsComponent implements OnInit {
           });
         });
         this.logoUrl = logoRes.data?.logoUrl ?? this.logoUrl;
-        this.logoPreview.set(this.logoUrl);
+        this.logoPreview.set(resolveFileUrl(this.logoUrl));
         this.selectedLogoFile = null;
         this.uploadingLogo.set(false);
       }
@@ -187,7 +188,7 @@ export class SettingsComponent implements OnInit {
         this.timezone = s.timezone;
         this.website = s.website ?? '';
         this.logoUrl = s.logoUrl ?? null;
-        this.logoPreview.set(this.logoUrl);
+        this.logoPreview.set(resolveFileUrl(this.logoUrl));
         this.auth.updateLocalTenantName(s.hospitalName);
       }
 

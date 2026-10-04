@@ -41,6 +41,7 @@ public static class DependencyInjection
         builder.Services.AddSingleton<JwtHelper>();
         builder.Services.AddSingleton<PhiEncryptionHelper>();
         builder.Services.AddSingleton<DbHelper>();
+        builder.Services.AddScoped<PublicUrlHelper>();
         builder.Services.AddScoped<EmailService>();
         builder.Services.AddHttpContextAccessor();
 

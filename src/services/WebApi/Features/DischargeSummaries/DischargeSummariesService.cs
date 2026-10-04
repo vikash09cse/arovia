@@ -11,7 +11,8 @@ public class DischargeSummariesService(
     IDischargeSummariesRepository repository,
     IHttpContextAccessor httpContextAccessor,
     IWebHostEnvironment environment,
-    PhiEncryptionHelper encryption)
+    PhiEncryptionHelper encryption,
+    PublicUrlHelper publicUrls)
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -182,7 +183,7 @@ public class DischargeSummariesService(
             row.HospitalName,
             row.HospitalAddress,
             row.HospitalPhone,
-            row.HospitalLogoUrl,
+            publicUrls.ToPublicUrl(row.HospitalLogoUrl),
             row.HospitalWebsite);
 
         return new DischargeSummaryResponse(
@@ -319,17 +320,9 @@ public class DischargeSummariesService(
 
     private byte[]? TryReadLogoBytes(string? logoUrl)
     {
-        if (string.IsNullOrWhiteSpace(logoUrl)) return null;
+        var relative = publicUrls.ToWebRootRelativePath(logoUrl);
+        if (string.IsNullOrWhiteSpace(relative)) return null;
 
-        var relative = logoUrl.Trim();
-        if (relative.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || relative.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-        {
-            try { relative = new Uri(relative).AbsolutePath; }
-            catch { return null; }
-        }
-
-        relative = relative.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
         var webRoot = environment.WebRootPath;
         if (string.IsNullOrWhiteSpace(webRoot)) return null;
 

@@ -4,6 +4,13 @@ public class AppSettings
 {
     public string SuperAdminUrl { get; set; } = "http://localhost:4200";
     public string TenantPortalUrl { get; set; } = "http://localhost:4201";
+
+    /// <summary>
+    /// Public origin that serves WebApi wwwroot (including /uploads).
+    /// Live example when the API is under a virtual folder: https://janakurocare.com/WebAPI
+    /// Leave empty locally to derive from the current request (Scheme + Host + PathBase).
+    /// </summary>
+    public string PublicBaseUrl { get; set; } = string.Empty;
 }
 
 public class DatabaseSettings

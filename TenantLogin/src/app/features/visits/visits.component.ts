@@ -23,6 +23,8 @@ interface VisitListItem {
   patientCode: string;
   patientFirstName: string;
   patientLastName: string;
+  departmentId?: string | null;
+  departmentName?: string | null;
   doctorFullName: string;
   aggregatedPaymentStatus: string;
   aggregatedPaymentStatusCode: number;

@@ -70,6 +70,10 @@ BEGIN
 
         d.lastname AS doctorlastname,
 
+        v.departmentid,
+
+        dep.name AS departmentname,
+
         ISNULL(v.totalchargeamount, 0) AS totaldue,
 
         ISNULL(col.totalcollected, 0) AS totalcollected,
@@ -90,6 +94,10 @@ BEGIN
        AND p.isdeleted = 0
 
     INNER JOIN dbo.users d ON d.userid = v.consultingdoctorid
+
+    LEFT JOIN dbo.departments dep
+        ON dep.departmentid = v.departmentid
+       AND dep.tenantid = v.tenantid
 
     OUTER APPLY (
 

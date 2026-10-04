@@ -180,6 +180,7 @@ public class VisitsService(
         var visitId = await repository.SaveAsync(
             tenantId,
             request.PatientId,
+            request.DepartmentId,
             request.ConsultingDoctorId,
             request.VisitType,
             string.IsNullOrWhiteSpace(request.Purpose) ? null : request.Purpose.Trim(),
@@ -293,6 +294,9 @@ public class VisitsService(
         if (request.PatientId == Guid.Empty)
             return Result<VisitResponse>.Fail(ErrorCode.Validation, "Patient is required.");
 
+        if (request.DepartmentId == Guid.Empty)
+            return Result<VisitResponse>.Fail(ErrorCode.Validation, "Department is required.");
+
         if (request.ConsultingDoctorId == Guid.Empty)
             return Result<VisitResponse>.Fail(ErrorCode.Validation, "Consulting doctor is required.");
 
@@ -381,6 +385,8 @@ public class VisitsService(
         row.PatientCode,
         row.PatientFirstName,
         row.PatientLastName,
+        row.DepartmentId,
+        row.DepartmentName,
         row.ConsultingDoctorId,
         $"{row.DoctorFirstName} {row.DoctorLastName}".Trim(),
         FormatAggregatedPaymentStatus(row.AggregatedPaymentStatus),
@@ -429,6 +435,8 @@ public class VisitsService(
             visit.PatientCode,
             visit.PatientFirstName,
             visit.PatientLastName,
+            visit.DepartmentId,
+            visit.DepartmentName,
             visit.ConsultingDoctorId,
             visit.DoctorFirstName,
             visit.DoctorLastName,

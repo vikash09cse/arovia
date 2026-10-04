@@ -5,6 +5,7 @@ using WebApi.Features.VisitAddons;
 
 public record CreateVisitRequest(
     Guid PatientId,
+    Guid DepartmentId,
     Guid ConsultingDoctorId,
     byte VisitType,
     string? Purpose,
@@ -83,6 +84,8 @@ public record VisitResponse(
     string PatientCode,
     string PatientFirstName,
     string PatientLastName,
+    Guid? DepartmentId,
+    string? DepartmentName,
     Guid ConsultingDoctorId,
     string DoctorFirstName,
     string DoctorLastName,
@@ -116,6 +119,8 @@ public record VisitListItem(
     string PatientCode,
     string PatientFirstName,
     string PatientLastName,
+    Guid? DepartmentId,
+    string? DepartmentName,
     Guid ConsultingDoctorId,
     string DoctorFullName,
     string AggregatedPaymentStatus,

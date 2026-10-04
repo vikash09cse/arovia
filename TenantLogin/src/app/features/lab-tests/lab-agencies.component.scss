@@ -1,5 +1,43 @@
 @import '../patients/patients.component.scss';
 
+.search-bar {
+  align-items: center;
+}
+
+.filter-type {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.2rem 0.65rem 0.2rem 0.75rem;
+  min-height: 2.5rem;
+}
+
+.filter-type span {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.filter-type select {
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.15rem;
+  min-width: 8.5rem;
+  outline: none;
+  box-shadow: none;
+}
+
+.filter-type:focus-within {
+  border-color: #99f6e4;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.search-bar .btn-primary {
+  min-height: 2.5rem;
+  font-weight: 600;
+}
+
 .drawer-backdrop {
   position: fixed;
   inset: 0;

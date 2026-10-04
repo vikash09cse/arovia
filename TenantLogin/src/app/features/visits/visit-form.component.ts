@@ -22,6 +22,11 @@ interface LookupItem {
   fullName: string;
 }
 
+interface DepartmentLookup {
+  id: string;
+  name: string;
+}
+
 interface FeePreview {
   proposedFeeStatus: string;
   proposedFeeStatusCode: number;
@@ -55,17 +60,20 @@ export class VisitFormComponent implements OnInit {
 
   readonly saving = signal(false);
   readonly error = signal('');
+  readonly departments = signal<DepartmentLookup[]>([]);
   readonly doctors = signal<LookupItem[]>([]);
   readonly collectors = signal<LookupItem[]>([]);
   readonly feePreview = signal<FeePreview | null>(null);
   readonly previewLoading = signal(false);
   readonly isSuperAdmin = signal(false);
   readonly activeAddons = signal<VisitAddonLookup[]>([]);
+  readonly loadingDoctors = signal(false);
 
   patientSearch = '';
   readonly selectedPatient = signal<PatientListItem | null>(null);
 
   visitType = 1;
+  departmentId = '';
   consultingDoctorId = '';
   purpose = '';
   visitNotes = '';
@@ -129,7 +137,7 @@ export class VisitFormComponent implements OnInit {
     if (user?.userId) {
       this.collectedByUserId = user.userId;
     }
-    this.loadDoctors();
+    this.loadDepartments();
     this.loadCollectors();
     this.loadActiveAddons();
 
@@ -142,16 +150,43 @@ export class VisitFormComponent implements OnInit {
     }
   }
 
-  loadDoctors() {
-    this.api.get<ApiResult<LookupItem[]>>('/doctors/active').subscribe({
+  loadDepartments() {
+    this.api.get<ApiResult<DepartmentLookup[]>>('/departments/active').subscribe({
+      next: res => {
+        const list = res.data ?? [];
+        this.departments.set(list);
+        if (list.length === 1) {
+          this.departmentId = list[0].id;
+          this.onDepartmentChange();
+        }
+      },
+      error: () => this.error.set('Unable to load departments.')
+    });
+  }
+
+  onDepartmentChange() {
+    this.consultingDoctorId = '';
+    this.doctors.set([]);
+    if (!this.departmentId) return;
+    this.loadDoctors(this.departmentId);
+  }
+
+  loadDoctors(departmentId: string) {
+    this.loadingDoctors.set(true);
+    const query = new URLSearchParams({ departmentId });
+    this.api.get<ApiResult<LookupItem[]>>(`/doctors/active?${query}`).subscribe({
       next: res => {
         const list = res.data ?? [];
         this.doctors.set(list);
         if (list.length === 1) {
           this.consultingDoctorId = list[0].id;
         }
+        this.loadingDoctors.set(false);
       },
-      error: () => this.error.set('Unable to load doctors.')
+      error: () => {
+        this.error.set('Unable to load doctors for this department.');
+        this.loadingDoctors.set(false);
+      }
     });
   }
 
@@ -335,6 +370,10 @@ export class VisitFormComponent implements OnInit {
       this.error.set('Please select a patient.');
       return;
     }
+    if (!this.departmentId) {
+      this.error.set('Please select a department.');
+      return;
+    }
     if (!this.consultingDoctorId) {
       this.error.set('Please select a consulting doctor.');
       return;
@@ -381,6 +420,7 @@ export class VisitFormComponent implements OnInit {
 
     const body: Record<string, unknown> = {
       patientId: patient.id,
+      departmentId: this.departmentId,
       consultingDoctorId: this.consultingDoctorId,
       visitType: this.visitType,
       purpose: this.purpose.trim() || null,

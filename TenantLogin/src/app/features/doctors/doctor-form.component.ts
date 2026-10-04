@@ -57,7 +57,10 @@ export class DoctorFormComponent implements OnInit {
 
   loadDepartments() {
     this.api.get<ApiResult<DepartmentLookup[]>>('/departments/active').subscribe({
-      next: res => this.departments.set(res.data ?? []),
+      next: res => {
+        this.departments.set(res.data ?? []);
+        this.ensureCurrentDepartmentOption(this.departmentId, null);
+      },
       error: () => this.error.set('Unable to load departments.')
     });
   }
@@ -76,6 +79,7 @@ export class DoctorFormComponent implements OnInit {
         this.lastName = d.lastName;
         this.email = d.email;
         this.departmentId = d.departmentId ?? '';
+        this.ensureCurrentDepartmentOption(d.departmentId, d.departmentName);
         this.loading.set(false);
       },
       error: err => {
@@ -83,6 +87,17 @@ export class DoctorFormComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  /** Keep inactive / missing department selectable so edit does not break. */
+  private ensureCurrentDepartmentOption(id: string | null | undefined, name: string | null | undefined) {
+    if (!id) return;
+    const list = this.departments();
+    if (list.some(d => d.id === id)) return;
+    this.departments.set([
+      ...list,
+      { id, name: name?.trim() || 'Current department (inactive)' }
+    ]);
   }
 
   submit() {

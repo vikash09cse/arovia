@@ -46,6 +46,8 @@ BEGIN
         d.userid AS consultingdoctorid,
         d.firstname AS doctorfirstname,
         d.lastname AS doctorlastname,
+        v.departmentid,
+        dep.name AS departmentname,
         CASE
             WHEN v.totalchargeamount IS NULL OR v.totalchargeamount = 0 THEN 0
             WHEN ISNULL(ct.totalcollected, 0) = 0 THEN 1
@@ -56,6 +58,9 @@ BEGIN
     FROM dbo.visits v
     INNER JOIN dbo.patients p ON p.patientid = v.patientid AND p.tenantid = v.tenantid AND p.isdeleted = 0
     INNER JOIN dbo.users d ON d.userid = v.consultingdoctorid
+    LEFT JOIN dbo.departments dep
+        ON dep.departmentid = v.departmentid
+       AND dep.tenantid = v.tenantid
     LEFT JOIN collection_totals ct ON ct.visitid = v.visitid
     WHERE v.tenantid = @tenantid
       AND v.isdeleted = 0

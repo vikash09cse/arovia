@@ -16,7 +16,7 @@
       <div class="visit-details-split">
         <div class="visit-details-main">
           <label class="patient-field">
-            Patient *
+            <span>Patient <span class="req">*</span></span>
             <div class="patient-search">
               <input
                 type="text"
@@ -26,7 +26,7 @@
                 [disabled]="!!selectedPatient()"
               />
               @if (!selectedPatient()) {
-                <button type="button" class="btn-secondary" (click)="searchPatients()">Find</button>
+                <button type="button" class="btn-primary" (click)="searchPatients()">Find</button>
               } @else {
                 <button type="button" class="btn-text" (click)="resetPatient()">Change</button>
               }
@@ -35,7 +35,7 @@
 
           <div class="visit-type-purpose-row">
             <label>
-              Visit type *
+              <span>Visit type <span class="req">*</span></span>
               <select name="visitType" [(ngModel)]="visitType" required>
                 <option [ngValue]="1">OPD</option>
                 <option [ngValue]="2">Follow-up</option>
@@ -94,20 +94,50 @@
 
         <div class="visit-details-side">
           <label>
-            Consulting doctor *
-            <select name="consultingDoctorId" [(ngModel)]="consultingDoctorId" required [disabled]="doctors().length === 0">
-              <option value="">Select doctor</option>
+            <span>Department <span class="req">*</span></span>
+            <select
+              name="departmentId"
+              [(ngModel)]="departmentId"
+              required
+              (ngModelChange)="onDepartmentChange()"
+            >
+              <option value="">Select department</option>
+              @for (d of departments(); track d.id) {
+                <option [value]="d.id">{{ d.name }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            <span>Consulting doctor <span class="req">*</span></span>
+            <select
+              name="consultingDoctorId"
+              [(ngModel)]="consultingDoctorId"
+              required
+              [disabled]="!departmentId || loadingDoctors() || doctors().length === 0"
+            >
+              <option value="">
+                @if (!departmentId) {
+                  Select department first
+                } @else if (loadingDoctors()) {
+                  Loading doctors…
+                } @else if (doctors().length === 0) {
+                  No doctors in this department
+                } @else {
+                  Select doctor
+                }
+              </option>
               @for (d of doctors(); track d.id) {
                 <option [value]="d.id">{{ d.fullName }}</option>
               }
             </select>
-            @if (doctors().length === 0) {
+            @if (departmentId && !loadingDoctors() && doctors().length === 0) {
               <span class="field-hint">
-                No active doctors yet.
+                No active doctors in this department.
                 @if (isSuperAdmin()) {
                   <a routerLink="/doctors/new">Add a doctor</a>
                 } @else {
-                  Ask your hospital administrator to add doctors.
+                  Ask your hospital administrator to assign doctors.
                 }
               </span>
             }

@@ -71,6 +71,8 @@ interface VisitDetail {
   patientCode: string;
   patientFirstName: string;
   patientLastName: string;
+  departmentId?: string | null;
+  departmentName?: string | null;
   doctorFullName: string;
   totalDue: number;
   totalCollected: number;

@@ -90,6 +90,7 @@
           <th>Date / time</th>
           <th>Patient</th>
           <th>Type</th>
+          <th>Department</th>
           <th>Doctor</th>
           <th>Consult</th>
           <th>Procedure</th>
@@ -108,6 +109,7 @@
               {{ v.patientFirstName }} {{ v.patientLastName }}
             </td>
             <td data-label="Type">{{ v.visitType }}</td>
+            <td data-label="Department">{{ v.departmentName || '—' }}</td>
             <td data-label="Doctor">{{ v.doctorFullName }}</td>
             <td data-label="Consult">{{ v.feeStatus === 'Free' ? 'Free' : formatMoney(v.feeAmount) }}</td>
             <td data-label="Procedure">{{ formatMoney(v.procedureChargeAmount) }}</td>

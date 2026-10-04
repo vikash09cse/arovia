@@ -17,6 +17,8 @@ public class VisitListRow
     public string PatientCode { get; set; } = string.Empty;
     public string PatientFirstName { get; set; } = string.Empty;
     public string PatientLastName { get; set; } = string.Empty;
+    public Guid? DepartmentId { get; set; }
+    public string? DepartmentName { get; set; }
     public Guid ConsultingDoctorId { get; set; }
     public string DoctorFirstName { get; set; } = string.Empty;
     public string DoctorLastName { get; set; } = string.Empty;
@@ -51,6 +53,8 @@ public class VisitDetailRow
     public string PatientCode { get; set; } = string.Empty;
     public string PatientFirstName { get; set; } = string.Empty;
     public string PatientLastName { get; set; } = string.Empty;
+    public Guid? DepartmentId { get; set; }
+    public string? DepartmentName { get; set; }
     public Guid ConsultingDoctorId { get; set; }
     public string DoctorFirstName { get; set; } = string.Empty;
     public string DoctorLastName { get; set; } = string.Empty;
@@ -130,6 +134,7 @@ public interface IVisitsRepository
     Task<Guid> SaveAsync(
         Guid tenantId,
         Guid patientId,
+        Guid departmentId,
         Guid consultingDoctorId,
         byte visitType,
         string? purpose,

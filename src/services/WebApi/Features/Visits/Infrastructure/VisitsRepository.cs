@@ -19,6 +19,7 @@ public class VisitsRepository(DbHelper dbHelper) : IVisitsRepository
     public async Task<Guid> SaveAsync(
         Guid tenantId,
         Guid patientId,
+        Guid departmentId,
         Guid consultingDoctorId,
         byte visitType,
         string? purpose,
@@ -47,6 +48,7 @@ public class VisitsRepository(DbHelper dbHelper) : IVisitsRepository
             {
                 tenantid = tenantId,
                 patientid = patientId,
+                departmentid = departmentId,
                 consultingdoctorid = consultingDoctorId,
                 visittype = visitType,
                 purpose,

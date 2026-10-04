@@ -12,12 +12,15 @@
 
 <form class="search-bar" (ngSubmit)="onSearch()">
   <input type="text" name="searchTerm" placeholder="Search by name, contact, phone, or email" [(ngModel)]="searchTerm" />
-  <select name="statusFilter" [(ngModel)]="statusFilter">
-    <option [ngValue]="null">All statuses</option>
-    <option [ngValue]="1">Active</option>
-    <option [ngValue]="2">Inactive</option>
-  </select>
-  <button type="submit" class="btn-secondary">Search</button>
+  <label class="filter-type">
+    <span>Status</span>
+    <select name="statusFilter" [(ngModel)]="statusFilter">
+      <option [ngValue]="null">All statuses</option>
+      <option [ngValue]="1">Active</option>
+      <option [ngValue]="2">Inactive</option>
+    </select>
+  </label>
+  <button type="submit" class="btn-primary">Search</button>
   @if (searchTerm || statusFilter != 1) {
     <button type="button" class="btn-text" (click)="clearSearch()">Clear</button>
   }

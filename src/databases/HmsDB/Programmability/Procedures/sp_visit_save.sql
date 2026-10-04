@@ -4,6 +4,8 @@ CREATE OR ALTER PROCEDURE dbo.sp_visit_save
 
     @patientid                  UNIQUEIDENTIFIER,
 
+    @departmentid              UNIQUEIDENTIFIER,
+
     @consultingdoctorid         UNIQUEIDENTIFIER,
 
     @visittype                  TINYINT,
@@ -67,23 +69,24 @@ BEGIN
 
 
     IF NOT EXISTS (
-
-        SELECT 1 FROM dbo.users u
-
-        WHERE u.userid = @consultingdoctorid
-
-          AND u.tenantid = @tenantid
-
-          AND u.usertype = 3
-
-          AND u.userstatus = 1
-
-          AND u.isdeleted = 0)
-
+        SELECT 1 FROM dbo.departments d
+        WHERE d.departmentid = @departmentid
+          AND d.tenantid = @tenantid
+          AND d.departmentstatus = 1)
     BEGIN
+        THROW 50400, 'Department not found or not active.', 1;
+    END
 
-        THROW 50400, 'Invalid consulting doctor.', 1;
-
+    IF NOT EXISTS (
+        SELECT 1 FROM dbo.users u
+        WHERE u.userid = @consultingdoctorid
+          AND u.tenantid = @tenantid
+          AND u.usertype = 3
+          AND u.userstatus = 1
+          AND u.isdeleted = 0
+          AND u.departmentid = @departmentid)
+    BEGIN
+        THROW 50400, 'Invalid consulting doctor for the selected department.', 1;
     END
 
 
@@ -473,7 +476,7 @@ BEGIN
 
         visitid, tenantid, patientid, visitcode, sequencenumber,
 
-        consultingdoctorid, visitdatetime, visittype, purpose, visitnotes, scheduledsurgerydate,
+        departmentid, consultingdoctorid, visitdatetime, visittype, purpose, visitnotes, scheduledsurgerydate,
 
         feestatus, feeamount, procedurechargeamount, totalchargeamount,
 
@@ -489,7 +492,7 @@ BEGIN
 
         @visitid, @tenantid, @patientid, @visitcode, @seq,
 
-        @consultingdoctorid, @visitUtc, @visittype, @purpose, @visitnotes, @scheduledsurgerydate,
+        @departmentid, @consultingdoctorid, @visitUtc, @visittype, @purpose, @visitnotes, @scheduledsurgerydate,
 
         @feestatus, @feeamount, @procedurechargeamount, @totalchargeamount,
 

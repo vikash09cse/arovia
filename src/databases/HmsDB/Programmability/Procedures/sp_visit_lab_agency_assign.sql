@@ -25,13 +25,6 @@ BEGIN
           AND la.agencystatus = 1)
         THROW 50400, 'Lab agency not found or not active.', 1;
 
-    IF EXISTS (
-        SELECT 1 FROM dbo.visit_lab_agencies vla
-        WHERE vla.tenantid = @tenantid
-          AND vla.visitid = @visitid
-          AND vla.labagencyid = @labagencyid)
-        THROW 50409, 'This lab agency is already assigned to the visit.', 1;
-
     DECLARE @visitlabagencyid UNIQUEIDENTIFIER = NEWID();
     DECLARE @assignedat DATETIME2 = SYSUTCDATETIME();
 

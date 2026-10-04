@@ -15,9 +15,6 @@ BEGIN
         CONSTRAINT FK_visit_lab_agencies_assignedby FOREIGN KEY (assignedby) REFERENCES dbo.users (userid)
     );
 
-    CREATE UNIQUE INDEX UQ_visit_lab_agencies_tenant_visit_agency
-        ON dbo.visit_lab_agencies (tenantid, visitid, labagencyid);
-
     CREATE INDEX IX_visit_lab_agencies_tenant_visit
         ON dbo.visit_lab_agencies (tenantid, visitid, assignedat DESC);
 END

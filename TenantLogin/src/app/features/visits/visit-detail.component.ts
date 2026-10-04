@@ -146,11 +146,6 @@ export class VisitDetailComponent implements OnInit {
     return (v?.balanceDue ?? 0) > 0;
   });
 
-  readonly availableLabAgencies = computed(() => {
-    const assigned = new Set((this.visit()?.labAgencies ?? []).map(a => a.labAgencyId));
-    return this.activeLabAgencies().filter(a => !assigned.has(a.id));
-  });
-
   ngOnInit() {
     const user = this.auth.currentUser();
     const role = user?.role;

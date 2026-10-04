@@ -144,7 +144,7 @@
       <section class="card panel-card">
         <div class="section-header">
           <h2>Lab agencies</h2>
-          @if (canManageLab() && v.visitStatusCode === 1 && availableLabAgencies().length > 0 && !showAssignLab()) {
+          @if (canManageLab() && v.visitStatusCode === 1 && activeLabAgencies().length > 0 && !showAssignLab()) {
             <button type="button" class="btn-primary" (click)="openAssignLab()">Assign Lab</button>
           }
         </div>
@@ -161,7 +161,7 @@
                 Lab agency *
                 <select name="selectedLabAgencyId" [(ngModel)]="selectedLabAgencyId" [disabled]="assigningLab()">
                   <option value="">Select agency</option>
-                  @for (a of availableLabAgencies(); track a.id) {
+                  @for (a of activeLabAgencies(); track a.id) {
                     <option [value]="a.id">{{ a.name }}</option>
                   }
                 </select>

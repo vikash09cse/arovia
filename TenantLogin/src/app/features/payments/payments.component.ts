@@ -9,10 +9,12 @@ type PaymentsTab = 'all' | 'open' | 'pending';
 
 interface PaymentListItem {
   id: string;
-  visitId: string;
-  visitCode: string;
-  visitDateTime: string;
-  visitStatusCode: number;
+  sourceTypeCode: number;
+  sourceType: string;
+  referenceId: string;
+  referenceCode: string;
+  referenceDateTime: string;
+  referenceStatusCode: number;
   patientCode: string;
   patientFirstName: string;
   patientLastName: string;

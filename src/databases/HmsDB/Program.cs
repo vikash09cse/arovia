@@ -21,6 +21,11 @@ static class Program
         "visits.sql",
         "receipt_sequences.sql",
         "payments.sql",
+        "departments.sql",
+        "admission_sequences.sql",
+        "admissions.sql",
+        "admission_charges.sql",
+        "admission_payments.sql",
         "global_document_templates.sql",
         "document_templates.sql"
     ];

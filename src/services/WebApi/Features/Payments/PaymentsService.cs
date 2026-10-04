@@ -262,17 +262,32 @@ public class PaymentsService(
             ? "Timings: 10:00 AM - 8:00 PM (Monday to Saturday)"
             : row.ReceiptFooterText!;
 
-        var feeLines = new List<ReceiptFeeLine>
+        List<ReceiptFeeLine> feeLines;
+        if (row.SourceType == (byte)PaymentSourceType.Admission)
         {
-            new("Consultation Fee", Money(row.ConsultationFee)),
-            new("Procedure Charges", Money(row.ProcedureCharge))
-        };
-        foreach (var addon in addons)
-        {
-            var name = string.IsNullOrWhiteSpace(addon.AddonName) ? "Add-on" : addon.AddonName.Trim();
-            feeLines.Add(new(name, Money(addon.Amount)));
+            var kindLabel = row.PaymentKind switch
+            {
+                (byte)AdmissionPaymentKind.Deposit => "IPD Deposit",
+                (byte)AdmissionPaymentKind.Partial => "IPD Partial payment",
+                (byte)AdmissionPaymentKind.Final => "IPD Final payment",
+                _ => "IPD Payment"
+            };
+            feeLines = [new(kindLabel, Money(row.AmountPaid))];
         }
-        feeLines.Add(new("Discount", Money(row.Discount)));
+        else
+        {
+            feeLines =
+            [
+                new("Consultation Fee", Money(row.ConsultationFee)),
+                new("Procedure Charges", Money(row.ProcedureCharge))
+            ];
+            foreach (var addon in addons)
+            {
+                var name = string.IsNullOrWhiteSpace(addon.AddonName) ? "Add-on" : addon.AddonName.Trim();
+                feeLines.Add(new(name, Money(addon.Amount)));
+            }
+            feeLines.Add(new("Discount", Money(row.Discount)));
+        }
 
         var feeRowsHtml = string.Concat(feeLines.Select((line, index) =>
             $"<tr><td class=\"sno\">{index + 1}</td><td>{System.Net.WebUtility.HtmlEncode(line.Label)}</td><td class=\"amt\">{line.Amount}</td></tr>"));
@@ -289,8 +304,14 @@ public class PaymentsService(
             ReceiptFooter = footer,
             ReceiptNumber = row.ReceiptNumber ?? "—",
             VisitCode = row.VisitCode,
-            VisitDate = row.VisitDateTime.ToString("dd-MM-yyyy"),
-            VisitTime = row.VisitDateTime.ToString("hh:mm tt"),
+            VisitDate = (row.SourceType == (byte)PaymentSourceType.Admission
+                    ? row.CollectionDateTime ?? row.VisitDateTime
+                    : row.VisitDateTime)
+                .ToString("dd-MM-yyyy"),
+            VisitTime = (row.SourceType == (byte)PaymentSourceType.Admission
+                    ? row.CollectionDateTime ?? row.VisitDateTime
+                    : row.VisitDateTime)
+                .ToString("hh:mm tt"),
             DoctorName = FormatDoctorName(row.DoctorFirstName, row.DoctorLastName),
             DoctorDesignation = row.DoctorDesignation ?? "",
             DoctorSpecialties = "Consultant Urologist",
@@ -483,17 +504,21 @@ public class PaymentsService(
         if (string.IsNullOrWhiteSpace(collectorName))
             collectorName = null;
 
+        var sourceType = row.SourceType == (byte)PaymentSourceType.Admission ? "IPD" : "Visit";
+
         return new PaymentListItemResponse(
             row.PaymentId,
-            row.VisitId,
-            row.VisitCode,
-            row.VisitDateTime,
-            row.VisitStatus,
+            row.SourceType,
+            sourceType,
+            row.ReferenceId,
+            row.ReferenceCode,
+            row.ReferenceDateTime,
+            row.ReferenceStatus,
             row.PatientCode,
             row.PatientFirstName,
             row.PatientLastName,
             $"{row.PatientFirstName} {row.PatientLastName}".Trim(),
-            row.AmountPaid ?? row.FeeAmount,
+            row.Amount,
             row.ReceiptNumber,
             row.CollectionDateTime,
             collectorName,

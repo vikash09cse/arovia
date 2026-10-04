@@ -214,12 +214,8 @@ export class VisitFormComponent implements OnInit {
     if (!term) return;
 
     const query = new URLSearchParams({ page: '1', pageSize: '10' });
-    const digits = term.replace(/\D/g, '');
-    if (digits.length >= 10) {
-      query.set('phone', digits);
-    } else {
-      query.set('patientCode', term);
-    }
+    if (this.isPhoneSearchTerm(term)) query.set('phone', term.replace(/\D/g, ''));
+    else query.set('patientCode', term);
 
     this.api.get<ApiResult<PatientList>>(`/patients?${query}`).subscribe({
       next: res => {
@@ -235,6 +231,16 @@ export class VisitFormComponent implements OnInit {
       },
       error: err => this.error.set(err.error?.message ?? 'Patient search failed.')
     });
+  }
+
+  /** Phone if digits-only (optional formatting); codes like 20260905-01 stay patientCode. */
+  private isPhoneSearchTerm(term: string): boolean {
+    const digits = term.replace(/\D/g, '');
+    if (digits.length < 10 || digits.length > 15) return false;
+    if (/[a-zA-Z]/.test(term)) return false;
+    // Patient codes: YYYYMMDD-NN (or similar prefix-seq with a hyphen)
+    if (/^\d{6,}-\d+$/.test(term)) return false;
+    return true;
   }
 
   selectPatient(p: PatientListItem) {

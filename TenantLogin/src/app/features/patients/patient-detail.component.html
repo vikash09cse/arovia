@@ -12,6 +12,7 @@
             {{ showUploadPanel() ? 'Cancel upload' : 'Upload document' }}
           </button>
           <a [routerLink]="['/visits/new']" [queryParams]="{ patientId: p.id }" class="btn-primary">Record visit</a>
+          <a [routerLink]="['/admissions/new']" [queryParams]="{ patientId: p.id }" class="btn-secondary">Admit patient</a>
         }
       </div>
     </div>

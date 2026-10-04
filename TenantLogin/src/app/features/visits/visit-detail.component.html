@@ -1,8 +1,19 @@
 <header class="page-header">
   <a routerLink="/visits" class="back-link">← Back to visits</a>
   @if (visit(); as v) {
-    <h1>{{ v.visitCode }}</h1>
-    <p class="subtitle">{{ v.visitDateTime | date: 'medium' }} · {{ v.visitType }}</p>
+    <div class="header-row">
+      <div>
+        <h1>{{ v.visitCode }}</h1>
+        <p class="subtitle">{{ v.visitDateTime | date: 'medium' }} · {{ v.visitType }}</p>
+      </div>
+      @if (canEdit() && v.visitStatusCode === 1) {
+        <a
+          [routerLink]="['/admissions/new']"
+          [queryParams]="{ patientId: v.patientId, fromVisitId: v.id }"
+          class="btn-secondary"
+        >Admit patient</a>
+      }
+    </div>
   }
 </header>
 

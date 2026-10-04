@@ -26,10 +26,12 @@ public record PaymentStatusResponse(
 
 public record PaymentListItemResponse(
     Guid Id,
-    Guid VisitId,
-    string VisitCode,
-    DateTime VisitDateTime,
-    byte VisitStatusCode,
+    byte SourceTypeCode,
+    string SourceType,
+    Guid ReferenceId,
+    string ReferenceCode,
+    DateTime ReferenceDateTime,
+    byte ReferenceStatusCode,
     string PatientCode,
     string PatientFirstName,
     string PatientLastName,

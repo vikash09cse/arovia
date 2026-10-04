@@ -134,13 +134,28 @@ public class PaymentsRepository(DbHelper dbHelper) : IPaymentsRepository
         CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
-        using var multi = await conn.QueryMultipleAsync(
+        using (var multi = await conn.QueryMultipleAsync(
             "dbo.sp_payment_get_receipt",
             new { tenantid = tenantId, paymentid = paymentId },
+            commandType: CommandType.StoredProcedure))
+        {
+            var visitReceipt = await multi.ReadFirstOrDefaultAsync<PaymentReceiptRow>();
+            var visitAddons = (await multi.ReadAsync<PaymentReceiptAddonRow>()).ToList();
+            if (visitReceipt != null)
+            {
+                if (visitReceipt.SourceType == 0)
+                    visitReceipt.SourceType = (byte)SharedKernel.Enums.PaymentSourceType.Visit;
+                return (visitReceipt, visitAddons);
+            }
+        }
+
+        using var admissionMulti = await conn.QueryMultipleAsync(
+            "dbo.sp_admission_payment_get_receipt",
+            new { tenantid = tenantId, admissionpaymentid = paymentId },
             commandType: CommandType.StoredProcedure);
 
-        var receipt = await multi.ReadFirstOrDefaultAsync<PaymentReceiptRow>();
-        var addons = (await multi.ReadAsync<PaymentReceiptAddonRow>()).ToList();
-        return (receipt, addons);
+        var admissionReceipt = await admissionMulti.ReadFirstOrDefaultAsync<PaymentReceiptRow>();
+        var admissionAddons = (await admissionMulti.ReadAsync<PaymentReceiptAddonRow>()).ToList();
+        return (admissionReceipt, admissionAddons);
     }
 }

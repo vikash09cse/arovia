@@ -21,15 +21,21 @@ BEGIN
         u.lastname,
         u.usertype AS role,
         u.userstatus AS status,
+        u.departmentid,
+        dep.name AS departmentname,
         u.lastloginat,
         u.createdat,
         COUNT(*) OVER() AS totalcount
     FROM dbo.users u
+    LEFT JOIN dbo.departments dep
+        ON dep.departmentid = u.departmentid
+       AND dep.tenantid = u.tenantid
     WHERE u.tenantid = @tenantid
       AND u.usertype = 3
       AND u.isdeleted = 0
       AND (@userstatus IS NULL OR u.userstatus = @userstatus)
-      AND (@like IS NULL OR u.email LIKE @like OR u.firstname LIKE @like OR u.lastname LIKE @like)
+      AND (@like IS NULL OR u.email LIKE @like OR u.firstname LIKE @like OR u.lastname LIKE @like
+           OR dep.name LIKE @like)
     ORDER BY u.lastname, u.firstname
     OFFSET @offset ROWS FETCH NEXT @pagesize ROWS ONLY;
 END

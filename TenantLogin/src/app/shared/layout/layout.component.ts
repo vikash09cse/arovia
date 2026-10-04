@@ -7,7 +7,7 @@ import { AuthService } from '../../core/auth/auth.service';
 interface NavItem {
   label: string;
   route: string;
-  icon: 'dashboard' | 'patients' | 'visits' | 'payments' | 'lab' | 'doctors' | 'users' | 'settings' | 'addons' | 'templates' | 'files';
+  icon: 'dashboard' | 'patients' | 'visits' | 'admissions' | 'payments' | 'lab' | 'doctors' | 'departments' | 'users' | 'settings' | 'addons' | 'templates' | 'files';
 }
 
 const SIDEBAR_COLLAPSED_KEY = 'tenant_sidebar_collapsed';
@@ -31,6 +31,7 @@ export class LayoutComponent {
     { label: 'Dashboard', route: '/dashboard', icon: 'dashboard' },
     { label: 'Patients', route: '/patients', icon: 'patients' },
     { label: 'Visits', route: '/visits', icon: 'visits' },
+    { label: 'Admissions', route: '/admissions', icon: 'admissions' },
     { label: 'Payments', route: '/payments', icon: 'payments' },
     { label: 'Lab Agencies', route: '/lab-tests', icon: 'lab' },
     { label: 'Lab Report', route: '/lab-report', icon: 'lab' },
@@ -41,6 +42,7 @@ export class LayoutComponent {
     if (this.user()?.role !== 'TenantSuperAdmin') return [];
 
     return [
+      { label: 'Departments', route: '/departments', icon: 'departments' },
       { label: 'Doctors', route: '/doctors', icon: 'doctors' },
       { label: 'Visit Add-ons', route: '/visit-addons', icon: 'addons' },
       { label: 'Users', route: '/users', icon: 'users' },

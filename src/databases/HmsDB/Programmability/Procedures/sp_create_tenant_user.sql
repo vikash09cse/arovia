@@ -6,6 +6,7 @@ CREATE OR ALTER PROCEDURE dbo.sp_create_tenant_user
     @firstname    NVARCHAR(100),
     @lastname     NVARCHAR(100),
     @designation  NVARCHAR(100) = NULL,
+    @departmentid UNIQUEIDENTIFIER = NULL,
     @usertype     TINYINT,
     @userstatus   TINYINT,
     @createdby    UNIQUEIDENTIFIER
@@ -13,10 +14,21 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    IF @departmentid IS NOT NULL
+       AND NOT EXISTS (
+           SELECT 1 FROM dbo.departments d
+           WHERE d.departmentid = @departmentid
+             AND d.tenantid = @tenantid
+             AND d.departmentstatus = 1)
+        THROW 50400, 'Department not found or not active.', 1;
+
+    IF @usertype = 3 AND @departmentid IS NULL
+        THROW 50400, 'Department is required for doctors.', 1;
+
     INSERT INTO dbo.users (
-        userid, tenantid, email, passwordhash, firstname, lastname, designation, usertype, userstatus, createdby)
+        userid, tenantid, email, passwordhash, firstname, lastname, designation, departmentid, usertype, userstatus, createdby)
     VALUES (
-        @userid, @tenantid, @email, @passwordhash, @firstname, @lastname, @designation, @usertype, @userstatus, @createdby);
+        @userid, @tenantid, @email, @passwordhash, @firstname, @lastname, @designation, @departmentid, @usertype, @userstatus, @createdby);
 
     SELECT @userid AS userid;
 END

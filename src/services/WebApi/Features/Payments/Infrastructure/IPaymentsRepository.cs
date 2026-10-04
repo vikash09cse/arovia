@@ -11,19 +11,17 @@ public class PaymentStatusRow
 
 public class PaymentListRow
 {
+    public byte SourceType { get; set; }
     public Guid PaymentId { get; set; }
-    public Guid VisitId { get; set; }
-    public string VisitCode { get; set; } = string.Empty;
-    public DateTime VisitDateTime { get; set; }
-    public byte VisitStatus { get; set; }
+    public Guid ReferenceId { get; set; }
+    public string ReferenceCode { get; set; } = string.Empty;
+    public DateTime ReferenceDateTime { get; set; }
+    public byte ReferenceStatus { get; set; }
     public Guid PatientId { get; set; }
     public string PatientCode { get; set; } = string.Empty;
     public string PatientFirstName { get; set; } = string.Empty;
     public string PatientLastName { get; set; } = string.Empty;
-    public byte PaymentLineType { get; set; }
-    public decimal FeeAmount { get; set; }
-    public byte PaymentStatus { get; set; }
-    public decimal? AmountPaid { get; set; }
+    public decimal Amount { get; set; }
     public DateTime? CollectionDateTime { get; set; }
     public string? ReceiptNumber { get; set; }
     public string? Notes { get; set; }
@@ -72,6 +70,8 @@ public class PaymentReceiptRow
     public string? ReceiptNumber { get; set; }
     public decimal? AmountPaid { get; set; }
     public byte? PaymentMethod { get; set; }
+    public byte? PaymentKind { get; set; }
+    public byte SourceType { get; set; }
     public DateTime? CollectionDateTime { get; set; }
     public string? Notes { get; set; }
     public string? CollectorFirstName { get; set; }

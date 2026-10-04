@@ -114,6 +114,42 @@ public enum VisitAddonStatus : byte
     Inactive = 2
 }
 
+public enum DepartmentStatus : byte
+{
+    Active = 1,
+    Inactive = 2
+}
+
+public enum AdmissionStatus : byte
+{
+    Admitted = 1,
+    Discharged = 2,
+    Cancelled = 3
+}
+
+public enum AdmissionChargeCategory : byte
+{
+    Room = 1,
+    Procedure = 2,
+    Lab = 3,
+    Pharmacy = 4,
+    Doctor = 5,
+    Other = 6
+}
+
+public enum AdmissionPaymentKind : byte
+{
+    Deposit = 1,
+    Partial = 2,
+    Final = 3
+}
+
+public enum PaymentSourceType : byte
+{
+    Visit = 1,
+    Admission = 2
+}
+
 public enum DocumentTemplateType : byte
 {
     Receipt = 1,

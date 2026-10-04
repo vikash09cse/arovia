@@ -49,6 +49,7 @@
       <thead>
         <tr>
           <th>Name</th>
+          <th>Department</th>
           <th>Email</th>
           <th>Status</th>
           <th>Last login</th>
@@ -61,6 +62,7 @@
         @for (d of doctors(); track d.id) {
           <tr>
             <td data-label="Name">{{ d.fullName }}</td>
+            <td data-label="Department">{{ d.departmentName || '—' }}</td>
             <td data-label="Email">{{ d.email }}</td>
             <td data-label="Status">
               <span class="badge" [class.active]="d.statusCode === 1">{{ d.status }}</span>

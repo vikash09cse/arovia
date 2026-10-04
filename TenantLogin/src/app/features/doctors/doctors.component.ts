@@ -12,6 +12,8 @@ interface DoctorListItem {
   firstName: string;
   lastName: string;
   fullName: string;
+  departmentId?: string | null;
+  departmentName?: string | null;
   status: string;
   statusCode: number;
   lastLoginAt?: string | null;

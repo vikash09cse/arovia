@@ -6,7 +6,16 @@
   font-size: 0.9rem;
 }
 
-input:disabled {
+.req {
+  color: #dc2626;
+}
+
+.grid .full {
+  grid-column: 1 / -1;
+}
+
+input:disabled,
+select:disabled {
   background: #f8fafc;
   color: #64748b;
 }

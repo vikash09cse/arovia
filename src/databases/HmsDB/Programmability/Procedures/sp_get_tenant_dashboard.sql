@@ -100,6 +100,48 @@ BEGIN
               AND v.visitstatus = 1
               AND CAST((COALESCE(p.collectiondatetime, p.createdat) AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) >= @filterFrom
               AND CAST((COALESCE(p.collectiondatetime, p.createdat) AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) <= @filterTo
+        ) AS todayopdrevenue,
+
+        (
+            SELECT ISNULL(SUM(ap.amount), 0)
+            FROM dbo.admission_payments ap
+            INNER JOIN dbo.patients pt
+                ON pt.patientid = ap.patientid
+               AND pt.tenantid = ap.tenantid
+               AND pt.isdeleted = 0
+            WHERE ap.tenantid = @tenantid
+              AND CAST((ap.collectiondatetime AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) >= @filterFrom
+              AND CAST((ap.collectiondatetime AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) <= @filterTo
+        ) AS todayipdrevenue,
+
+        (
+            SELECT ISNULL(SUM(p.amountpaid), 0)
+            FROM dbo.payments p
+            INNER JOIN dbo.visits v
+                ON v.visitid = p.visitid
+               AND v.tenantid = p.tenantid
+            INNER JOIN dbo.patients pt
+                ON pt.patientid = v.patientid
+               AND pt.tenantid = v.tenantid
+               AND pt.isdeleted = 0
+            WHERE p.tenantid = @tenantid
+              AND p.paymentstatus = 2
+              AND v.isdeleted = 0
+              AND v.visitstatus = 1
+              AND CAST((COALESCE(p.collectiondatetime, p.createdat) AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) >= @filterFrom
+              AND CAST((COALESCE(p.collectiondatetime, p.createdat) AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) <= @filterTo
+        )
+        +
+        (
+            SELECT ISNULL(SUM(ap.amount), 0)
+            FROM dbo.admission_payments ap
+            INNER JOIN dbo.patients pt
+                ON pt.patientid = ap.patientid
+               AND pt.tenantid = ap.tenantid
+               AND pt.isdeleted = 0
+            WHERE ap.tenantid = @tenantid
+              AND CAST((ap.collectiondatetime AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) >= @filterFrom
+              AND CAST((ap.collectiondatetime AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) <= @filterTo
         ) AS todayrevenue,
 
         (
@@ -118,6 +160,48 @@ BEGIN
               AND v.visitstatus = 1
               AND CAST((COALESCE(p.collectiondatetime, p.createdat) AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) >= @monthStart
               AND CAST((COALESCE(p.collectiondatetime, p.createdat) AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) <= @today
+        ) AS currentmonthopdrevenue,
+
+        (
+            SELECT ISNULL(SUM(ap.amount), 0)
+            FROM dbo.admission_payments ap
+            INNER JOIN dbo.patients pt
+                ON pt.patientid = ap.patientid
+               AND pt.tenantid = ap.tenantid
+               AND pt.isdeleted = 0
+            WHERE ap.tenantid = @tenantid
+              AND CAST((ap.collectiondatetime AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) >= @monthStart
+              AND CAST((ap.collectiondatetime AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) <= @today
+        ) AS currentmonthipdrevenue,
+
+        (
+            SELECT ISNULL(SUM(p.amountpaid), 0)
+            FROM dbo.payments p
+            INNER JOIN dbo.visits v
+                ON v.visitid = p.visitid
+               AND v.tenantid = p.tenantid
+            INNER JOIN dbo.patients pt
+                ON pt.patientid = v.patientid
+               AND pt.tenantid = v.tenantid
+               AND pt.isdeleted = 0
+            WHERE p.tenantid = @tenantid
+              AND p.paymentstatus = 2
+              AND v.isdeleted = 0
+              AND v.visitstatus = 1
+              AND CAST((COALESCE(p.collectiondatetime, p.createdat) AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) >= @monthStart
+              AND CAST((COALESCE(p.collectiondatetime, p.createdat) AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) <= @today
+        )
+        +
+        (
+            SELECT ISNULL(SUM(ap.amount), 0)
+            FROM dbo.admission_payments ap
+            INNER JOIN dbo.patients pt
+                ON pt.patientid = ap.patientid
+               AND pt.tenantid = ap.tenantid
+               AND pt.isdeleted = 0
+            WHERE ap.tenantid = @tenantid
+              AND CAST((ap.collectiondatetime AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) >= @monthStart
+              AND CAST((ap.collectiondatetime AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE) <= @today
         ) AS currentmonthrevenue,
 
         -- Pending = unpaid balance on Active visits for non-deleted patients only

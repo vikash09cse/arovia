@@ -1,0 +1,165 @@
+<a routerLink="/admissions" class="back-link">← Back to admissions</a>
+
+<header class="page-header">
+  <h1>Admit patient</h1>
+  <p class="subtitle">Create an IPD stay. Optional deposit and room estimate can be recorded now.</p>
+</header>
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+@if (fromVisitId) {
+  <p class="hint">Linked from visit. Source visit will be saved on the admission.</p>
+}
+
+<form class="form-card admit-form" (ngSubmit)="submit()">
+  <section>
+    <h2>Admission details</h2>
+
+    <div class="form-grid">
+      <label class="full">
+        <span>Patient <span class="req">*</span></span>
+        @if (selectedPatient(); as p) {
+          <div class="selected-patient">
+            <strong>{{ p.firstName }} {{ p.lastName }}</strong>
+            <span>{{ p.patientCode }}</span>
+            <button type="button" class="btn-text" (click)="clearPatient()">Change</button>
+          </div>
+        } @else {
+          <div class="patient-search">
+            <input
+              type="text"
+              name="patientSearch"
+              [(ngModel)]="patientSearch"
+              placeholder="Search UHID or phone"
+              [disabled]="saving()"
+            />
+            <button type="button" class="btn-secondary" (click)="searchPatients()" [disabled]="saving()">Find</button>
+          </div>
+        }
+      </label>
+
+      <label>
+        <span>Department <span class="req">*</span></span>
+        <select
+          name="departmentId"
+          [(ngModel)]="departmentId"
+          required
+          [disabled]="saving()"
+          (ngModelChange)="onDepartmentChange()"
+        >
+          <option value="">Select department</option>
+          @for (d of departments(); track d.id) {
+            <option [value]="d.id">{{ d.name }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        <span>Attending doctor <span class="req">*</span></span>
+        <select
+          name="attendingDoctorId"
+          [(ngModel)]="attendingDoctorId"
+          required
+          [disabled]="saving() || !departmentId || loadingDoctors()"
+        >
+          <option value="">
+            @if (!departmentId) {
+              Select department first
+            } @else if (loadingDoctors()) {
+              Loading doctors…
+            } @else if (doctors().length === 0) {
+              No doctors in this department
+            } @else {
+              Select doctor
+            }
+          </option>
+          @for (d of doctors(); track d.id) {
+            <option [value]="d.id">{{ d.fullName }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        <span>Room class <span class="req">*</span></span>
+        <select name="roomClass" [(ngModel)]="roomClass" required [disabled]="saving()">
+          <option value="General">General</option>
+          <option value="Semi-private">Semi-private</option>
+          <option value="Private">Private</option>
+          <option value="ICU">ICU</option>
+        </select>
+      </label>
+
+      <label>
+        <span>Ward <span class="req">*</span></span>
+        <input type="text" name="ward" [(ngModel)]="ward" maxlength="100" required [disabled]="saving()" />
+      </label>
+
+      <label>
+        Bed
+        <input
+          type="text"
+          name="bed"
+          [(ngModel)]="bed"
+          maxlength="50"
+          placeholder="e.g. B-12"
+          [disabled]="saving()"
+        />
+      </label>
+
+      <label>
+        Estimated amount
+        <input
+          type="number"
+          name="estimatedAmount"
+          [(ngModel)]="estimatedAmount"
+          min="0"
+          step="0.01"
+          placeholder="Creates initial Room charge if set"
+          [disabled]="saving()"
+        />
+      </label>
+
+      <label class="full">
+        Notes
+        <textarea name="notes" [(ngModel)]="notes" rows="3" maxlength="1000" [disabled]="saving()"></textarea>
+      </label>
+    </div>
+  </section>
+
+  <section>
+    <h2>Initial deposit (optional)</h2>
+    <div class="form-grid">
+      <label>
+        Amount
+        <input type="number" name="depositAmount" [(ngModel)]="depositAmount" min="0" step="0.01" [disabled]="saving()" />
+      </label>
+      <label>
+        Method
+        <select name="paymentMethod" [(ngModel)]="paymentMethod" [disabled]="saving()">
+          <option [ngValue]="1">Cash</option>
+          <option [ngValue]="2">UPI</option>
+          <option [ngValue]="3">Bank Account</option>
+          <option [ngValue]="4">Cheque</option>
+        </select>
+      </label>
+      <label class="full">
+        Collected by
+        <select name="collectedByUserId" [(ngModel)]="collectedByUserId" [disabled]="saving()">
+          <option value="">Select collector</option>
+          @for (c of collectors(); track c.id) {
+            <option [value]="c.id">{{ c.fullName }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <div class="form-actions">
+    <a routerLink="/admissions" class="btn-secondary">Cancel</a>
+    <button type="submit" class="btn-primary" [disabled]="saving()">
+      {{ saving() ? 'Admitting…' : 'Admit patient' }}
+    </button>
+  </div>
+</form>

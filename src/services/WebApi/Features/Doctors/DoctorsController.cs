@@ -22,8 +22,8 @@ public class DoctorsController(DoctorsService service) : ControllerBase
 
     [HttpGet("active")]
     [Authorize(Roles = $"{RoleNames.TenantSuperAdmin},{RoleNames.Staff},{RoleNames.Doctor}")]
-    public async Task<IActionResult> GetActive(CancellationToken ct) =>
-        (await service.GetActiveDoctorsAsync(ct)).ToActionResult();
+    public async Task<IActionResult> GetActive([FromQuery] Guid? departmentId = null, CancellationToken ct = default) =>
+        (await service.GetActiveDoctorsAsync(departmentId, ct)).ToActionResult();
 
     [HttpGet("{id:guid}")]
     [Authorize(Roles = RoleNames.TenantSuperAdmin)]

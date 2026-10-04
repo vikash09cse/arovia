@@ -9,15 +9,21 @@
 
 <div class="filter-tabs">
   <button type="button" class="tab" [class.active]="activeTab === 'all'" (click)="setTab('all')">All collections</button>
-  <button type="button" class="tab" [class.active]="activeTab === 'open'" (click)="setTab('open')">Open visits</button>
+  <button type="button" class="tab" [class.active]="activeTab === 'open'" (click)="setTab('open')">Open balances</button>
   <button type="button" class="tab" [class.active]="activeTab === 'pending'" (click)="setTab('pending')">Pending payments</button>
 </div>
 
 <form class="search-bar" (ngSubmit)="onSearch()">
   <input type="text" name="searchTerm" placeholder="Search by patient code" [(ngModel)]="searchTerm" />
-  <input type="date" name="dateFrom" [(ngModel)]="dateFrom" title="From date" />
-  <input type="date" name="dateTo" [(ngModel)]="dateTo" title="To date" />
-  <button type="submit" class="btn-secondary">Search</button>
+  <label class="date-filter">
+    <span>From</span>
+    <input type="date" name="dateFrom" [(ngModel)]="dateFrom" />
+  </label>
+  <label class="date-filter">
+    <span>To</span>
+    <input type="date" name="dateTo" [(ngModel)]="dateTo" />
+  </label>
+  <button type="submit" class="btn-primary">Search</button>
   @if (searchTerm || dateFrom || dateTo || activeTab !== 'all') {
     <button type="button" class="btn-text" (click)="clearFilters()">Clear</button>
   }
@@ -100,11 +106,12 @@
     <table>
       <thead>
         <tr>
+          <th>Source</th>
           <th>Receipt</th>
-          <th>Visit</th>
+          <th>Reference</th>
           <th>Patient</th>
           <th>Amount</th>
-          <th>Visit balance</th>
+          <th>Balance</th>
           <th>Collected by</th>
           <th>Collected on</th>
           <th class="actions-col">Actions</th>
@@ -113,58 +120,77 @@
       <tbody>
         @for (p of payments(); track p.id) {
           <tr>
+            <td data-label="Source">
+              <span class="badge" [class.active]="p.sourceTypeCode === 1" [class.partial]="p.sourceTypeCode === 2">{{ p.sourceType }}</span>
+            </td>
             <td data-label="Receipt">{{ p.receiptNumber ?? '—' }}</td>
-            <td data-label="Visit">
-              <span class="visit-code">{{ p.visitCode }}</span>
-              <span class="visit-date">{{ formatDateTime(p.visitDateTime) }}</span>
+            <td data-label="Reference">
+              <span class="visit-code">{{ p.referenceCode }}</span>
+              <span class="visit-date">{{ formatDateTime(p.referenceDateTime) }}</span>
             </td>
             <td data-label="Patient">
               <span class="patient-code">{{ p.patientCode }}</span>
               {{ p.patientFullName }}
             </td>
             <td data-label="Amount">{{ formatMoney(p.amount) }}</td>
-            <td data-label="Visit balance">
+            <td data-label="Balance">
               <span class="balance-line">{{ formatMoney(p.balanceDue) }} due</span>
               <span class="balance-sub">{{ formatMoney(p.totalCollected) }} / {{ formatMoney(p.totalDue) }}</span>
             </td>
             <td data-label="Collected by">{{ p.collectedByName ?? '—' }}</td>
             <td data-label="Collected on">{{ formatDateTime(p.collectionDateTime) }}</td>
             <td data-label="Actions" class="actions-cell">
-              <a
-                [routerLink]="['/visits', p.visitId]"
-                class="icon-btn icon-btn-view"
-                title="View visit"
-                aria-label="View visit"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-              </a>
-              <button
-                type="button"
-                class="icon-btn"
-                title="Print receipt"
-                aria-label="Print receipt"
-                [disabled]="receiptBusyId() === p.id"
-                (click)="printReceipt(p.id)"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
-                </svg>
-              </button>
-              <button
-                type="button"
-                class="icon-btn"
-                title="Download PDF"
-                aria-label="Download PDF"
-                [disabled]="receiptBusyId() === p.id"
-                (click)="downloadReceiptPdf(p.id)"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-              </button>
+              @if (p.sourceTypeCode === 2) {
+                <a
+                  [routerLink]="['/admissions', p.referenceId]"
+                  class="icon-btn icon-btn-view"
+                  title="View admission"
+                  aria-label="View admission"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </a>
+              } @else {
+                <a
+                  [routerLink]="['/visits', p.referenceId]"
+                  class="icon-btn icon-btn-view"
+                  title="View visit"
+                  aria-label="View visit"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </a>
+              }
+              @if (p.receiptNumber) {
+                <button
+                  type="button"
+                  class="icon-btn"
+                  title="Print receipt"
+                  aria-label="Print receipt"
+                  [disabled]="receiptBusyId() === p.id"
+                  (click)="printReceipt(p.id)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn"
+                  title="Download PDF"
+                  aria-label="Download PDF"
+                  [disabled]="receiptBusyId() === p.id"
+                  (click)="downloadReceiptPdf(p.id)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                </button>
+              }
             </td>
           </tr>
         }

@@ -4,11 +4,13 @@ public record CreateDoctorRequest(
     string Email,
     string FirstName,
     string LastName,
+    Guid DepartmentId,
     string? TemporaryPassword);
 
 public record UpdateDoctorRequest(
     string FirstName,
-    string LastName);
+    string LastName,
+    Guid DepartmentId);
 
 public record DoctorResponse(
     Guid Id,
@@ -16,6 +18,8 @@ public record DoctorResponse(
     string FirstName,
     string LastName,
     string FullName,
+    Guid? DepartmentId,
+    string? DepartmentName,
     string Status,
     byte StatusCode,
     DateTime? LastLoginAt,
@@ -31,4 +35,6 @@ public record DoctorLookupItem(
     Guid Id,
     string FirstName,
     string LastName,
-    string FullName);
+    string FullName,
+    Guid? DepartmentId,
+    string? DepartmentName);

@@ -1,0 +1,102 @@
+<header class="page-header">
+  <div class="header-row">
+    <div>
+      <h1>Admissions</h1>
+      <p class="subtitle">IPD stays, room charges, deposits, and discharge</p>
+    </div>
+    @if (canEdit()) {
+      <a routerLink="/admissions/new" class="btn-primary">Admit patient</a>
+    }
+  </div>
+</header>
+
+<form class="search-bar" (ngSubmit)="onStatusChange()">
+  <label class="filter-type">
+    <span>Status</span>
+    <select name="statusFilter" [(ngModel)]="statusFilter" (ngModelChange)="onStatusChange()">
+      <option value="1">Admitted</option>
+      <option value="2">Discharged</option>
+      <option value="3">Cancelled</option>
+      <option value="">All</option>
+    </select>
+  </label>
+</form>
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="status">Loading admissions…</p>
+} @else if (items().length === 0) {
+  <div class="empty">
+    @if (statusFilter === '1') {
+      No patients currently admitted.
+    } @else if (statusFilter) {
+      No admissions for this status.
+    } @else {
+      No admissions recorded yet.
+    }
+  </div>
+} @else {
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Admission</th>
+          <th>Admitted</th>
+          <th>Patient</th>
+          <th>Department</th>
+          <th>Doctor</th>
+          <th>Ward / bed</th>
+          <th>Status</th>
+          <th class="actions-col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (a of items(); track a.id) {
+          <tr>
+            <td data-label="Admission"><code>{{ a.admissionCode }}</code></td>
+            <td data-label="Admitted">{{ a.admittedAt | date: 'dd MMM yyyy, HH:mm' }}</td>
+            <td data-label="Patient">
+              {{ a.patientFullName }}
+              <span class="patient-code">{{ a.patientCode }}</span>
+            </td>
+            <td data-label="Department">{{ a.departmentName }}</td>
+            <td data-label="Doctor">{{ a.doctorName }}</td>
+            <td data-label="Ward / bed">
+              {{ a.ward }} / {{ a.bed || '—' }}
+              <span class="patient-code">{{ a.roomClass }}</span>
+            </td>
+            <td data-label="Status">
+              <span class="badge" [class.active]="a.statusCode === 1" [class.none]="a.statusCode !== 1">{{ a.status }}</span>
+            </td>
+            <td class="actions-cell" data-label="Actions">
+              <div class="row-actions">
+                <a
+                  [routerLink]="['/admissions', a.id]"
+                  class="icon-btn icon-btn-view"
+                  title="View admission"
+                  aria-label="View admission"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </a>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (totalCount() > pageSize) {
+    <div class="pager">
+      <button type="button" class="btn-secondary" (click)="prevPage()" [disabled]="page() <= 1">Previous</button>
+      <span>Page {{ page() }} of {{ Math.ceil(totalCount() / pageSize) }}</span>
+      <button type="button" class="btn-secondary" (click)="nextPage()" [disabled]="page() * pageSize >= totalCount()">Next</button>
+    </div>
+  }
+}

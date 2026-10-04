@@ -1,0 +1,287 @@
+<a routerLink="/admissions" class="back-link">← Back to admissions</a>
+
+@if (loading()) {
+  <p class="status">Loading admission…</p>
+} @else {
+  @if (admission(); as a) {
+    <header class="page-header">
+      <div class="header-row">
+        <div>
+          <h1>{{ a.admissionCode }}</h1>
+          <p class="subtitle">
+            <a [routerLink]="['/patients', a.patientId]">{{ a.patientFullName }}</a>
+            · {{ a.patientCode }}
+            · {{ a.departmentName }}
+            · {{ a.doctorName }}
+          </p>
+        </div>
+        <span class="badge" [class.active]="a.statusCode === 1" [class.none]="a.statusCode !== 1">{{ a.status }}</span>
+      </div>
+    </header>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+    @if (message()) {
+      <p class="success">{{ message() }}</p>
+    }
+
+    <div class="detail-layout">
+      <div class="main-col">
+        <section class="card panel-card">
+          <h2>Stay details</h2>
+          <dl class="meta-grid">
+            <div><dt>Admitted</dt><dd>{{ a.admittedAt | date: 'dd MMM yyyy, HH:mm' }}</dd></div>
+            @if (a.dischargedAt) {
+              <div><dt>Discharged</dt><dd>{{ a.dischargedAt | date: 'dd MMM yyyy, HH:mm' }}</dd></div>
+            }
+            <div><dt>Department</dt><dd>{{ a.departmentName }}</dd></div>
+            <div><dt>Ward / bed</dt><dd>{{ a.ward }} / {{ a.bed || '—' }}</dd></div>
+            <div><dt>Room class</dt><dd>{{ a.roomClass }}</dd></div>
+            @if (a.fromVisitId) {
+              <div>
+                <dt>From visit</dt>
+                <dd><a [routerLink]="['/visits', a.fromVisitId]">{{ a.fromVisitCode || 'Open visit' }}</a></dd>
+              </div>
+            }
+            @if (a.notes) {
+              <div class="full"><dt>Notes</dt><dd>{{ a.notes }}</dd></div>
+            }
+          </dl>
+        </section>
+
+        <section class="card panel-card">
+          <div class="section-header">
+            <h2>Charges</h2>
+            @if (canManage() && a.statusCode === 1 && !showCharge) {
+              <button type="button" class="btn-primary" (click)="openCharge()">Add charge</button>
+            }
+          </div>
+
+          @if (showCharge) {
+            <div class="inline-form">
+              <label>
+                Category
+                <select name="chargeCategory" [(ngModel)]="chargeCategory" [disabled]="busy()">
+                  @for (c of chargeCategories; track c.code) {
+                    <option [ngValue]="c.code">{{ c.label }}</option>
+                  }
+                </select>
+              </label>
+              <label>
+                Description
+                <input type="text" name="chargeDescription" [(ngModel)]="chargeDescription" maxlength="250" [disabled]="busy()" />
+              </label>
+              <label>
+                Amount
+                <input type="number" name="chargeAmount" [(ngModel)]="chargeAmount" min="0" step="0.01" [disabled]="busy()" />
+              </label>
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" (click)="showCharge = false" [disabled]="busy()">Cancel</button>
+                <button type="button" class="btn-primary" (click)="addCharge()" [disabled]="busy()">Save charge</button>
+              </div>
+            </div>
+          }
+
+          @if (a.charges.length === 0) {
+            <p class="status">No charges yet.</p>
+          } @else {
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>When</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th class="num">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (c of a.charges; track c.id) {
+                    <tr>
+                      <td>{{ c.chargedOn | date: 'dd MMM yyyy' }}</td>
+                      <td>{{ c.chargeCategory }}</td>
+                      <td>{{ c.description }}</td>
+                      <td class="num">{{ c.amount | number: '1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+
+        <section class="card panel-card">
+          <div class="section-header">
+            <h2>Payments</h2>
+            @if (canManage() && a.statusCode === 1 && !showPay) {
+              <button type="button" class="btn-primary" (click)="openPay()">Add payment</button>
+            }
+          </div>
+
+          @if (showPay) {
+            <div class="inline-form">
+              <label>
+                Amount
+                <input type="number" name="payAmount" [(ngModel)]="payAmount" min="0.01" step="0.01" [disabled]="busy()" />
+              </label>
+              <label>
+                Kind
+                <select name="payKind" [(ngModel)]="payKind" [disabled]="busy()">
+                  <option [ngValue]="1">Deposit</option>
+                  <option [ngValue]="2">Partial</option>
+                  <option [ngValue]="3">Final</option>
+                </select>
+              </label>
+              <label>
+                Method
+                <select name="payMethod" [(ngModel)]="payMethod" [disabled]="busy()">
+                  <option [ngValue]="1">Cash</option>
+                  <option [ngValue]="2">UPI</option>
+                  <option [ngValue]="3">Bank Account</option>
+                  <option [ngValue]="4">Cheque</option>
+                </select>
+              </label>
+              <label>
+                Collected by
+                <select name="payCollectorId" [(ngModel)]="payCollectorId" [disabled]="busy()">
+                  <option value="">Select</option>
+                  @for (c of collectors(); track c.id) {
+                    <option [value]="c.id">{{ c.fullName }}</option>
+                  }
+                </select>
+              </label>
+              <label class="full">
+                Notes
+                <input type="text" name="payNotes" [(ngModel)]="payNotes" maxlength="500" [disabled]="busy()" />
+              </label>
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" (click)="collectFullBalance()" [disabled]="busy() || a.balanceDue <= 0">Collect full balance</button>
+                <button type="button" class="btn-secondary" (click)="showPay = false" [disabled]="busy()">Cancel</button>
+                <button type="button" class="btn-primary" (click)="addPayment()" [disabled]="busy()">Save payment</button>
+              </div>
+            </div>
+          }
+
+          @if (a.payments.length === 0) {
+            <p class="status">No payments yet.</p>
+          } @else {
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Receipt</th>
+                    <th>When</th>
+                    <th>Kind</th>
+                    <th>Method</th>
+                    <th>Collector</th>
+                    <th class="num">Amount</th>
+                    <th class="actions-col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (p of a.payments; track p.id) {
+                    <tr>
+                      <td>{{ p.receiptNumber || '—' }}</td>
+                      <td>{{ p.collectionDateTime | date: 'dd MMM yyyy, HH:mm' }}</td>
+                      <td>{{ p.paymentKind }}</td>
+                      <td>{{ p.paymentMethod }}</td>
+                      <td>{{ p.collectedByName || '—' }}</td>
+                      <td class="num">{{ p.amount | number: '1.2-2' }}</td>
+                      <td class="actions-cell">
+                        @if (p.receiptNumber) {
+                          <button
+                            type="button"
+                            class="icon-btn"
+                            title="Print receipt"
+                            aria-label="Print receipt"
+                            [disabled]="receiptBusyId() === p.id"
+                            (click)="printReceipt(p.id)"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                              <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            class="icon-btn"
+                            title="Download PDF"
+                            aria-label="Download PDF"
+                            [disabled]="receiptBusyId() === p.id"
+                            (click)="downloadReceiptPdf(p.id)"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                          </button>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+      </div>
+
+      <aside class="side-col">
+        <section class="card panel-card summary-card">
+          <h2>Interim summary</h2>
+          <dl class="summary-list">
+            <div><dt>Estimate</dt><dd>{{ a.estimatedAmount | number: '1.2-2' }}</dd></div>
+            <div><dt>Charges</dt><dd>{{ a.chargesTotal | number: '1.2-2' }}</dd></div>
+            <div><dt>Discount</dt><dd>{{ a.discountAmount | number: '1.2-2' }}</dd></div>
+            <div><dt>Bill</dt><dd><strong>{{ a.billTotal | number: '1.2-2' }}</strong></dd></div>
+            <div><dt>Paid</dt><dd>{{ a.paidTotal | number: '1.2-2' }}</dd></div>
+            <div class="balance"><dt>Balance</dt><dd><strong>{{ a.balanceDue | number: '1.2-2' }}</strong></dd></div>
+          </dl>
+
+          @if (canManage() && a.statusCode === 1) {
+            <button type="button" class="btn-primary full-btn" (click)="discharge()" [disabled]="busy() || a.balanceDue > 0">
+              Discharge
+            </button>
+            @if (a.balanceDue > 0) {
+              <p class="hint">Collect the remaining balance before discharge.</p>
+            }
+          }
+        </section>
+
+        <section class="card panel-card">
+          <div class="section-header">
+            <h2>Discount</h2>
+            @if (canManage() && a.statusCode === 1 && !showDiscount) {
+              <button type="button" class="btn-secondary" (click)="openDiscount()">Edit</button>
+            }
+          </div>
+          @if (showDiscount) {
+            <div class="inline-form">
+              <label>
+                Amount
+                <input type="number" name="discountAmount" [(ngModel)]="discountAmount" min="0" step="0.01" [disabled]="busy()" />
+              </label>
+              <label>
+                Reason
+                <input type="text" name="discountReason" [(ngModel)]="discountReason" maxlength="500" [disabled]="busy()" />
+              </label>
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" (click)="showDiscount = false" [disabled]="busy()">Cancel</button>
+                <button type="button" class="btn-primary" (click)="applyDiscount()" [disabled]="busy()">Save</button>
+              </div>
+            </div>
+          }
+          @if (!showDiscount) {
+            <p class="status">
+              {{ a.discountAmount | number: '1.2-2' }}
+              @if (a.discountReason) {
+                — {{ a.discountReason }}
+              }
+            </p>
+          }
+        </section>
+      </aside>
+    </div>
+  } @else {
+    <p class="error">{{ error() || 'Admission not found.' }}</p>
+  }
+}

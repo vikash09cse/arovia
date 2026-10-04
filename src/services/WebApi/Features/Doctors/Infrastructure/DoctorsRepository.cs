@@ -39,7 +39,7 @@ public class DoctorsRepository(DbHelper dbHelper) : IDoctorsRepository
     }
 
     public async Task<Guid> CreateAsync(
-        Guid tenantId, string email, string firstName, string lastName, string passwordHash,
+        Guid tenantId, string email, string firstName, string lastName, Guid departmentId, string passwordHash,
         Guid createdBy, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
@@ -53,6 +53,7 @@ public class DoctorsRepository(DbHelper dbHelper) : IDoctorsRepository
                 passwordhash = passwordHash,
                 firstname = firstName,
                 lastname = lastName,
+                departmentid = departmentId,
                 usertype = (byte)UserType.Doctor,
                 userstatus = (byte)UserStatus.Active,
                 createdby = createdBy
@@ -60,7 +61,8 @@ public class DoctorsRepository(DbHelper dbHelper) : IDoctorsRepository
             commandType: CommandType.StoredProcedure);
     }
 
-    public async Task UpdateAsync(Guid tenantId, Guid doctorId, string firstName, string lastName, Guid updatedBy, CancellationToken ct)
+    public async Task UpdateAsync(
+        Guid tenantId, Guid doctorId, string firstName, string lastName, Guid departmentId, Guid updatedBy, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
         await conn.ExecuteAsync(
@@ -71,6 +73,8 @@ public class DoctorsRepository(DbHelper dbHelper) : IDoctorsRepository
                 userid = doctorId,
                 firstname = firstName,
                 lastname = lastName,
+                departmentid = departmentId,
+                updatedepartment = 1,
                 usertype = (byte)UserType.Doctor,
                 updatedby = updatedBy
             },
@@ -86,12 +90,12 @@ public class DoctorsRepository(DbHelper dbHelper) : IDoctorsRepository
             commandType: CommandType.StoredProcedure);
     }
 
-    public async Task<IEnumerable<DoctorRow>> GetActiveAsync(Guid tenantId, CancellationToken ct)
+    public async Task<IEnumerable<DoctorRow>> GetActiveAsync(Guid tenantId, Guid? departmentId, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
         return await conn.QueryAsync<DoctorRow>(
             "dbo.sp_visit_get_active_doctors",
-            new { tenantid = tenantId },
+            new { tenantid = tenantId, departmentid = departmentId },
             commandType: CommandType.StoredProcedure);
     }
 }

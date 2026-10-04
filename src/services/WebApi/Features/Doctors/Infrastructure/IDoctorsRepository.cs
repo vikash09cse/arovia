@@ -8,6 +8,8 @@ public class DoctorRow
     public string LastName { get; set; } = string.Empty;
     public byte Role { get; set; }
     public byte Status { get; set; }
+    public Guid? DepartmentId { get; set; }
+    public string? DepartmentName { get; set; }
     public DateTime? LastLoginAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public int TotalCount { get; set; }
@@ -23,12 +25,13 @@ public interface IDoctorsRepository
     Task<bool> EmailExistsAsync(Guid tenantId, string email, Guid? excludeId, CancellationToken ct);
 
     Task<Guid> CreateAsync(
-        Guid tenantId, string email, string firstName, string lastName, string passwordHash,
+        Guid tenantId, string email, string firstName, string lastName, Guid departmentId, string passwordHash,
         Guid createdBy, CancellationToken ct);
 
-    Task UpdateAsync(Guid tenantId, Guid doctorId, string firstName, string lastName, Guid updatedBy, CancellationToken ct);
+    Task UpdateAsync(
+        Guid tenantId, Guid doctorId, string firstName, string lastName, Guid departmentId, Guid updatedBy, CancellationToken ct);
 
     Task SetStatusAsync(Guid tenantId, Guid doctorId, byte status, Guid updatedBy, CancellationToken ct);
 
-    Task<IEnumerable<DoctorRow>> GetActiveAsync(Guid tenantId, CancellationToken ct);
+    Task<IEnumerable<DoctorRow>> GetActiveAsync(Guid tenantId, Guid? departmentId, CancellationToken ct);
 }

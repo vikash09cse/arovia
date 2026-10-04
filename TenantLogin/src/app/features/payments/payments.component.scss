@@ -1,5 +1,55 @@
 @import '../visits/visits.component.scss';
 
+.search-bar {
+  align-items: center;
+}
+
+.date-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.2rem 0.65rem 0.2rem 0.75rem;
+  min-height: 2.5rem;
+}
+
+.date-filter span {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.date-filter input[type='date'] {
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0;
+  font-size: 0.9rem;
+  color: #0f172a;
+  min-width: 8.5rem;
+  outline: none;
+}
+
+.date-filter input[type='date']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.date-filter:focus-within {
+  border-color: #99f6e4;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.search-bar .btn-primary {
+  min-height: 2.5rem;
+  padding: 0.625rem 1.15rem;
+  font-weight: 600;
+}
+
 .filter-tabs {
   display: flex;
   gap: 0.5rem;

@@ -1,0 +1,72 @@
+@import '../visits/visit-form.component.scss';
+
+.req {
+  color: #dc2626;
+}
+
+.admit-form {
+  max-width: 820px;
+}
+
+.admit-form h2 {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.form-grid label > span {
+  display: inline;
+}
+
+.selected-patient {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.selected-patient span {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.patient-search {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.patient-search input {
+  flex: 1;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-search {
+    flex-direction: column;
+  }
+}

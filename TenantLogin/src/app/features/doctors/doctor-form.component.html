@@ -18,16 +18,25 @@
       <h2>Doctor details</h2>
       <div class="grid">
         <label>
-          First name *
+          First name <span class="req">*</span>
           <input type="text" name="firstName" [(ngModel)]="firstName" required minlength="2" />
         </label>
         <label>
-          Last name *
+          Last name <span class="req">*</span>
           <input type="text" name="lastName" [(ngModel)]="lastName" required minlength="2" />
+        </label>
+        <label class="full">
+          Department <span class="req">*</span>
+          <select name="departmentId" [(ngModel)]="departmentId" required [disabled]="saving()">
+            <option value="">Select department</option>
+            @for (d of departments(); track d.id) {
+              <option [value]="d.id">{{ d.name }}</option>
+            }
+          </select>
         </label>
         @if (!isEdit()) {
           <label>
-            Email *
+            Email <span class="req">*</span>
             <input type="email" name="email" [(ngModel)]="email" required />
           </label>
           <label>

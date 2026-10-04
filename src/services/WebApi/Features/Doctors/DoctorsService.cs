@@ -39,15 +39,17 @@ public class DoctorsService(
             items.Select(Map), total, page, pageSize));
     }
 
-    public async Task<Result<IEnumerable<DoctorLookupItem>>> GetActiveDoctorsAsync(CancellationToken ct)
+    public async Task<Result<IEnumerable<DoctorLookupItem>>> GetActiveDoctorsAsync(
+        Guid? departmentId, CancellationToken ct)
     {
         var tenantError = RequireTenantContext<IEnumerable<DoctorLookupItem>>();
         if (tenantError != null) return tenantError;
 
         var tenantId = httpContextAccessor.GetTenantContext().TenantId;
-        var rows = await repository.GetActiveAsync(tenantId, ct);
+        var rows = await repository.GetActiveAsync(tenantId, departmentId, ct);
         var mapped = rows.Select(d => new DoctorLookupItem(
-            d.UserId, d.FirstName, d.LastName, $"{d.FirstName} {d.LastName}".Trim()));
+            d.UserId, d.FirstName, d.LastName, $"{d.FirstName} {d.LastName}".Trim(),
+            d.DepartmentId, d.DepartmentName));
         return Result<IEnumerable<DoctorLookupItem>>.Ok(mapped);
     }
 
@@ -68,6 +70,8 @@ public class DoctorsService(
     {
         var validation = ValidateNameEmail(request.FirstName, request.LastName, request.Email);
         if (validation != null) return validation;
+        if (request.DepartmentId == Guid.Empty)
+            return Result<DoctorResponse>.Fail(ErrorCode.Validation, "Department is required.");
 
         var tenantError = RequireTenantContext<DoctorResponse>();
         if (tenantError != null) return tenantError;
@@ -81,7 +85,7 @@ public class DoctorsService(
         var password = request.TemporaryPassword ?? PasswordHelper.GenerateTemporaryPassword();
         var id = await repository.CreateAsync(
             tenantId, email, request.FirstName.Trim(), request.LastName.Trim(),
-            PasswordHelper.Hash(password), GetUserId(), ct);
+            request.DepartmentId, PasswordHelper.Hash(password), GetUserId(), ct);
 
         var created = await repository.GetByIdAsync(tenantId, id, ct);
         return Result<DoctorResponse>.Ok(Map(created!), "Doctor created successfully.");
@@ -91,6 +95,8 @@ public class DoctorsService(
     {
         if (string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName))
             return Result<DoctorResponse>.Fail(ErrorCode.Validation, "First name and last name are required.");
+        if (request.DepartmentId == Guid.Empty)
+            return Result<DoctorResponse>.Fail(ErrorCode.Validation, "Department is required.");
 
         var tenantError = RequireTenantContext<DoctorResponse>();
         if (tenantError != null) return tenantError;
@@ -100,7 +106,9 @@ public class DoctorsService(
         if (existing == null)
             return Result<DoctorResponse>.Fail(ErrorCode.NotFound, "Doctor not found.");
 
-        await repository.UpdateAsync(tenantId, doctorId, request.FirstName.Trim(), request.LastName.Trim(), GetUserId(), ct);
+        await repository.UpdateAsync(
+            tenantId, doctorId, request.FirstName.Trim(), request.LastName.Trim(),
+            request.DepartmentId, GetUserId(), ct);
         var updated = await repository.GetByIdAsync(tenantId, doctorId, ct);
         return Result<DoctorResponse>.Ok(Map(updated!), "Doctor updated successfully.");
     }
@@ -136,6 +144,8 @@ public class DoctorsService(
         row.FirstName,
         row.LastName,
         $"{row.FirstName} {row.LastName}".Trim(),
+        row.DepartmentId,
+        row.DepartmentName,
         row.Status == (byte)UserStatus.Active ? "Active" : "Inactive",
         row.Status,
         row.LastLoginAt,

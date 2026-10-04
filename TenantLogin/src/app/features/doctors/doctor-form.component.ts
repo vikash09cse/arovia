@@ -9,8 +9,15 @@ interface DoctorDetail {
   email: string;
   firstName: string;
   lastName: string;
+  departmentId?: string | null;
+  departmentName?: string | null;
   status: string;
   statusCode: number;
+}
+
+interface DepartmentLookup {
+  id: string;
+  name: string;
 }
 
 @Component({
@@ -29,20 +36,30 @@ export class DoctorFormComponent implements OnInit {
   readonly saving = signal(false);
   readonly error = signal('');
   readonly isEdit = signal(false);
+  readonly departments = signal<DepartmentLookup[]>([]);
   doctorId = '';
 
   firstName = '';
   lastName = '';
   email = '';
   temporaryPassword = '';
+  departmentId = '';
 
   ngOnInit() {
+    this.loadDepartments();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEdit.set(true);
       this.doctorId = id;
       this.loadDoctor(id);
     }
+  }
+
+  loadDepartments() {
+    this.api.get<ApiResult<DepartmentLookup[]>>('/departments/active').subscribe({
+      next: res => this.departments.set(res.data ?? []),
+      error: () => this.error.set('Unable to load departments.')
+    });
   }
 
   loadDoctor(id: string) {
@@ -58,6 +75,7 @@ export class DoctorFormComponent implements OnInit {
         this.firstName = d.firstName;
         this.lastName = d.lastName;
         this.email = d.email;
+        this.departmentId = d.departmentId ?? '';
         this.loading.set(false);
       },
       error: err => {
@@ -72,6 +90,10 @@ export class DoctorFormComponent implements OnInit {
       this.error.set('First name and last name are required.');
       return;
     }
+    if (!this.departmentId) {
+      this.error.set('Department is required.');
+      return;
+    }
     if (!this.isEdit() && (!this.email.trim() || !this.email.includes('@'))) {
       this.error.set('A valid email is required.');
       return;
@@ -83,7 +105,8 @@ export class DoctorFormComponent implements OnInit {
     if (this.isEdit()) {
       this.api.put<ApiResult<DoctorDetail>>(`/doctors/${this.doctorId}`, {
         firstName: this.firstName.trim(),
-        lastName: this.lastName.trim()
+        lastName: this.lastName.trim(),
+        departmentId: this.departmentId
       }).subscribe({
         next: () => this.router.navigate(['/doctors']),
         error: err => {
@@ -97,7 +120,8 @@ export class DoctorFormComponent implements OnInit {
     const body: Record<string, string> = {
       email: this.email.trim(),
       firstName: this.firstName.trim(),
-      lastName: this.lastName.trim()
+      lastName: this.lastName.trim(),
+      departmentId: this.departmentId
     };
     if (this.temporaryPassword.trim()) {
       body['temporaryPassword'] = this.temporaryPassword.trim();

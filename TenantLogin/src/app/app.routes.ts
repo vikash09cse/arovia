@@ -47,6 +47,18 @@ export const routes: Routes = [
         loadComponent: () => import('./features/visits/visit-detail.component').then(m => m.VisitDetailComponent)
       },
       {
+        path: 'admissions',
+        loadComponent: () => import('./features/admissions/admissions.component').then(m => m.AdmissionsComponent)
+      },
+      {
+        path: 'admissions/new',
+        loadComponent: () => import('./features/admissions/admission-form.component').then(m => m.AdmissionFormComponent)
+      },
+      {
+        path: 'admissions/:id',
+        loadComponent: () => import('./features/admissions/admission-detail.component').then(m => m.AdmissionDetailComponent)
+      },
+      {
         path: 'payments',
         loadComponent: () => import('./features/payments/payments.component').then(m => m.PaymentsComponent)
       },
@@ -66,6 +78,11 @@ export const routes: Routes = [
         path: 'visit-addons',
         canActivate: [tenantSuperAdminGuard],
         loadComponent: () => import('./features/visit-addons/visit-addons.component').then(m => m.VisitAddonsComponent)
+      },
+      {
+        path: 'departments',
+        canActivate: [tenantSuperAdminGuard],
+        loadComponent: () => import('./features/departments/departments.component').then(m => m.DepartmentsComponent)
       },
       {
         path: 'doctors',

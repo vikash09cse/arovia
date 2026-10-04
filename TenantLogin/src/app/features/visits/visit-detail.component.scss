@@ -1,5 +1,12 @@
 .page-header { margin-bottom: 1.25rem; }
 .back-link { display: inline-block; margin-bottom: 0.5rem; color: #64748b; text-decoration: none; font-size: 0.9rem; }
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
 h1 { margin: 0; font-size: clamp(1.35rem, 3vw, 1.75rem); color: #0f172a; }
 .subtitle { margin: 0.35rem 0 0; color: #64748b; font-size: 0.95rem; }
 .status { color: #64748b; }

@@ -10,7 +10,11 @@ interface TenantDashboard {
   todayNewPatientCount: number;
   todayVisitCount: number;
   todayRevenue: number;
+  todayOpdRevenue: number;
+  todayIpdRevenue: number;
   currentMonthRevenue: number;
+  currentMonthOpdRevenue: number;
+  currentMonthIpdRevenue: number;
   totalPendingAmount: number;
   todayPendingAmount: number;
   todayLabAssignCount: number;

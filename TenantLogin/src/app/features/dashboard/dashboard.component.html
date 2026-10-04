@@ -48,7 +48,13 @@
             <a class="card-value-link" routerLink="/payments">
               <strong class="card-value" [class.card-value-muted]="!isRevenueVisible('monthRevenue')">{{ displayMoney('monthRevenue', m.currentMonthRevenue) }}</strong>
             </a>
-            <span class="card-note">Confirmed collections this month</span>
+            <span class="card-note">
+              @if (isRevenueVisible('monthRevenue')) {
+                OPD {{ formatMoney(m.currentMonthOpdRevenue) }} · IPD {{ formatMoney(m.currentMonthIpdRevenue) }}
+              } @else {
+                OPD + IPD collections this month
+              }
+            </span>
           </div>
 
           <div class="card card-money">
@@ -150,7 +156,15 @@
             <a class="card-value-link" routerLink="/payments">
               <strong class="card-value" [class.card-value-muted]="!isRevenueVisible('todayRevenue')">{{ displayMoney('todayRevenue', m.todayRevenue) }}</strong>
             </a>
-            <span class="card-note">{{ filtersAreActive() ? 'Collections in From–To range' : 'Confirmed collections today' }}</span>
+            <span class="card-note">
+              @if (isRevenueVisible('todayRevenue')) {
+                OPD {{ formatMoney(m.todayOpdRevenue) }} · IPD {{ formatMoney(m.todayIpdRevenue) }}
+              } @else if (filtersAreActive()) {
+                OPD + IPD in From–To range
+              } @else {
+                OPD + IPD collections today
+              }
+            </span>
           </div>
 
           <div class="card card-money">

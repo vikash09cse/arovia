@@ -94,6 +94,18 @@ export class AuthService {
     }
   }
 
+  updateLocalProfile(fullName: string, designation: string | null | undefined): void {
+    const user = this.currentUser();
+    if (!user) return;
+    const next: LoginResponse = {
+      ...user,
+      fullName,
+      designation: designation?.trim() || null
+    };
+    this.tokens.saveSession(next);
+    this.currentUser.set(next);
+  }
+
   ensureValidToken(): Observable<boolean> {
     const token = this.getToken();
     if (!token) return of(false);

@@ -40,4 +40,21 @@ public class AuthController(AuthService authService) : ControllerBase
     [Authorize]
     public async Task<IActionResult> Logout(CancellationToken ct) =>
         (await authService.LogoutAsync(ct)).ToActionResult();
+
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> GetMyProfile(CancellationToken ct) =>
+        (await authService.GetMyProfileAsync(ct)).ToActionResult();
+
+    [HttpPut("me")]
+    [Authorize]
+    public async Task<IActionResult> UpdateMyProfile(
+        [FromBody] UpdateMyProfileRequest request, CancellationToken ct) =>
+        (await authService.UpdateMyProfileAsync(request, ct)).ToActionResult();
+
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword(
+        [FromBody] ChangePasswordRequest request, CancellationToken ct) =>
+        (await authService.ChangePasswordAsync(request, ct)).ToActionResult();
 }

@@ -25,3 +25,19 @@ public record LoginResponse(
     int ExpiresIn,
     string RefreshToken,
     DateTime RefreshTokenExpiry);
+
+public record MyProfileResponse(
+    Guid UserId,
+    string Email,
+    string FirstName,
+    string LastName,
+    string? Designation);
+
+public record UpdateMyProfileRequest(
+    string FirstName,
+    string LastName,
+    string? Designation = null);
+
+public record ChangePasswordRequest(
+    string CurrentPassword,
+    string NewPassword);

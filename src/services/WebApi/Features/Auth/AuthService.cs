@@ -145,6 +145,107 @@ public class AuthService(
         return Result<bool>.Ok(true, "Logged out successfully.");
     }
 
+    public async Task<Result<MyProfileResponse>> GetMyProfileAsync(CancellationToken ct)
+    {
+        var tenantError = RequireTenantUser<MyProfileResponse>();
+        if (tenantError != null) return tenantError;
+
+        var ctx = httpContextAccessor.GetTenantContext();
+        var row = await repository.GetMyProfileAsync(ctx.TenantId, ctx.UserId, ct);
+        if (row == null)
+            return Result<MyProfileResponse>.Fail(ErrorCode.NotFound, "User not found.");
+
+        return Result<MyProfileResponse>.Ok(MapProfile(row));
+    }
+
+    public async Task<Result<MyProfileResponse>> UpdateMyProfileAsync(UpdateMyProfileRequest request, CancellationToken ct)
+    {
+        var tenantError = RequireTenantUser<MyProfileResponse>();
+        if (tenantError != null) return tenantError;
+
+        if (string.IsNullOrWhiteSpace(request.FirstName))
+            return Result<MyProfileResponse>.Fail(ErrorCode.Validation, "First name is required.");
+        if (string.IsNullOrWhiteSpace(request.LastName))
+            return Result<MyProfileResponse>.Fail(ErrorCode.Validation, "Last name is required.");
+        if (request.FirstName.Trim().Length > 100)
+            return Result<MyProfileResponse>.Fail(ErrorCode.Validation, "First name cannot exceed 100 characters.");
+        if (request.LastName.Trim().Length > 100)
+            return Result<MyProfileResponse>.Fail(ErrorCode.Validation, "Last name cannot exceed 100 characters.");
+        if (request.Designation?.Trim().Length > 100)
+            return Result<MyProfileResponse>.Fail(ErrorCode.Validation, "Designation cannot exceed 100 characters.");
+
+        var ctx = httpContextAccessor.GetTenantContext();
+        try
+        {
+            var row = await repository.UpdateMyProfileAsync(
+                ctx.TenantId,
+                ctx.UserId,
+                request.FirstName.Trim(),
+                request.LastName.Trim(),
+                string.IsNullOrWhiteSpace(request.Designation) ? null : request.Designation.Trim(),
+                ct);
+
+            if (row == null)
+                return Result<MyProfileResponse>.Fail(ErrorCode.NotFound, "User not found.");
+
+            return Result<MyProfileResponse>.Ok(MapProfile(row), "Profile updated.");
+        }
+        catch (Exception ex) when (TrySqlMessage(ex, out var message))
+        {
+            return Result<MyProfileResponse>.Fail(ErrorCode.Validation, message);
+        }
+    }
+
+    public async Task<Result<bool>> ChangePasswordAsync(ChangePasswordRequest request, CancellationToken ct)
+    {
+        var tenantError = RequireTenantUser<bool>();
+        if (tenantError != null) return tenantError;
+
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword))
+            return Result<bool>.Fail(ErrorCode.Validation, "Current password is required.");
+        if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Trim().Length < 6)
+            return Result<bool>.Fail(ErrorCode.Validation, "New password must be at least 6 characters.");
+
+        var ctx = httpContextAccessor.GetTenantContext();
+        var profile = await repository.GetMyProfileAsync(ctx.TenantId, ctx.UserId, ct);
+        if (profile == null || string.IsNullOrEmpty(profile.PasswordHash))
+            return Result<bool>.Fail(ErrorCode.NotFound, "User not found.");
+
+        if (!PasswordHelper.Verify(request.CurrentPassword, profile.PasswordHash))
+            return Result<bool>.Fail(ErrorCode.Validation, "Current password is incorrect.");
+
+        await repository.SetMyPasswordAsync(
+            ctx.TenantId, ctx.UserId, PasswordHelper.Hash(request.NewPassword.Trim()), ct);
+
+        return Result<bool>.Ok(true, "Password updated successfully.");
+    }
+
+    private Result<T>? RequireTenantUser<T>()
+    {
+        var ctx = httpContextAccessor.HttpContext?.TryGetTenantContext();
+        if (ctx == null || !ctx.IsValidForTenantScope())
+            return Result<T>.Fail(ErrorCode.Forbidden, "Tenant context is required.");
+        return null;
+    }
+
+    private static MyProfileResponse MapProfile(MyProfileRow row) => new(
+        row.UserId,
+        row.Email,
+        row.FirstName,
+        row.LastName,
+        row.Designation);
+
+    private static bool TrySqlMessage(Exception ex, out string message)
+    {
+        message = ex.Message;
+        if (ex is Microsoft.Data.SqlClient.SqlException sql && sql.Number is >= 50000 and < 60000)
+        {
+            message = sql.Message;
+            return true;
+        }
+        return false;
+    }
+
     private static TenantContext BuildContext(
         Guid userId, string email, string fullName, UserType userType, string? designation,
         Guid tenantId, string tenantName, string subdomain) => new()

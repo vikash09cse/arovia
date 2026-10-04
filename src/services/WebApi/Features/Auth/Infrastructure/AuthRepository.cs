@@ -31,6 +31,16 @@ public class TenantRow
     public string Timezone { get; set; } = string.Empty;
 }
 
+public class MyProfileRow
+{
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string? Designation { get; set; }
+    public string? PasswordHash { get; set; }
+}
+
 public class AuthRepository(DbHelper dbHelper) : IAuthRepository
 {
     public async Task<UserLoginRow?> GetUserForLoginAsync(string email, Guid? tenantId, CancellationToken ct)
@@ -100,6 +110,47 @@ public class AuthRepository(DbHelper dbHelper) : IAuthRepository
         await conn.ExecuteAsync(
             "dbo.sp_update_user_last_login",
             new { userid = userId },
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<MyProfileRow?> GetMyProfileAsync(Guid tenantId, Guid userId, CancellationToken ct)
+    {
+        using var conn = dbHelper.GetConnection();
+        return await conn.QueryFirstOrDefaultAsync<MyProfileRow>(
+            "dbo.sp_get_my_profile",
+            new { tenantid = tenantId, userid = userId },
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<MyProfileRow?> UpdateMyProfileAsync(
+        Guid tenantId, Guid userId, string firstName, string lastName, string? designation, CancellationToken ct)
+    {
+        using var conn = dbHelper.GetConnection();
+        return await conn.QueryFirstOrDefaultAsync<MyProfileRow>(
+            "dbo.sp_update_my_profile",
+            new
+            {
+                tenantid = tenantId,
+                userid = userId,
+                firstname = firstName,
+                lastname = lastName,
+                designation
+            },
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task SetMyPasswordAsync(Guid tenantId, Guid userId, string passwordHash, CancellationToken ct)
+    {
+        using var conn = dbHelper.GetConnection();
+        await conn.ExecuteAsync(
+            "dbo.sp_set_tenant_user_password",
+            new
+            {
+                tenantid = tenantId,
+                userid = userId,
+                passwordhash = passwordHash,
+                updatedby = userId
+            },
             commandType: CommandType.StoredProcedure);
     }
 }

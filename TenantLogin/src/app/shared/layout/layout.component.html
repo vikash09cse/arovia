@@ -119,10 +119,29 @@
         }
       </div>
       @if (user(); as u) {
-        <div class="topbar-user">
-          <span class="topbar-name">{{ u.fullName }}</span>
-          @if (u.designation) {
-            <span class="topbar-role">{{ u.designation }}</span>
+        <div class="topbar-user-wrap" (click)="$event.stopPropagation()">
+          <button
+            type="button"
+            class="topbar-user"
+            [class.open]="userMenuOpen()"
+            [attr.aria-expanded]="userMenuOpen()"
+            aria-haspopup="menu"
+            (click)="toggleUserMenu($event)"
+          >
+            <span class="topbar-name">{{ u.fullName }}</span>
+            @if (u.designation) {
+              <span class="topbar-role">{{ u.designation }}</span>
+            }
+            <svg class="topbar-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (userMenuOpen()) {
+            <div class="user-menu" role="menu">
+              <button type="button" role="menuitem" (click)="openChangePassword($event)">Change Password</button>
+              <button type="button" role="menuitem" (click)="openUpdateProfile($event)">Update Profile</button>
+              <button type="button" role="menuitem" class="danger" (click)="logout()">Logout</button>
+            </div>
           }
         </div>
       }
@@ -132,3 +151,85 @@
     </main>
   </div>
 </div>
+
+@if (passwordModalOpen()) {
+  <div class="account-backdrop" (click)="closeAccountModals()">
+    <div class="account-modal" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="change-password-title">
+      <header class="account-modal-header">
+        <h2 id="change-password-title">Change Password</h2>
+        <button type="button" class="drawer-close" (click)="closeAccountModals()" aria-label="Close">×</button>
+      </header>
+      @if (accountError()) {
+        <div class="error">{{ accountError() }}</div>
+      }
+      @if (accountMessage()) {
+        <div class="success">{{ accountMessage() }}</div>
+      }
+      <form class="account-form" (ngSubmit)="submitChangePassword()">
+        <label>
+          Current password
+          <input type="password" name="currentPassword" [(ngModel)]="currentPassword" autocomplete="current-password" [disabled]="accountSaving()" />
+        </label>
+        <label>
+          New password
+          <input type="password" name="newPassword" [(ngModel)]="newPassword" autocomplete="new-password" [disabled]="accountSaving()" />
+        </label>
+        <label>
+          Confirm new password
+          <input type="password" name="confirmPassword" [(ngModel)]="confirmPassword" autocomplete="new-password" [disabled]="accountSaving()" />
+        </label>
+        <div class="account-actions">
+          <button type="button" class="btn-secondary" [disabled]="accountSaving()" (click)="closeAccountModals()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="accountSaving()">
+            {{ accountSaving() ? 'Updating…' : 'Update password' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (profileModalOpen()) {
+  <div class="account-backdrop" (click)="closeAccountModals()">
+    <div class="account-modal" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="update-profile-title">
+      <header class="account-modal-header">
+        <h2 id="update-profile-title">Update Profile</h2>
+        <button type="button" class="drawer-close" (click)="closeAccountModals()" aria-label="Close">×</button>
+      </header>
+      @if (accountError()) {
+        <div class="error">{{ accountError() }}</div>
+      }
+      @if (accountMessage()) {
+        <div class="success">{{ accountMessage() }}</div>
+      }
+      @if (profileLoading()) {
+        <p class="status">Loading profile…</p>
+      } @else {
+        <form class="account-form" (ngSubmit)="submitUpdateProfile()">
+          <label>
+            Email
+            <input type="email" name="profileEmail" [ngModel]="profileEmail" disabled />
+          </label>
+          <label>
+            First name
+            <input type="text" name="profileFirstName" [(ngModel)]="profileFirstName" maxlength="100" [disabled]="accountSaving()" required />
+          </label>
+          <label>
+            Last name
+            <input type="text" name="profileLastName" [(ngModel)]="profileLastName" maxlength="100" [disabled]="accountSaving()" required />
+          </label>
+          <label>
+            Designation
+            <input type="text" name="profileDesignation" [(ngModel)]="profileDesignation" maxlength="100" [disabled]="accountSaving()" />
+          </label>
+          <div class="account-actions">
+            <button type="button" class="btn-secondary" [disabled]="accountSaving()" (click)="closeAccountModals()">Cancel</button>
+            <button type="submit" class="btn-primary" [disabled]="accountSaving()">
+              {{ accountSaving() ? 'Saving…' : 'Save profile' }}
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+}

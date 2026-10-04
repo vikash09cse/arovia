@@ -10,4 +10,8 @@ public interface IAuthRepository
     Task LogLoginAttemptAsync(Guid? tenantId, string userIdentifier, LoginType loginType, bool success, string? failureReason, string? ipAddress, CancellationToken ct);
     Task SaveRefreshTokenAsync(Guid userId, Guid? tenantId, string tokenHash, DateTime expiresAt, CancellationToken ct);
     Task UpdateUserLastLoginAsync(Guid userId, CancellationToken ct);
+    Task<MyProfileRow?> GetMyProfileAsync(Guid tenantId, Guid userId, CancellationToken ct);
+    Task<MyProfileRow?> UpdateMyProfileAsync(
+        Guid tenantId, Guid userId, string firstName, string lastName, string? designation, CancellationToken ct);
+    Task SetMyPasswordAsync(Guid tenantId, Guid userId, string passwordHash, CancellationToken ct);
 }

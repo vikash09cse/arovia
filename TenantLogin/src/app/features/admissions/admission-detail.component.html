@@ -237,6 +237,13 @@
             <div class="balance"><dt>Balance</dt><dd><strong>{{ a.balanceDue | number: '1.2-2' }}</strong></dd></div>
           </dl>
 
+          <a
+            class="btn-secondary full-btn summary-link"
+            [routerLink]="['/admissions', a.id, 'discharge-summary']"
+          >
+            {{ a.statusCode === 2 ? 'View discharge summary' : 'Prepare discharge summary' }}
+          </a>
+
           @if (canManage() && a.statusCode === 1) {
             <button type="button" class="btn-primary full-btn" (click)="discharge()" [disabled]="busy() || a.balanceDue > 0">
               Discharge

@@ -50,6 +50,20 @@ BEGIN
     FROM dbo.global_document_templates g
     WHERE g.isdeleted = 0;
 
+    -- Copy active global diagnosis masters into the new tenant
+    IF OBJECT_ID(N'dbo.global_diagnosis_masters', N'U') IS NOT NULL
+       AND OBJECT_ID(N'dbo.diagnosis_masters', N'U') IS NOT NULL
+    BEGIN
+        INSERT INTO dbo.diagnosis_masters (
+            diagnosismasterid, tenantid, globaldiagnosismasterid,
+            code, name, packjson, sortorder, isactive)
+        SELECT
+            NEWID(), @tenantid, g.globaldiagnosismasterid,
+            g.code, g.name, g.packjson, g.sortorder, g.isactive
+        FROM dbo.global_diagnosis_masters g
+        WHERE g.isactive = 1;
+    END;
+
     COMMIT TRAN;
 
     SELECT @tenantid AS tenantid;

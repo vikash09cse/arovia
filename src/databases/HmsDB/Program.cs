@@ -27,7 +27,10 @@ static class Program
         "admission_charges.sql",
         "admission_payments.sql",
         "global_document_templates.sql",
-        "document_templates.sql"
+        "document_templates.sql",
+        "global_diagnosis_masters.sql",
+        "diagnosis_masters.sql",
+        "discharge_summaries.sql"
     ];
 
     static int Main(string[] args)

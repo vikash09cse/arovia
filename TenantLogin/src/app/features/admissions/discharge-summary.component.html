@@ -1,0 +1,389 @@
+<a [routerLink]="admissionId ? ['/admissions', admissionId] : ['/admissions']" class="back-link">← Back to admission</a>
+
+@if (loading()) {
+  <p class="status">Loading discharge summary…</p>
+} @else if (!admission()) {
+  <p class="error">{{ error() || 'Admission not found.' }}</p>
+} @else {
+  <header class="page-header">
+    <div class="header-row">
+      <div>
+        <h1>Discharge Summary</h1>
+        <p class="subtitle">Guided prep · {{ admission()!.admissionCode }} · {{ admission()!.patientFullName }}</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn-secondary" (click)="print()" [disabled]="saving() || printing()">
+          {{ printing() ? 'Printing…' : 'Print' }}
+        </button>
+        <button type="button" class="btn-primary" (click)="save()" [disabled]="saving() || printing()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+  @if (message()) {
+    <p class="success">{{ message() }}</p>
+  }
+
+  <!-- Patient meta strip (Prototype) -->
+  <section class="card meta-strip">
+    <div class="meta-item">
+      <span class="meta-label">Patient</span>
+      <span class="meta-value">{{ admission()!.patientFullName }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">IPD</span>
+      <span class="meta-value">{{ admission()!.admissionCode }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Age / Sex</span>
+      <span class="meta-value">{{ ageSexLabel() }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Admitted</span>
+      <span class="meta-value">{{ admission()!.admittedAt | date: 'dd/M/yy' }}</span>
+    </div>
+    <label class="meta-field">
+      <span class="meta-label">Date of surgery</span>
+      <input type="date" name="dateOfSurgery" [(ngModel)]="form.dateOfSurgery" />
+    </label>
+    <label class="meta-field">
+      <span class="meta-label">Date of discharge</span>
+      <input type="date" name="dateOfDischarge" [(ngModel)]="form.dateOfDischarge" />
+    </label>
+  </section>
+
+  <div class="ds-layout">
+    <!-- LEFT: clinical + procedure -->
+    <div class="ds-main">
+      <section class="card panel">
+        <h2>A. Clinical details</h2>
+        <div class="field-grid">
+          <label>
+            Final diagnosis <span class="req">*</span>
+            <select name="diagnosisKey" [ngModel]="form.diagnosisKey" (ngModelChange)="onDiagnosisChange($event)">
+              <option value="">Select diagnosis</option>
+              @for (d of diagnoses(); track d.id) {
+                <option [value]="d.name">{{ d.name }}</option>
+              }
+              @if (showLegacyDiagnosisOption()) {
+                <option [value]="form.diagnosisKey">{{ form.diagnosisKey }}</option>
+              }
+              <option value="Other">Other</option>
+            </select>
+          </label>
+          @if (form.diagnosisKey === 'Other') {
+            <label>
+              Diagnosis (other) <span class="req">*</span>
+              <input type="text" name="diagnosisOther" [(ngModel)]="form.diagnosisOther" maxlength="500" />
+            </label>
+          } @else {
+            <div class="field-spacer" aria-hidden="true"></div>
+          }
+          <label class="span-2">
+            Chief complaints
+            <textarea name="chiefComplaints" rows="2" [(ngModel)]="form.chiefComplaints"></textarea>
+          </label>
+          <label class="span-2">
+            Brief history
+            <textarea name="briefHistory" rows="3" [(ngModel)]="form.briefHistory"></textarea>
+          </label>
+        </div>
+
+        <h3 class="subhead">Investigations</h3>
+        <div class="inv-list">
+          @for (row of investigationRows; track row.key) {
+            <div class="inv-row">
+              <span class="inv-label">{{ row.label }}</span>
+              <label class="inv-result">
+                <span class="sr-only">Result</span>
+                <input type="text" [name]="'inv_' + row.key" [(ngModel)]="form.investigations[row.key]" placeholder="Result" />
+              </label>
+              <label class="inv-date">
+                <span class="sr-only">Date</span>
+                <input type="date" [name]="'invd_' + row.key" [(ngModel)]="form.investigationDates[row.key]" />
+              </label>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="card panel">
+        <div class="panel-head">
+          <div>
+            <h2>Procedure template</h2>
+            <p class="hint">Fields change with the procedure. Apply fills Findings / Procedure for print.</p>
+          </div>
+          <button type="button" class="btn-secondary" (click)="applyCompose()">Apply to operative text</button>
+        </div>
+        <div class="field-grid">
+          <label>
+            Procedure
+            <select name="procedureKey" [ngModel]="form.procedureKey" (ngModelChange)="onProcedureChange($event)">
+              @for (o of procedureOptions; track o.key) {
+                <option [value]="o.key">{{ o.label }}</option>
+              }
+            </select>
+          </label>
+          @if (form.procedureKey === 'Other') {
+            <label>
+              Procedure note
+              <input type="text" name="otherNote" [(ngModel)]="form.procedureExtras['otherNote']" />
+            </label>
+          }
+          @for (f of procedureFields; track f.key) {
+            <label>
+              {{ f.label }}
+              @if (f.kind === 'select') {
+                <select [name]="'pe_' + f.key" [(ngModel)]="form.procedureExtras[f.key]">
+                  <option value="">Select</option>
+                  @for (opt of f.options || []; track opt) {
+                    <option [value]="opt">{{ opt }}</option>
+                  }
+                </select>
+              } @else {
+                <input
+                  [type]="f.kind === 'number' ? 'number' : 'text'"
+                  [name]="'pe_' + f.key"
+                  [(ngModel)]="form.procedureExtras[f.key]"
+                  [placeholder]="f.placeholder || ''"
+                />
+              }
+            </label>
+          }
+          <label class="span-2">
+            Procedure details (print)
+            <textarea rows="2" name="procedureDetails" [(ngModel)]="form.procedureDetails"></textarea>
+          </label>
+          <label class="span-2">
+            Findings (print)
+            <textarea rows="3" name="findings" [(ngModel)]="form.findings"></textarea>
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT: B–F stacked cards -->
+    <div class="ds-side">
+      <section class="card panel">
+        <h2>B. Condition at discharge</h2>
+        <div class="stack">
+          <div>
+            <p class="field-caption">General condition</p>
+            <div class="radio-row">
+              @for (opt of ['Stable', 'Improved', 'Other']; track opt) {
+                <label class="radio">
+                  <input type="radio" name="generalCondition" [value]="opt" [(ngModel)]="form.generalCondition" />
+                  {{ opt }}
+                </label>
+              }
+            </div>
+            @if (form.generalCondition === 'Other') {
+              <input class="mt-2" type="text" name="generalConditionOther" [(ngModel)]="form.generalConditionOther" placeholder="Describe condition" />
+            }
+          </div>
+          <div>
+            <p class="field-caption">Postoperative course</p>
+            <div class="radio-row">
+              @for (opt of ['Uneventful', 'Complicated']; track opt) {
+                <label class="radio">
+                  <input type="radio" name="postopCourse" [value]="opt" [(ngModel)]="form.postopCourse" />
+                  {{ opt }}
+                </label>
+              }
+            </div>
+            @if (form.postopCourse === 'Complicated') {
+              <textarea class="mt-2" rows="2" name="postopCourseDetails" [(ngModel)]="form.postopCourseDetails" placeholder="Details required"></textarea>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="card panel">
+        <h2>C. Catheter / Drain</h2>
+        <label>
+          Status
+          <select name="catheterKey" [(ngModel)]="form.catheterKey">
+            <option value="">Select</option>
+            @for (o of catheterOptions; track o) {
+              <option [value]="o">{{ o }}</option>
+            }
+          </select>
+        </label>
+        @if (form.catheterKey === 'Other') {
+          <label class="mt-2">
+            Other details
+            <input type="text" name="catheterOther" [(ngModel)]="form.catheterOther" />
+          </label>
+        }
+      </section>
+
+      <section class="card panel">
+        <h2>D. Specimen</h2>
+        <div class="radio-row wrap">
+          @for (o of specimenOptions; track o) {
+            <label class="radio">
+              <input type="radio" name="specimen" [value]="o" [(ngModel)]="form.specimen" />
+              {{ o }}
+            </label>
+          }
+        </div>
+      </section>
+
+      <section class="card panel">
+        <h2>E. Discharge type</h2>
+        <select name="dischargeType" [(ngModel)]="form.dischargeType">
+          @for (o of dischargeTypeOptions; track o) {
+            <option [value]="o">{{ o }}</option>
+          }
+        </select>
+      </section>
+
+      <section class="card panel">
+        <h2>F. Follow-up plan</h2>
+        <div class="stack">
+          <label>
+            Plan
+            <select name="followUpKey" [(ngModel)]="form.followUpKey">
+              <option value="">Select</option>
+              @for (o of followUpOptions; track o) {
+                <option [value]="o">{{ o }}</option>
+              }
+            </select>
+          </label>
+          @if (form.followUpKey === 'Other') {
+            <label>
+              Other plan
+              <input type="text" name="followUpOther" [(ngModel)]="form.followUpOther" />
+            </label>
+          }
+          <label>
+            Additional clinical notes <span class="optional">(optional)</span>
+            <textarea rows="2" name="followUpNotes" [(ngModel)]="form.followUpNotes" placeholder="Only enter additional findings or instructions…"></textarea>
+          </label>
+          <label>
+            Advice / instructions
+            <textarea rows="4" name="advice" [(ngModel)]="form.advice" placeholder="One line per instruction (Hindi/English OK)"></textarea>
+          </label>
+          <div class="field-grid compact">
+            <label>
+              Follow-up date
+              <input type="date" name="followUpDate" [(ngModel)]="form.followUpDate" />
+            </label>
+            <label>
+              Department
+              <input type="text" name="followUpDepartment" [(ngModel)]="form.followUpDepartment" />
+            </label>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Full-width medicines -->
+  <section class="card panel medicines-panel">
+    <div class="panel-head">
+      <h2>Discharge medicines</h2>
+      <div class="header-actions">
+        <button type="button" class="btn-secondary" (click)="loadCommonPack()">Load common pack</button>
+        <button type="button" class="btn-secondary" (click)="addMedicine()">+ Add medicine</button>
+      </div>
+    </div>
+    @if (form.medicines.length === 0) {
+      <p class="empty-hint">No medicines yet. Load the common pack or add a row.</p>
+    } @else {
+      <div class="med-list">
+        @for (m of form.medicines; track m.id; let i = $index) {
+          <div class="med-card">
+            <div class="med-card-head">
+              <strong>Medicine {{ i + 1 }}</strong>
+              <button type="button" class="link-danger" (click)="removeMedicine(i)">Remove</button>
+            </div>
+            <div class="med-grid">
+              <label>Name<input type="text" [(ngModel)]="m.name" [name]="'med_name_' + i" /></label>
+              <label>Strength<input type="text" [(ngModel)]="m.strength" [name]="'med_str_' + i" /></label>
+              <label>Dose<input type="text" [(ngModel)]="m.dose" [name]="'med_dose_' + i" /></label>
+              <label>
+                Frequency
+                <select [(ngModel)]="m.frequency" [name]="'med_freq_' + i">
+                  <option value="">Select</option>
+                  @for (f of frequencyOptions; track f) {
+                    <option [value]="f">{{ f }}</option>
+                  }
+                </select>
+              </label>
+              <label>Duration<input type="text" [(ngModel)]="m.duration" [name]="'med_dur_' + i" /></label>
+              <label>Route<input type="text" [(ngModel)]="m.route" [name]="'med_route_' + i" /></label>
+              <label>Timing<input type="text" [(ngModel)]="m.timing" [name]="'med_time_' + i" placeholder="After food" /></label>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Collapsible advanced (Prototype) -->
+  <section class="card panel advanced-toggle">
+    <button type="button" class="toggle-btn" (click)="showAdvanced.set(!showAdvanced())">
+      {{ showAdvanced() ? 'Hide' : 'Show' }} summary format details (past history, exam, surgery extras)
+    </button>
+
+    @if (showAdvanced()) {
+      <div class="advanced-body">
+        <div class="field-grid four">
+          <label>Father's name<input type="text" name="fatherName" [(ngModel)]="form.fatherName" maxlength="200" /></label>
+          <label>Comorbidities<input type="text" name="comorbidities" [(ngModel)]="form.pastHistory.comorbidities" /></label>
+          <label>Past surgery<input type="text" name="pastSurgery" [(ngModel)]="form.pastHistory.pastSurgery" /></label>
+          <label>Allergy<input type="text" name="allergy" [(ngModel)]="form.pastHistory.allergy" /></label>
+          <label>Addiction<input type="text" name="addiction" [(ngModel)]="form.pastHistory.addiction" /></label>
+        </div>
+
+        <h3 class="subhead">Examination at admission</h3>
+        <div class="field-grid four">
+          <label>General<input type="text" name="examGeneral" [(ngModel)]="form.examination.general" /></label>
+          <label>Pulse<input type="text" name="examPulse" [(ngModel)]="form.examination.pulse" /></label>
+          <label>BP<input type="text" name="examBp" [(ngModel)]="form.examination.bp" /></label>
+          <label>Temp<input type="text" name="examTemp" [(ngModel)]="form.examination.temp" /></label>
+          <label>SpO₂<input type="text" name="examSpo2" [(ngModel)]="form.examination.spo2" /></label>
+          <label>Systemic<input type="text" name="examSystemic" [(ngModel)]="form.examination.systemic" /></label>
+          <label>Per abdomen<input type="text" name="perAbdomen" [(ngModel)]="form.examination.perAbdomen" /></label>
+          <label>Genitalia<input type="text" name="genitalia" [(ngModel)]="form.examination.genitalia" /></label>
+        </div>
+
+        <h3 class="subhead">Surgery extras</h3>
+        <div class="field-grid three">
+          <label>Anaesthesia<input type="text" name="anaesthesia" [(ngModel)]="form.anaesthesia" /></label>
+          <label>Assistant surgeon<input type="text" name="assistantSurgeon" [(ngModel)]="form.assistantSurgeon" /></label>
+          <label>Indication<input type="text" name="indication" [(ngModel)]="form.indication" /></label>
+          <label>Intra-op complications<input type="text" name="intraopComplications" [(ngModel)]="form.intraopComplications" /></label>
+          <label class="span-2">
+            Treatment during admission
+            <textarea rows="3" name="treatmentDuringAdmission" [(ngModel)]="form.treatmentDuringAdmission"></textarea>
+          </label>
+        </div>
+
+        <h3 class="subhead">Condition vitals at discharge</h3>
+        <div class="field-grid four">
+          <label>Pulse<input type="text" name="cPulse" [(ngModel)]="form.conditionExtras.pulse" /></label>
+          <label>BP<input type="text" name="cBp" [(ngModel)]="form.conditionExtras.bp" /></label>
+          <label>Temp<input type="text" name="cTemp" [(ngModel)]="form.conditionExtras.temp" /></label>
+          <label>SpO₂<input type="text" name="cSpo2" [(ngModel)]="form.conditionExtras.spo2" /></label>
+          <label>Urine output<input type="text" name="urineOutput" [(ngModel)]="form.conditionExtras.urineOutput" /></label>
+          <label>Oral intake<input type="text" name="oralIntake" [(ngModel)]="form.conditionExtras.oralIntake" /></label>
+          <label class="span-2">Ambulation<input type="text" name="ambulation" [(ngModel)]="form.conditionExtras.ambulation" /></label>
+        </div>
+      </div>
+    }
+  </section>
+
+  <div class="form-actions sticky-actions">
+    <button type="button" class="btn-secondary" (click)="print()" [disabled]="saving() || printing()">Print</button>
+    <button type="button" class="btn-primary" (click)="save()" [disabled]="saving() || printing()">
+      {{ saving() ? 'Saving…' : 'Save summary' }}
+    </button>
+  </div>
+}

@@ -55,6 +55,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admissions/admission-form.component').then(m => m.AdmissionFormComponent)
       },
       {
+        path: 'admissions/:id/discharge-summary',
+        loadComponent: () =>
+          import('./features/admissions/discharge-summary.component').then(m => m.DischargeSummaryComponent)
+      },
+      {
         path: 'admissions/:id',
         loadComponent: () => import('./features/admissions/admission-detail.component').then(m => m.AdmissionDetailComponent)
       },

@@ -152,6 +152,14 @@
   justify-content: center;
 }
 
+a.summary-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  box-sizing: border-box;
+  margin-bottom: 0.5rem;
+}
+
 .success {
   background: #dcfce7;
   color: #166534;

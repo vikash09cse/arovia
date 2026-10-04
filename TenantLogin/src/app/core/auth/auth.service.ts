@@ -106,6 +106,17 @@ export class AuthService {
     this.currentUser.set(next);
   }
 
+  updateLocalTenantName(tenantName: string): void {
+    const user = this.currentUser();
+    if (!user) return;
+    const next: LoginResponse = {
+      ...user,
+      tenantName: tenantName.trim() || user.tenantName
+    };
+    this.tokens.saveSession(next);
+    this.currentUser.set(next);
+  }
+
   ensureValidToken(): Observable<boolean> {
     const token = this.getToken();
     if (!token) return of(false);

@@ -125,15 +125,15 @@
 
       <form class="drawer-form" (ngSubmit)="submitUser()">
         <label>
-          First name *
+          <span class="field-label">First name <span class="req">*</span></span>
           <input type="text" name="firstName" [(ngModel)]="firstName" required minlength="2" [disabled]="saving()" />
         </label>
         <label>
-          Last name *
+          <span class="field-label">Last name <span class="req">*</span></span>
           <input type="text" name="lastName" [(ngModel)]="lastName" required minlength="2" [disabled]="saving()" />
         </label>
         <label>
-          Email *
+          <span class="field-label">Email <span class="req">*</span></span>
           <input
             type="email"
             name="email"
@@ -146,7 +146,7 @@
           }
         </label>
         <label>
-          Designation
+          <span class="field-label">Designation</span>
           <input
             type="text"
             name="designation"
@@ -157,7 +157,7 @@
           />
         </label>
         <label>
-          Role *
+          <span class="field-label">Role <span class="req">*</span></span>
           <select name="roleCode" [(ngModel)]="roleCode" [disabled]="saving()" (ngModelChange)="onRoleChange()">
             <option [ngValue]="2">Staff</option>
             <option [ngValue]="3">Doctor</option>
@@ -166,7 +166,7 @@
 
         @if (roleCode === 2 && !isEditing()) {
           <label>
-            Monthly salary
+            <span class="field-label">Monthly salary</span>
             <input
               type="number"
               name="monthlySalary"
@@ -179,7 +179,7 @@
           </label>
           @if (monthlySalary != null) {
             <label>
-              Effective from
+              <span class="field-label">Effective from</span>
               <input
                 type="date"
                 name="salaryEffectiveFrom"
@@ -192,7 +192,7 @@
 
         @if (!isEditing()) {
           <label>
-            Temporary password
+            <span class="field-label">Temporary password</span>
             <input
               type="text"
               name="temporaryPassword"

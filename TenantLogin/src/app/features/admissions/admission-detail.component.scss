@@ -27,6 +27,7 @@
 
 .badge {
   display: inline-block;
+  margin-top: 0.5rem;
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
   font-size: 0.75rem;
@@ -147,17 +148,18 @@
   border-bottom: none;
 }
 
-.full-btn {
-  width: 100%;
-  justify-content: center;
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 }
 
-a.summary-link {
-  display: inline-flex;
-  align-items: center;
+.header-actions .btn-secondary,
+.header-actions .btn-primary {
+  margin-top: 0;
   text-decoration: none;
-  box-sizing: border-box;
-  margin-bottom: 0.5rem;
+  white-space: nowrap;
 }
 
 .success {

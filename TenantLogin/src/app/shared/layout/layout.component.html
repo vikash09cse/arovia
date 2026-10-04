@@ -7,22 +7,14 @@
 
   <aside class="sidebar" [class.open]="mobileSidebarOpen()">
     <div class="brand">
-      <div class="brand-logo">A</div>
+      <div class="brand-logo">{{ brandInitial() }}</div>
       <div class="brand-text">
-        <span class="brand-name">Arovia</span>
-        <span class="brand-tag">Hospital Portal</span>
+        <span class="brand-name" [title]="hospitalName()">{{ hospitalName() }}</span>
       </div>
       <button type="button" class="collapse-btn sidebar-collapse-btn" aria-label="Collapse menu" (click)="toggleCollapse()">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
     </div>
-
-    @if (user(); as u) {
-      <div class="tenant-card" [title]="u.tenantName ?? ''">
-        <span class="tenant-label">Hospital</span>
-        <strong class="tenant-name">{{ u.tenantName ?? '—' }}</strong>
-      </div>
-    }
 
     <nav class="nav">
       <span class="nav-section">Operations</span>

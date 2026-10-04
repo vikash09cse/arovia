@@ -17,7 +17,7 @@
     <option [ngValue]="1">Active</option>
     <option [ngValue]="2">Inactive</option>
   </select>
-  <button type="submit" class="btn-secondary">Search</button>
+  <button type="submit" class="btn-primary">Search</button>
   @if (searchTerm || statusFilter != null) {
     <button type="button" class="btn-text" (click)="clearSearch()">Clear</button>
   }
@@ -114,7 +114,7 @@
 
       <form class="drawer-form" (ngSubmit)="submit()">
         <label>
-          Name *
+          <span class="field-label">Name <span class="req">*</span></span>
           <input type="text" name="name" [(ngModel)]="name" required maxlength="200" [disabled]="saving()" />
         </label>
         <label>
@@ -122,7 +122,7 @@
           <input type="text" name="code" [(ngModel)]="code" maxlength="50" placeholder="Optional — e.g. UROMETRIC" [disabled]="saving()" />
         </label>
         <label>
-          Default amount (₹) *
+          <span class="field-label">Default amount (₹) <span class="req">*</span></span>
           <input type="number" name="defaultAmount" [(ngModel)]="defaultAmount" required min="0" step="0.01" [disabled]="saving()" />
         </label>
 

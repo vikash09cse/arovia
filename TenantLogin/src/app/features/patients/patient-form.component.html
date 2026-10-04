@@ -15,19 +15,19 @@
       <h2>Personal details</h2>
       <div class="grid">
         <label>
-          First name *
+          <span class="field-label">First name <span class="req">*</span></span>
           <input type="text" name="firstName" [(ngModel)]="firstName" required minlength="2" />
         </label>
         <label>
-          Last name *
+          <span class="field-label">Last name <span class="req">*</span></span>
           <input type="text" name="lastName" [(ngModel)]="lastName" required minlength="2" />
         </label>
         <label>
-          Date of birth
+          <span class="field-label">Date of birth</span>
           <app-dob-picker name="dateOfBirth" [(ngModel)]="dateOfBirth" />
         </label>
         <label>
-          Age
+          <span class="field-label">Age</span>
           <input
             type="number"
             name="age"
@@ -41,7 +41,7 @@
           />
         </label>
         <label>
-          Gender *
+          <span class="field-label">Gender <span class="req">*</span></span>
           <select name="gender" [(ngModel)]="gender" required>
             <option [ngValue]="1">Male</option>
             <option [ngValue]="2">Female</option>
@@ -49,7 +49,7 @@
           </select>
         </label>
         <label>
-          Blood group
+          <span class="field-label">Blood group</span>
           <select name="bloodGroup" [(ngModel)]="bloodGroup">
             <option [ngValue]="null">—</option>
             <option [ngValue]="1">A+</option>
@@ -63,7 +63,7 @@
           </select>
         </label>
         <label>
-          Referred by
+          <span class="field-label">Referred by</span>
           <input type="text" name="referredBy" [(ngModel)]="referredBy" placeholder="Doctor name or Self" />
         </label>
       </div>
@@ -73,15 +73,15 @@
       <h2>Contact information</h2>
       <div class="grid">
         <label>
-          Phone *
+          <span class="field-label">Phone <span class="req">*</span></span>
           <input type="tel" name="phone" [(ngModel)]="phone" required />
         </label>
         <label>
-          Email
+          <span class="field-label">Email</span>
           <input type="email" name="email" [(ngModel)]="email" />
         </label>
         <label>
-          Address *
+          <span class="field-label">Address <span class="req">*</span></span>
           <input type="text" name="address" [(ngModel)]="address" required />
         </label>
       </div>
@@ -91,11 +91,11 @@
       <h2>Emergency contact <span class="optional">(optional)</span></h2>
       <div class="grid">
         <label>
-          Contact name
+          <span class="field-label">Contact name</span>
           <input type="text" name="emergencyContactName" [(ngModel)]="emergencyContactName" />
         </label>
         <label>
-          Contact phone
+          <span class="field-label">Contact phone</span>
           <input type="tel" name="emergencyContactPhone" [(ngModel)]="emergencyContactPhone" />
         </label>
       </div>

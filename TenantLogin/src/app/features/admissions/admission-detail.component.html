@@ -14,8 +14,26 @@
             · {{ a.departmentName }}
             · {{ a.doctorName }}
           </p>
+          <span class="badge" [class.active]="a.statusCode === 1" [class.none]="a.statusCode !== 1">{{ a.status }}</span>
         </div>
-        <span class="badge" [class.active]="a.statusCode === 1" [class.none]="a.statusCode !== 1">{{ a.status }}</span>
+        <div class="header-actions">
+          <a
+            class="btn-secondary"
+            [routerLink]="['/admissions', a.id, 'discharge-summary']"
+          >
+            {{ a.statusCode === 2 ? 'View discharge summary' : 'Prepare discharge summary' }}
+          </a>
+          @if (canManage() && a.statusCode === 1) {
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="discharge()"
+              [disabled]="busy() || a.balanceDue > 0"
+            >
+              Discharge
+            </button>
+          }
+        </div>
       </div>
     </header>
 
@@ -236,21 +254,8 @@
             <div><dt>Paid</dt><dd>{{ a.paidTotal | number: '1.2-2' }}</dd></div>
             <div class="balance"><dt>Balance</dt><dd><strong>{{ a.balanceDue | number: '1.2-2' }}</strong></dd></div>
           </dl>
-
-          <a
-            class="btn-secondary full-btn summary-link"
-            [routerLink]="['/admissions', a.id, 'discharge-summary']"
-          >
-            {{ a.statusCode === 2 ? 'View discharge summary' : 'Prepare discharge summary' }}
-          </a>
-
-          @if (canManage() && a.statusCode === 1) {
-            <button type="button" class="btn-primary full-btn" (click)="discharge()" [disabled]="busy() || a.balanceDue > 0">
-              Discharge
-            </button>
-            @if (a.balanceDue > 0) {
-              <p class="hint">Collect the remaining balance before discharge.</p>
-            }
+          @if (canManage() && a.statusCode === 1 && a.balanceDue > 0) {
+            <p class="hint">Collect the remaining balance before discharge.</p>
           }
         </section>
 

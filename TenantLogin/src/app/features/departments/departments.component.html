@@ -17,7 +17,7 @@
     <option [ngValue]="1">Active</option>
     <option [ngValue]="2">Inactive</option>
   </select>
-  <button type="submit" class="btn-secondary">Search</button>
+  <button type="submit" class="btn-primary">Search</button>
   @if (searchTerm || statusFilter != null) {
     <button type="button" class="btn-text" (click)="clearSearch()">Clear</button>
   }
@@ -110,7 +110,7 @@
 
       <form class="drawer-form" (ngSubmit)="submit()">
         <label>
-          Name <span class="req">*</span>
+          <span class="field-label">Name <span class="req">*</span></span>
           <input type="text" name="name" [(ngModel)]="name" required maxlength="150" [disabled]="saving()" />
         </label>
 

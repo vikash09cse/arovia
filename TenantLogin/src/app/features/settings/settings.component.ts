@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api/api.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { ApiResult } from '../../core/models/api.models';
 
 interface TenantSettings {
@@ -27,6 +28,7 @@ interface TenantSettings {
 })
 export class SettingsComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
 
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -186,6 +188,7 @@ export class SettingsComponent implements OnInit {
         this.website = s.website ?? '';
         this.logoUrl = s.logoUrl ?? null;
         this.logoPreview.set(this.logoUrl);
+        this.auth.updateLocalTenantName(s.hospitalName);
       }
 
       this.message.set(res.message || 'Tenant settings saved.');

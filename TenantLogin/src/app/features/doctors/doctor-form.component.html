@@ -25,7 +25,18 @@
           Last name <span class="req">*</span>
           <input type="text" name="lastName" [(ngModel)]="lastName" required minlength="2" />
         </label>
-        <label class="full">
+        @if (!isEdit()) {
+          <label>
+            Email <span class="req">*</span>
+            <input type="email" name="email" [(ngModel)]="email" required />
+          </label>
+        } @else {
+          <label>
+            Email
+            <input type="email" [value]="email" disabled />
+          </label>
+        }
+        <label>
           Department <span class="req">*</span>
           <select name="departmentId" [(ngModel)]="departmentId" required [disabled]="saving()">
             <option value="">Select department</option>
@@ -36,10 +47,6 @@
         </label>
         @if (!isEdit()) {
           <label>
-            Email <span class="req">*</span>
-            <input type="email" name="email" [(ngModel)]="email" required />
-          </label>
-          <label>
             Temporary password
             <input
               type="text"
@@ -48,11 +55,6 @@
               placeholder="Leave blank to auto-generate"
               autocomplete="new-password"
             />
-          </label>
-        } @else {
-          <label>
-            Email
-            <input type="email" [value]="email" disabled />
           </label>
         }
       </div>

@@ -94,16 +94,8 @@ export const routes: Routes = [
         canActivate: [tenantSuperAdminGuard],
         loadComponent: () => import('./features/doctors/doctors.component').then(m => m.DoctorsComponent)
       },
-      {
-        path: 'doctors/new',
-        canActivate: [tenantSuperAdminGuard],
-        loadComponent: () => import('./features/doctors/doctor-form.component').then(m => m.DoctorFormComponent)
-      },
-      {
-        path: 'doctors/:id/edit',
-        canActivate: [tenantSuperAdminGuard],
-        loadComponent: () => import('./features/doctors/doctor-form.component').then(m => m.DoctorFormComponent)
-      },
+      { path: 'doctors/new', redirectTo: '/doctors', pathMatch: 'full' },
+      { path: 'doctors/:id/edit', redirectTo: '/doctors', pathMatch: 'full' },
       {
         path: 'users',
         canActivate: [tenantSuperAdminGuard],

@@ -111,7 +111,7 @@
 
       <form class="drawer-form" (ngSubmit)="submit()">
         <label>
-          Diagnosis name <span class="req">*</span>
+          <span class="field-label">Diagnosis name <span class="req">*</span></span>
           <input type="text" name="name" [(ngModel)]="name" required maxlength="300" [disabled]="saving()" />
         </label>
 

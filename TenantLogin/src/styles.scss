@@ -79,10 +79,29 @@ h1, h2, h3, h4, p {
   margin: 0;
 }
 
-button, input {
+button, input, select {
   font: inherit;
 }
 
 a {
   color: inherit;
+}
+
+/* Shared list-page filter controls (Visits reference) */
+.search-bar select,
+.filter-type select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #334155;
+  background: #fff;
+  font-family: inherit;
+  min-width: 10rem;
+  cursor: pointer;
+}
+
+.search-bar .btn-primary {
+  min-height: 2.5rem;
+  font-weight: 600;
 }

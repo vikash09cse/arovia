@@ -81,6 +81,11 @@
   font-weight: 600;
   font-size: 1rem;
   color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  display: block;
 }
 
 .brand-tag {

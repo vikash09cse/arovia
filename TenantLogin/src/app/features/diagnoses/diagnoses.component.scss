@@ -1,14 +1,7 @@
 @import '../departments/departments.component.scss';
 
-.search-bar select {
-  padding: 0.625rem 0.875rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  color: #0f172a;
-  background: #fff;
-  font-family: inherit;
-  min-width: 10rem;
+.field-label {
+  display: inline;
 }
 
 .drawer-panel.wide {

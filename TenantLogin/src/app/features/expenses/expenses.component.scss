@@ -193,6 +193,10 @@
   color: #dc2626;
 }
 
+.expense-form .field-label {
+  display: inline;
+}
+
 .optional {
   color: #94a3b8;
   font-weight: 400;
@@ -203,9 +207,36 @@
   margin-top: 0.25rem;
 }
 
-.btn-text.danger {
+.actions-cell {
+  text-align: right;
+}
+
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.icon-btn-delete {
   color: #b91c1c;
-  font-weight: 600;
+}
+
+.icon-btn-delete:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
 }
 
 @media (max-width: 640px) {

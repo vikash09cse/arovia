@@ -38,6 +38,11 @@ export class LayoutComponent {
   readonly mobileSidebarOpen = signal(false);
   readonly sidebarCollapsed = signal(this.loadCollapsedPreference());
   readonly user = computed(() => this.auth.currentUser());
+  readonly hospitalName = computed(() => this.user()?.tenantName?.trim() || 'Hospital');
+  readonly brandInitial = computed(() => {
+    const name = this.hospitalName();
+    return name.charAt(0).toUpperCase() || 'H';
+  });
   readonly userMenuOpen = signal(false);
 
   readonly passwordModalOpen = signal(false);

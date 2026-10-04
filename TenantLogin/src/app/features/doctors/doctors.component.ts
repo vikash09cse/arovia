@@ -1,7 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiResult } from '../../core/models/api.models';
@@ -20,6 +19,17 @@ interface DoctorListItem {
   createdAt: string;
 }
 
+interface DoctorDetail {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  departmentId?: string | null;
+  departmentName?: string | null;
+  status: string;
+  statusCode: number;
+}
+
 interface DoctorList {
   items: DoctorListItem[];
   totalCount: number;
@@ -27,10 +37,15 @@ interface DoctorList {
   pageSize: number;
 }
 
+interface DepartmentLookup {
+  id: string;
+  name: string;
+}
+
 @Component({
   selector: 'app-doctors',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe],
+  imports: [FormsModule, DatePipe],
   templateUrl: './doctors.component.html',
   styleUrl: './doctors.component.scss'
 })
@@ -48,13 +63,31 @@ export class DoctorsComponent implements OnInit {
   readonly togglingId = signal<string | null>(null);
   readonly Math = Math;
 
+  readonly drawerOpen = signal(false);
+  readonly editingId = signal<string | null>(null);
+  readonly saving = signal(false);
+  readonly formError = signal('');
+  readonly departments = signal<DepartmentLookup[]>([]);
+
   searchTerm = '';
   statusFilter: number | null = null;
+  firstName = '';
+  lastName = '';
+  email = '';
+  temporaryPassword = '';
+  departmentId = '';
 
   ngOnInit() {
     const user = this.auth.currentUser();
     this.canManage.set(user?.role === 'TenantSuperAdmin');
     this.loadDoctors();
+    if (this.canManage()) {
+      this.loadDepartments();
+    }
+  }
+
+  isEditing(): boolean {
+    return !!this.editingId();
   }
 
   loadDoctors() {
@@ -79,6 +112,13 @@ export class DoctorsComponent implements OnInit {
         this.error.set(err.error?.message ?? 'Unable to load doctors.');
         this.loading.set(false);
       }
+    });
+  }
+
+  loadDepartments() {
+    this.api.get<ApiResult<DepartmentLookup[]>>('/departments/active').subscribe({
+      next: res => this.departments.set(res.data ?? []),
+      error: () => this.formError.set('Unable to load departments.')
     });
   }
 
@@ -109,6 +149,111 @@ export class DoctorsComponent implements OnInit {
     }
   }
 
+  openCreate() {
+    if (!this.canManage()) return;
+    this.editingId.set(null);
+    this.firstName = '';
+    this.lastName = '';
+    this.email = '';
+    this.temporaryPassword = '';
+    this.departmentId = '';
+    this.formError.set('');
+    this.drawerOpen.set(true);
+    if (!this.departments().length) this.loadDepartments();
+  }
+
+  openEdit(doctor: DoctorListItem) {
+    if (!this.canManage()) return;
+    this.formError.set('');
+    this.api.get<ApiResult<DoctorDetail>>(`/doctors/${doctor.id}`).subscribe({
+      next: res => {
+        const d = res.data;
+        if (!d) {
+          this.error.set('Doctor not found.');
+          return;
+        }
+        this.editingId.set(d.id);
+        this.firstName = d.firstName;
+        this.lastName = d.lastName;
+        this.email = d.email;
+        this.temporaryPassword = '';
+        this.departmentId = d.departmentId ?? '';
+        this.ensureCurrentDepartmentOption(d.departmentId, d.departmentName);
+        this.drawerOpen.set(true);
+      },
+      error: err => {
+        this.error.set(err.error?.message ?? 'Unable to load doctor.');
+      }
+    });
+  }
+
+  closeDrawer() {
+    if (this.saving()) return;
+    this.drawerOpen.set(false);
+    this.formError.set('');
+  }
+
+  submit() {
+    if (!this.firstName.trim() || !this.lastName.trim()) {
+      this.formError.set('First name and last name are required.');
+      return;
+    }
+    if (!this.departmentId) {
+      this.formError.set('Department is required.');
+      return;
+    }
+    if (!this.isEditing() && (!this.email.trim() || !this.email.includes('@'))) {
+      this.formError.set('A valid email is required.');
+      return;
+    }
+
+    this.saving.set(true);
+    this.formError.set('');
+
+    const editId = this.editingId();
+    if (editId) {
+      this.api.put<ApiResult<DoctorDetail>>(`/doctors/${editId}`, {
+        firstName: this.firstName.trim(),
+        lastName: this.lastName.trim(),
+        departmentId: this.departmentId
+      }).subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.drawerOpen.set(false);
+          this.loadDoctors();
+        },
+        error: err => {
+          this.formError.set(err.error?.message ?? 'Unable to update doctor.');
+          this.saving.set(false);
+        }
+      });
+      return;
+    }
+
+    const body: Record<string, string> = {
+      email: this.email.trim(),
+      firstName: this.firstName.trim(),
+      lastName: this.lastName.trim(),
+      departmentId: this.departmentId
+    };
+    if (this.temporaryPassword.trim()) {
+      body['temporaryPassword'] = this.temporaryPassword.trim();
+    }
+
+    this.api.post<ApiResult<DoctorDetail>>('/doctors', body).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.drawerOpen.set(false);
+        this.page.set(1);
+        this.loadDoctors();
+      },
+      error: err => {
+        this.formError.set(err.error?.message ?? 'Unable to create doctor.');
+        this.saving.set(false);
+      }
+    });
+  }
+
   toggleStatus(doctor: DoctorListItem) {
     if (!this.canManage()) return;
 
@@ -126,5 +271,15 @@ export class DoctorsComponent implements OnInit {
         this.togglingId.set(null);
       }
     });
+  }
+
+  private ensureCurrentDepartmentOption(id: string | null | undefined, name: string | null | undefined) {
+    if (!id) return;
+    const list = this.departments();
+    if (list.some(d => d.id === id)) return;
+    this.departments.set([
+      ...list,
+      { id, name: name?.trim() || 'Current department (inactive)' }
+    ]);
   }
 }

@@ -132,7 +132,7 @@
 
       <form class="drawer-form" (ngSubmit)="submit()">
         <label>
-          Agency name *
+          <span class="field-label">Agency name <span class="req">*</span></span>
           <input type="text" name="name" [(ngModel)]="name" required maxlength="200" [disabled]="saving()" />
         </label>
         <label>

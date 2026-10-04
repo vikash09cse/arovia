@@ -464,6 +464,14 @@ td {
   color: #94a3b8;
 }
 
+.field-label {
+  display: inline;
+}
+
+.req {
+  color: #dc2626;
+}
+
 .drawer-actions {
   display: flex;
   gap: 0.5rem;

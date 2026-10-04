@@ -22,7 +22,7 @@
       <h2>Hospital profile</h2>
       <div class="grid">
         <label>
-          Hospital Name
+          <span class="field-label">Hospital Name <span class="req">*</span></span>
           <input type="text" name="hospitalName" [(ngModel)]="hospitalName" required maxlength="200" />
         </label>
 
@@ -32,27 +32,27 @@
         </label>
 
         <label>
-          Contact First Name
+          <span class="field-label">Contact First Name <span class="req">*</span></span>
           <input type="text" name="primaryContactFirstName" [(ngModel)]="primaryContactFirstName" required maxlength="100" />
         </label>
 
         <label>
-          Contact Last Name
+          <span class="field-label">Contact Last Name <span class="req">*</span></span>
           <input type="text" name="primaryContactLastName" [(ngModel)]="primaryContactLastName" required maxlength="100" />
         </label>
 
         <label>
-          Contact Email
+          <span class="field-label">Contact Email <span class="req">*</span></span>
           <input type="email" name="primaryContactEmail" [(ngModel)]="primaryContactEmail" required maxlength="100" />
         </label>
 
         <label>
-          Contact Phone
+          <span class="field-label">Contact Phone <span class="req">*</span></span>
           <input type="text" name="primaryContactPhone" [(ngModel)]="primaryContactPhone" required maxlength="15" />
         </label>
 
         <label>
-          Timezone
+          <span class="field-label">Timezone <span class="req">*</span></span>
           <input type="text" name="timezone" [(ngModel)]="timezone" required maxlength="50" />
         </label>
 
@@ -68,7 +68,7 @@
         </label>
 
         <label class="full">
-          Address
+          <span class="field-label">Address <span class="req">*</span></span>
           <textarea name="address" [(ngModel)]="address" rows="3" required maxlength="500"></textarea>
         </label>
       </div>

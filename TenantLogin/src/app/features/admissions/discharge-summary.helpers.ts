@@ -309,12 +309,27 @@ export function composeDischargeForm(form: DischargeForm): DischargeForm {
 
 export function applyDiagnosisPack(form: DischargeForm, master: DiagnosisMaster): DischargeForm {
   const pack = master.pack ?? {};
-  const size = pack['medicinePackSize'] as number | null | undefined;
-  const packMeds = commonMedicinePack().map((m, i) => ({
-    ...m,
-    id: `seed-med-${master.code}-${i}`
-  }));
-  const medicines = size == null ? packMeds : packMeds.slice(0, size);
+  const rawMeds = pack['medicines'];
+  let medicines: DischargeMedicine[];
+  if (Array.isArray(rawMeds) && rawMeds.length > 0) {
+    medicines = rawMeds.map((m: any, i: number) => ({
+      id: String(m?.id || `seed-med-${master.code}-${i}`),
+      name: String(m?.name ?? ''),
+      strength: String(m?.strength ?? ''),
+      dose: String(m?.dose ?? ''),
+      route: String(m?.route ?? 'Oral'),
+      frequency: String(m?.frequency ?? ''),
+      duration: String(m?.duration ?? ''),
+      timing: String(m?.timing ?? '')
+    }));
+  } else {
+    const size = pack['medicinePackSize'] as number | null | undefined;
+    const packMeds = commonMedicinePack().map((m, i) => ({
+      ...m,
+      id: `seed-med-${master.code}-${i}`
+    }));
+    medicines = size == null ? packMeds : packMeds.slice(0, size);
+  }
 
   return {
     ...form,

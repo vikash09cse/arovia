@@ -9,6 +9,7 @@ public interface IUsersRepository
     Task<bool> EmailExistsAsync(Guid tenantId, string email, Guid? excludeId, CancellationToken ct);
     Task<Guid> CreateAsync(Guid tenantId, string email, string firstName, string lastName, string? designation, byte role, string passwordHash, Guid createdBy, CancellationToken ct);
     Task UpdateAsync(Guid tenantId, Guid userId, string firstName, string lastName, string? designation, byte role, Guid updatedBy, CancellationToken ct);
+    Task SetPasswordAsync(Guid tenantId, Guid userId, string passwordHash, Guid updatedBy, CancellationToken ct);
     Task SetStatusAsync(Guid tenantId, Guid userId, UserStatus status, Guid updatedBy, CancellationToken ct);
     Task DeleteAsync(Guid tenantId, Guid userId, Guid updatedBy, CancellationToken ct);
 }

@@ -1,0 +1,182 @@
+<header class="page-header">
+  <div class="header-row">
+    <div>
+      <h1>Expenses</h1>
+      <p class="subtitle">Hospital operating expenses used for monthly profit payouts</p>
+    </div>
+    <a routerLink="/monthly-reconcile" class="btn-primary">Revenue &amp; profit lock</a>
+  </div>
+</header>
+
+@if (msg()) {
+  <div class="success-banner">{{ msg() }}</div>
+}
+@if (error()) {
+  <div class="error">{{ error() }}</div>
+}
+
+<section class="card month-card">
+  <div class="month-row">
+    <div class="month-control">
+      <span class="field-label">Month</span>
+      <div class="month-picker">
+        <button type="button" class="btn-ghost month-nav" aria-label="Previous month" (click)="prevMonth()">‹</button>
+        <input
+          type="month"
+          [ngModel]="yearMonth()"
+          (ngModelChange)="onMonthInput($event)"
+          name="yearMonth"
+        />
+        <button type="button" class="btn-ghost month-nav" aria-label="Next month" (click)="nextMonth()">›</button>
+      </div>
+    </div>
+
+    <span class="badge" [class.open]="!isReconciled()" [class.closed]="isReconciled()">
+      {{ isReconciled() ? 'Closed' : 'Open' }}
+    </span>
+
+    <div class="month-total">
+      <p class="muted">Month total</p>
+      <p class="total-value">{{ formatMoney(monthTotal()) }}</p>
+    </div>
+  </div>
+
+  @if (categoryBreakdown().length > 0) {
+    <div class="chip-row">
+      <button
+        type="button"
+        class="chip"
+        [class.active]="categoryFilter() === 'all'"
+        (click)="setCategoryFilter('all')"
+      >
+        All · {{ formatMoney(monthTotal()) }}
+      </button>
+      @for (c of categoryBreakdown(); track c.category) {
+        <button
+          type="button"
+          class="chip"
+          [class.active]="categoryFilter() === c.category"
+          (click)="setCategoryFilter(c.category)"
+        >
+          {{ c.category }} · {{ formatMoney(c.total) }}
+        </button>
+      }
+    </div>
+  }
+
+  <div class="month-actions">
+    @if (!isReconciled()) {
+      <button type="button" class="btn-primary" [disabled]="closing()" (click)="closeMonth()">
+        {{ closing() ? 'Closing…' : 'Close month (locks totals)' }}
+      </button>
+    } @else {
+      <button type="button" class="btn-secondary" [disabled]="closing()" (click)="reopenMonth()">
+        {{ closing() ? 'Reopening…' : 'Reopen month' }}
+      </button>
+    }
+    <p class="hint">
+      Full OPD/IPD revenue view:
+      <a routerLink="/monthly-reconcile">Monthly reconcile</a>
+    </p>
+  </div>
+
+  @if (isReconciled()) {
+    <p class="locked-note">This month is closed. Expenses cannot be added or deleted until it is reopened.</p>
+  }
+</section>
+
+@if (!isReconciled()) {
+  <section class="card form-card">
+    <h2>Add expense</h2>
+    <form class="expense-form" (ngSubmit)="addExpense()">
+      <label>
+        Amount (₹) <span class="req">*</span>
+        <input type="number" name="amount" min="0.01" step="0.01" [(ngModel)]="amount" [disabled]="saving()" />
+      </label>
+      <label>
+        Date <span class="req">*</span>
+        <input
+          type="date"
+          name="expenseOn"
+          [min]="monthFrom()"
+          [max]="monthTo()"
+          [(ngModel)]="expenseOn"
+          [disabled]="saving()"
+        />
+      </label>
+      <label>
+        Category <span class="req">*</span>
+        <select name="category" [(ngModel)]="category" (ngModelChange)="onCategoryChange()" [disabled]="saving()">
+          @for (c of categories; track c) {
+            <option [value]="c">{{ c }}</option>
+          }
+        </select>
+      </label>
+      @if (category === 'Staff advance') {
+        <label>
+          Staff <span class="req">*</span>
+          <select name="staffUserId" [(ngModel)]="staffUserId" [disabled]="saving()">
+            <option value="">Select staff</option>
+            @for (s of staffOptions(); track s.id) {
+              <option [value]="s.id">{{ s.name }}</option>
+            }
+          </select>
+        </label>
+      }
+      <label class="full">
+        Note <span class="optional">(optional)</span>
+        <input type="text" name="note" [(ngModel)]="note" maxlength="500" [disabled]="saving()" />
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" [disabled]="saving()">
+          {{ saving() ? 'Adding…' : 'Add expense' }}
+        </button>
+      </div>
+    </form>
+  </section>
+}
+
+@if (loading()) {
+  <p class="status">Loading expenses…</p>
+} @else if (filteredItems().length === 0) {
+  <div class="empty">
+    @if (items().length === 0) {
+      No expenses for {{ monthLabel() }}.
+    } @else {
+      No {{ categoryFilter() }} expenses this month.
+    }
+  </div>
+} @else {
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Category</th>
+          <th>Staff</th>
+          <th>Amount</th>
+          <th>Note</th>
+          <th class="actions-col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (e of filteredItems(); track e.id) {
+          <tr>
+            <td data-label="Date">{{ formatDate(e.expenseOn) }}</td>
+            <td data-label="Category">{{ e.category }}</td>
+            <td data-label="Staff">{{ e.staffName || '—' }}</td>
+            <td data-label="Amount">{{ formatMoney(e.amount) }}</td>
+            <td data-label="Note">{{ e.note || '—' }}</td>
+            <td data-label="Actions" class="actions-cell">
+              @if (!isReconciled()) {
+                <button type="button" class="btn-text danger" (click)="deleteExpense(e)">Delete</button>
+              } @else {
+                —
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

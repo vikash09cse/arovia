@@ -49,6 +49,30 @@ public class LabTestsRepository(DbHelper dbHelper) : ILabTestsRepository
             commandType: CommandType.StoredProcedure);
     }
 
+    public async Task<IEnumerable<LabAgencyAssignmentReportDetailRow>> GetAssignmentReportDetailAsync(
+        Guid tenantId,
+        Guid labAgencyId,
+        DateOnly? dateFrom,
+        DateOnly? dateTo,
+        string? patientCode,
+        byte[]? phoneBlindIndex,
+        CancellationToken ct)
+    {
+        using var conn = dbHelper.GetConnection();
+        return await conn.QueryAsync<LabAgencyAssignmentReportDetailRow>(
+            "dbo.sp_lab_agency_assignment_report_detail",
+            new
+            {
+                tenantid = tenantId,
+                labagencyid = labAgencyId,
+                datefrom = dateFrom?.ToDateTime(TimeOnly.MinValue),
+                dateto = dateTo?.ToDateTime(TimeOnly.MinValue),
+                patientcode = patientCode,
+                phoneblindindex = phoneBlindIndex
+            },
+            commandType: CommandType.StoredProcedure);
+    }
+
     public async Task<LabAgencyRow?> GetByIdAsync(Guid tenantId, Guid labAgencyId, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();

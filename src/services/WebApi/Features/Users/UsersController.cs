@@ -27,6 +27,11 @@ public class UsersController(UsersService service) : ControllerBase
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTenantUserRequest request, CancellationToken ct) =>
         (await service.UpdateUserAsync(id, request, ct)).ToActionResult();
 
+    [HttpPatch("{id:guid}/password")]
+    public async Task<IActionResult> SetPassword(
+        Guid id, [FromBody] SetUserPasswordRequest request, CancellationToken ct) =>
+        (await service.SetPasswordAsync(id, request, ct)).ToActionResult();
+
     [HttpPatch("{id:guid}/status")]
     public async Task<IActionResult> SetStatus(Guid id, [FromQuery] byte status, CancellationToken ct)
     {

@@ -85,6 +85,41 @@ public class UsersService(
         return Result<TenantUserResponse>.Ok(Map(updated!), "User updated successfully.");
     }
 
+    public async Task<Result<bool>> SetPasswordAsync(Guid userId, SetUserPasswordRequest request, CancellationToken ct)
+    {
+        var tenantError = RequireTenantContext<bool>();
+        if (tenantError != null) return tenantError;
+
+        if (userId == GetUserId())
+            return Result<bool>.Fail(ErrorCode.Validation, "You cannot change your own password here.");
+
+        if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 6)
+            return Result<bool>.Fail(ErrorCode.Validation, "Password must be at least 6 characters.");
+
+        var tenantId = httpContextAccessor.GetTenantContext().TenantId;
+        var existing = await repository.GetByIdAsync(tenantId, userId, ct);
+        if (existing == null)
+            return Result<bool>.Fail(ErrorCode.NotFound, "User not found.");
+
+        if (existing.Role is not ((byte)UserType.Staff) and not ((byte)UserType.Doctor))
+            return Result<bool>.Fail(ErrorCode.Forbidden, "Only Staff and Doctor passwords can be changed here.");
+
+        try
+        {
+            await repository.SetPasswordAsync(
+                tenantId, userId, PasswordHelper.Hash(request.NewPassword), GetUserId(), ct);
+            return Result<bool>.Ok(true, "Password updated successfully.");
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 50404)
+        {
+            return Result<bool>.Fail(ErrorCode.NotFound, "User not found.");
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 50400)
+        {
+            return Result<bool>.Fail(ErrorCode.Validation, ex.Message.Split('\n')[0].Trim());
+        }
+    }
+
     public async Task<Result<bool>> SetUserStatusAsync(Guid userId, UserStatus status, CancellationToken ct)
     {
         var tenantError = RequireTenantContext<bool>();

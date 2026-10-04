@@ -156,6 +156,12 @@ public enum DocumentTemplateType : byte
     Email = 2
 }
 
+public enum MonthlyProfileStatus : byte
+{
+    Open = 1,
+    Reconciled = 2
+}
+
 public static class RoleNames
 {
     public const string PlatformAdmin = "PlatformAdmin";

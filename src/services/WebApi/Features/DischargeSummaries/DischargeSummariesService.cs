@@ -126,27 +126,6 @@ public class DischargeSummariesService(
             bytes));
     }
 
-    public async Task<Result<DiagnosisMasterListResponse>> GetActiveDiagnosesAsync(CancellationToken ct)
-    {
-        var tenantError = RequireTenantContext<DiagnosisMasterListResponse>();
-        if (tenantError != null) return tenantError;
-
-        var tenantId = httpContextAccessor.GetTenantContext().TenantId;
-        var rows = await repository.GetActiveDiagnosesAsync(tenantId, ct);
-        var items = rows.Select(r =>
-        {
-            JsonElement pack;
-            if (string.IsNullOrWhiteSpace(r.PackJson))
-                pack = JsonDocument.Parse("{}").RootElement.Clone();
-            else
-                pack = JsonDocument.Parse(r.PackJson).RootElement.Clone();
-
-            return new DiagnosisMasterItemResponse(r.DiagnosisMasterId, r.Code, r.Name, pack);
-        });
-
-        return Result<DiagnosisMasterListResponse>.Ok(new DiagnosisMasterListResponse(items));
-    }
-
     private DischargeSummaryResponse MapResponse(DischargeSummaryGetRow row)
     {
         var exists = row.DischargeSummaryId.HasValue;

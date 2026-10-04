@@ -40,15 +40,6 @@ public class DischargeSummaryGetRow
     public DateTime? SummaryUpdatedAt { get; set; }
 }
 
-public class DiagnosisMasterRow
-{
-    public Guid DiagnosisMasterId { get; set; }
-    public string Code { get; set; } = "";
-    public string Name { get; set; } = "";
-    public string? PackJson { get; set; }
-    public int SortOrder { get; set; }
-}
-
 public interface IDischargeSummariesRepository
 {
     Task<DischargeSummaryGetRow?> GetAsync(Guid tenantId, Guid admissionId, CancellationToken ct);
@@ -63,5 +54,4 @@ public interface IDischargeSummariesRepository
         string formJson,
         Guid actorId,
         CancellationToken ct);
-    Task<IReadOnlyList<DiagnosisMasterRow>> GetActiveDiagnosesAsync(Guid tenantId, CancellationToken ct);
 }

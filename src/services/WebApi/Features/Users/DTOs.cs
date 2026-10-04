@@ -14,6 +14,8 @@ public record UpdateTenantUserRequest(
     byte Role,
     string? Designation);
 
+public record SetUserPasswordRequest(string NewPassword);
+
 public record TenantUserResponse(
     Guid Id,
     string Email,

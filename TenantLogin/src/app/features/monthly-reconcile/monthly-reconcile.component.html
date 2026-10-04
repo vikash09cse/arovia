@@ -1,0 +1,138 @@
+<header class="page-header">
+  <div class="header-row">
+    <div>
+      <h1>Monthly reconcile</h1>
+      <p class="subtitle">Lock OPD + IPD collections and expenses for the month before investor payouts</p>
+    </div>
+  </div>
+</header>
+
+@if (msg()) {
+  <div class="success-banner">{{ msg() }}</div>
+}
+@if (error()) {
+  <div class="error">{{ error() }}</div>
+}
+
+<section class="card month-card">
+  <div class="month-row">
+    <label class="month-field">
+      <span class="field-label">Month</span>
+      <input
+        type="month"
+        [ngModel]="yearMonth()"
+        (ngModelChange)="onMonthChange($event)"
+        name="yearMonth"
+      />
+    </label>
+    <span class="badge" [class.open]="!isReconciled()" [class.closed]="isReconciled()">
+      {{ isReconciled() ? 'Reconciled' : 'Open (live)' }}
+    </span>
+  </div>
+
+  @if (isReconciled() && profile(); as p) {
+    <p class="meta">
+      Locked {{ formatDateTime(p.reconciledAt) }}
+      @if (p.reconcilerName) {
+        by {{ p.reconcilerName }}
+      }
+      @if (p.note) {
+        · {{ p.note }}
+      }
+    </p>
+  } @else {
+    <p class="meta">Showing live totals. Reconcile to freeze this month for investor payouts.</p>
+  }
+</section>
+
+@if (loading()) {
+  <p class="status">Loading totals…</p>
+} @else {
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <p class="kpi-label">OPD revenue</p>
+      <p class="kpi-value">{{ formatMoney(totals().opdRevenue) }}</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">IPD revenue</p>
+      <p class="kpi-value">{{ formatMoney(totals().ipdRevenue) }}</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Total revenue</p>
+      <p class="kpi-value">{{ formatMoney(totals().totalRevenue) }}</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Expenses</p>
+      <p class="kpi-value">{{ formatMoney(totals().totalExpenses) }}</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Profit</p>
+      <p class="kpi-value profit">{{ formatMoney(totals().profit) }}</p>
+    </div>
+  </div>
+}
+
+@if (!isReconciled()) {
+  <section class="card action-card">
+    <label>
+      Reconcile note <span class="optional">(optional)</span>
+      <textarea
+        name="note"
+        rows="3"
+        [(ngModel)]="note"
+        placeholder="Optional note for the close"
+        [disabled]="acting()"
+      ></textarea>
+    </label>
+    <div class="form-actions">
+      <button type="button" class="btn-primary" [disabled]="acting()" (click)="reconcile()">
+        {{ acting() ? 'Reconciling…' : 'Reconcile month' }}
+      </button>
+    </div>
+  </section>
+} @else {
+  <section class="card action-card">
+    <p class="meta">Reopening clears the lock so expenses and live totals can change again.</p>
+    <button type="button" class="btn-secondary" [disabled]="acting()" (click)="reopen()">
+      {{ acting() ? 'Reopening…' : 'Reopen month' }}
+    </button>
+  </section>
+}
+
+@if (history().length > 0) {
+  <h2 class="section-title">Reconciled months</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Status</th>
+          <th>Revenue</th>
+          <th>Expenses</th>
+          <th>Profit</th>
+          <th>Reconciled</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of history(); track p.id) {
+          <tr>
+            <td data-label="Month">
+              <button type="button" class="link-btn" (click)="selectHistoryMonth(p.yearMonth)">
+                {{ formatYearMonthLabel(p.yearMonth) }}
+              </button>
+            </td>
+            <td data-label="Status">
+              <span class="badge" [class.closed]="p.statusCode === 2" [class.open]="p.statusCode !== 2">
+                {{ p.status }}
+              </span>
+            </td>
+            <td data-label="Revenue">{{ formatMoney(p.totalRevenue) }}</td>
+            <td data-label="Expenses">{{ formatMoney(p.totalExpenses) }}</td>
+            <td data-label="Profit">{{ formatMoney(p.profit) }}</td>
+            <td data-label="Reconciled">{{ formatDateTime(p.reconciledAt) }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

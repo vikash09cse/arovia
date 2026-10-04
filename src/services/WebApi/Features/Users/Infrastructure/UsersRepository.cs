@@ -97,6 +97,22 @@ public class UsersRepository(DbHelper dbHelper) : IUsersRepository
             commandType: CommandType.StoredProcedure);
     }
 
+    public async Task SetPasswordAsync(
+        Guid tenantId, Guid userId, string passwordHash, Guid updatedBy, CancellationToken ct)
+    {
+        using var conn = dbHelper.GetConnection();
+        await conn.ExecuteAsync(
+            "dbo.sp_set_tenant_user_password",
+            new
+            {
+                tenantid = tenantId,
+                userid = userId,
+                passwordhash = passwordHash,
+                updatedby = updatedBy
+            },
+            commandType: CommandType.StoredProcedure);
+    }
+
     public async Task SetStatusAsync(Guid tenantId, Guid userId, UserStatus status, Guid updatedBy, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();

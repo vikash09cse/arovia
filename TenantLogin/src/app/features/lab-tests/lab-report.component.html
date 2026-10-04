@@ -2,10 +2,10 @@
   <div class="header-row">
     <div>
       <h1>Lab Report</h1>
-      <p class="subtitle">Visit assignments by lab agency</p>
+      <p class="subtitle">Lab assignments by agency (includes multiple assigns per visit)</p>
     </div>
     @if (totalVisits() > 0) {
-      <div class="summary-pill">{{ totalVisits() }} visit{{ totalVisits() === 1 ? '' : 's' }} assigned</div>
+      <div class="summary-pill">{{ totalVisits() }} assignment{{ totalVisits() === 1 ? '' : 's' }}</div>
     }
   </div>
 </header>
@@ -79,7 +79,7 @@
           <th>Contact</th>
           <th>Phone</th>
           <th>Status</th>
-          <th class="count-col">Visits assigned</th>
+          <th class="count-col">Assignments</th>
         </tr>
       </thead>
       <tbody>
@@ -91,12 +91,74 @@
             <td data-label="Status">
               <span class="badge" [class.active]="r.statusCode === 1">{{ r.status }}</span>
             </td>
-            <td data-label="Visits assigned" class="count-cell">
-              <span class="visit-count" [class.zero]="r.visitCount === 0">{{ r.visitCount }}</span>
+            <td data-label="Assignments" class="count-cell">
+              @if (r.visitCount > 0) {
+                <button
+                  type="button"
+                  class="visit-count visit-count-btn"
+                  [attr.aria-label]="'View ' + r.visitCount + ' assignments for ' + r.name"
+                  (click)="openDetails(r)"
+                >
+                  {{ r.visitCount }}
+                </button>
+              } @else {
+                <span class="visit-count zero">0</span>
+              }
             </td>
           </tr>
         }
       </tbody>
     </table>
+  </div>
+}
+
+@if (drawerOpen()) {
+  <div class="drawer-backdrop" (click)="closeDrawer()">
+    <aside class="drawer-panel" (click)="$event.stopPropagation()">
+      <header class="drawer-header">
+        <div>
+          <h2>{{ drawerAgencyName() }}</h2>
+          <p class="drawer-hint">Patients assigned under the current filters</p>
+        </div>
+        <button type="button" class="drawer-close" (click)="closeDrawer()" aria-label="Close">×</button>
+      </header>
+
+      @if (detailLoading()) {
+        <p class="status">Loading assignments…</p>
+      } @else if (detailError()) {
+        <div class="error">{{ detailError() }}</div>
+      } @else if (detailRows().length === 0) {
+        <div class="empty">No assignments found for this agency.</div>
+      } @else {
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Patient No.</th>
+                <th>Visit date</th>
+                <th>Assigned</th>
+                <th>Test name</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (d of detailRows(); track d.id) {
+                <tr>
+                  <td data-label="Patient">
+                    <a class="patient-link" [routerLink]="['/visits', d.visitId]">{{ d.patientName }}</a>
+                  </td>
+                  <td data-label="Patient No.">{{ d.patientCode }}</td>
+                  <td data-label="Visit date">{{ formatDateTime(d.visitDateTime) }}</td>
+                  <td data-label="Assigned">{{ formatDateTime(d.assignedAt) }}</td>
+                  <td data-label="Test name">{{ d.testName || '—' }}</td>
+                  <td data-label="Notes">{{ d.notes || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </aside>
   </div>
 }

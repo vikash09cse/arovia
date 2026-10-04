@@ -46,6 +46,20 @@ public class LabAgencyAssignmentReportRow
     public int VisitCount { get; set; }
 }
 
+public class LabAgencyAssignmentReportDetailRow
+{
+    public Guid VisitLabAgencyId { get; set; }
+    public Guid VisitId { get; set; }
+    public Guid PatientId { get; set; }
+    public string PatientCode { get; set; } = string.Empty;
+    public string PatientFirstName { get; set; } = string.Empty;
+    public string PatientLastName { get; set; } = string.Empty;
+    public DateTime VisitDateTime { get; set; }
+    public DateTime AssignedAt { get; set; }
+    public string? TestName { get; set; }
+    public string? Notes { get; set; }
+}
+
 public interface ILabTestsRepository
 {
     Task<(IEnumerable<LabAgencyRow> Items, int Total)> GetListAsync(
@@ -55,6 +69,15 @@ public interface ILabTestsRepository
 
     Task<IEnumerable<LabAgencyAssignmentReportRow>> GetAssignmentReportAsync(
         Guid tenantId,
+        DateOnly? dateFrom,
+        DateOnly? dateTo,
+        string? patientCode,
+        byte[]? phoneBlindIndex,
+        CancellationToken ct);
+
+    Task<IEnumerable<LabAgencyAssignmentReportDetailRow>> GetAssignmentReportDetailAsync(
+        Guid tenantId,
+        Guid labAgencyId,
         DateOnly? dateFrom,
         DateOnly? dateTo,
         string? patientCode,

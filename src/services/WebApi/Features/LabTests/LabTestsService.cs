@@ -95,6 +95,58 @@ public class LabTestsService(
             new LabAgencyAssignmentReportResponse(items, items.Sum(i => i.VisitCount)));
     }
 
+    public async Task<Result<LabAgencyAssignmentReportDetailResponse>> GetAssignmentReportDetailAsync(
+        Guid labAgencyId,
+        DateOnly? dateFrom,
+        DateOnly? dateTo,
+        string? phone,
+        string? patientCode,
+        CancellationToken ct)
+    {
+        var tenantError = RequireTenantContext<LabAgencyAssignmentReportDetailResponse>();
+        if (tenantError != null) return tenantError;
+
+        if (dateFrom.HasValue && dateTo.HasValue && dateFrom > dateTo)
+            return Result<LabAgencyAssignmentReportDetailResponse>.Fail(ErrorCode.Validation, "From date cannot be after To date.");
+
+        var tenantId = GetTenantId();
+        var agency = await repository.GetByIdAsync(tenantId, labAgencyId, ct);
+        if (agency == null)
+            return Result<LabAgencyAssignmentReportDetailResponse>.Fail(ErrorCode.NotFound, "Lab agency not found.");
+
+        byte[]? phoneBlindIndex = null;
+        if (!string.IsNullOrWhiteSpace(phone))
+        {
+            var normalized = PhiEncryptionHelper.NormalizePhone(phone);
+            if (normalized.Length is < 10 or > 15)
+                return Result<LabAgencyAssignmentReportDetailResponse>.Fail(ErrorCode.Validation, "Phone search must be 10–15 digits.");
+            phoneBlindIndex = encryption.ComputeBlindIndex(tenantId, normalized);
+        }
+
+        var rows = await repository.GetAssignmentReportDetailAsync(
+            tenantId,
+            labAgencyId,
+            dateFrom,
+            dateTo,
+            string.IsNullOrWhiteSpace(patientCode) ? null : patientCode.Trim(),
+            phoneBlindIndex,
+            ct);
+
+        var items = rows.Select(r => new LabAgencyAssignmentReportDetailItem(
+            r.VisitLabAgencyId,
+            r.VisitId,
+            r.PatientId,
+            r.PatientCode,
+            $"{r.PatientFirstName} {r.PatientLastName}".Trim(),
+            r.VisitDateTime,
+            r.AssignedAt,
+            r.TestName,
+            r.Notes));
+
+        return Result<LabAgencyAssignmentReportDetailResponse>.Ok(
+            new LabAgencyAssignmentReportDetailResponse(agency.LabAgencyId, agency.Name, items));
+    }
+
     public async Task<Result<LabAgencyResponse>> GetByIdAsync(Guid labAgencyId, CancellationToken ct)
     {
         var tenantError = RequireTenantContext<LabAgencyResponse>();

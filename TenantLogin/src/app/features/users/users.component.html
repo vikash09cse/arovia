@@ -110,7 +110,7 @@
           <h2>{{ isEditing() ? 'Edit user' : 'Add staff member' }}</h2>
           <p class="drawer-hint">
             @if (isEditing()) {
-              Update name, designation, or role for this hospital user.
+              Update name, designation, role, or password for this hospital user.
             } @else {
               Staff can collect payments and manage day-to-day hospital operations.
             }
@@ -205,6 +205,39 @@
           </label>
         }
 
+        @if (isEditing()) {
+          <section class="password-section">
+            <h3>Change password</h3>
+            <p class="field-hint">Set a new password for this user. You cannot change your own login password here.</p>
+            @if (passwordError()) {
+              <div class="error">{{ passwordError() }}</div>
+            }
+            @if (passwordMessage()) {
+              <div class="success">{{ passwordMessage() }}</div>
+            }
+            <label>
+              New password
+              <input
+                type="text"
+                name="newPassword"
+                [(ngModel)]="newPassword"
+                minlength="6"
+                placeholder="At least 6 characters"
+                autocomplete="new-password"
+                [disabled]="passwordSaving() || saving()"
+              />
+            </label>
+            <button
+              type="button"
+              class="btn-secondary"
+              [disabled]="passwordSaving() || saving() || !newPassword.trim()"
+              (click)="setPassword()"
+            >
+              {{ passwordSaving() ? 'Updating…' : 'Set password' }}
+            </button>
+          </section>
+        }
+
         @if (isEditing() && roleCode === 2) {
           <section class="salary-section">
             <h3>Monthly salary</h3>
@@ -291,8 +324,8 @@
         }
 
         <div class="drawer-actions">
-          <button type="button" class="btn-secondary" [disabled]="saving() || salarySaving()" (click)="closeDrawer()">Cancel</button>
-          <button type="submit" class="btn-primary" [disabled]="saving() || salarySaving()">
+          <button type="button" class="btn-secondary" [disabled]="saving() || salarySaving() || passwordSaving()" (click)="closeDrawer()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="saving() || salarySaving() || passwordSaving()">
             @if (saving()) {
               {{ isEditing() ? 'Saving…' : 'Adding…' }}
             } @else {

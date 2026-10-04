@@ -52,14 +52,4 @@ public class DischargeSummariesRepository(DbHelper dbHelper) : IDischargeSummari
             commandType: CommandType.StoredProcedure);
         return (Guid)result.dischargesummaryid;
     }
-
-    public async Task<IReadOnlyList<DiagnosisMasterRow>> GetActiveDiagnosesAsync(Guid tenantId, CancellationToken ct)
-    {
-        using var conn = dbHelper.GetConnection();
-        var rows = await conn.QueryAsync<DiagnosisMasterRow>(
-            "dbo.sp_diagnosis_master_get_active",
-            new { tenantid = tenantId },
-            commandType: CommandType.StoredProcedure);
-        return rows.ToList();
-    }
 }

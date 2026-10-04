@@ -61,12 +61,3 @@ public record DischargeSummaryPrintResponse(
     Guid AdmissionId,
     string AdmissionCode,
     string Html);
-
-public record DiagnosisMasterItemResponse(
-    Guid Id,
-    string Code,
-    string Name,
-    JsonElement Pack);
-
-public record DiagnosisMasterListResponse(
-    IEnumerable<DiagnosisMasterItemResponse> Items);

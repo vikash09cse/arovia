@@ -18,8 +18,8 @@ END
 GO
 
 -- Remove pending charge-line rows; balance is derived from visits.totalchargeamount
-DELETE FROM dbo.payments WHERE paymentstatus = 1;
-GO
+-- DELETE FROM dbo.payments WHERE paymentstatus = 1;
+--GO
 
 -- Normalize paid rows as collections
 UPDATE dbo.payments

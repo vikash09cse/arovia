@@ -1,0 +1,318 @@
+<header class="page-header">
+  <div class="header-row">
+    <div>
+      <h1>Diagnoses</h1>
+      <p class="subtitle">Master diagnoses with discharge packs. Selecting one on Prepare Discharge Summary auto-fills the form.</p>
+    </div>
+    <button type="button" class="btn-primary" (click)="openCreate()">Add diagnosis</button>
+  </div>
+</header>
+
+<form class="search-bar" (ngSubmit)="loadList()">
+  <select name="statusFilter" [(ngModel)]="statusFilter" (ngModelChange)="onStatusFilterChange()">
+    <option [ngValue]="null">All statuses</option>
+    <option [ngValue]="true">Active</option>
+    <option [ngValue]="false">Inactive</option>
+  </select>
+</form>
+
+@if (loading()) {
+  <p class="status">Loading diagnoses…</p>
+} @else if (error()) {
+  <div class="error">{{ error() }}</div>
+} @else if (rows().length === 0) {
+  <div class="empty">
+    No diagnosis masters yet.
+    <button type="button" class="btn-text" (click)="openCreate()">Add the first diagnosis</button>
+  </div>
+} @else {
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Diagnosis</th>
+          <th>Procedure</th>
+          <th>Follow-up</th>
+          <th>Status</th>
+          <th class="actions-col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of rows(); track r.id) {
+          <tr>
+            <td data-label="Diagnosis">{{ r.name }}</td>
+            <td data-label="Procedure">{{ r.procedureKey || '—' }}</td>
+            <td data-label="Follow-up">{{ r.followUpKey || '—' }}</td>
+            <td data-label="Status">
+              <span class="badge" [class.active]="r.isActive">{{ r.isActive ? 'Active' : 'Inactive' }}</span>
+            </td>
+            <td data-label="Actions" class="actions-cell">
+              <div class="row-actions">
+                <button
+                  type="button"
+                  class="icon-btn icon-btn-edit"
+                  title="Edit diagnosis"
+                  aria-label="Edit diagnosis"
+                  (click)="openEdit(r)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn"
+                  [class.icon-btn-deactivate]="r.isActive"
+                  [class.icon-btn-activate]="!r.isActive"
+                  [disabled]="updatingStatusId() === r.id || deletingId() === r.id"
+                  [title]="r.isActive ? 'Deactivate' : 'Activate'"
+                  [attr.aria-label]="r.isActive ? 'Deactivate' : 'Activate'"
+                  (click)="toggleStatus(r)"
+                >
+                  {{ r.isActive ? 'Off' : 'On' }}
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn icon-btn-delete"
+                  title="Delete diagnosis"
+                  aria-label="Delete diagnosis"
+                  [disabled]="deletingId() === r.id"
+                  (click)="deleteRow(r)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (drawerOpen()) {
+  <div class="drawer-backdrop" (click)="closeDrawer()">
+    <aside class="drawer-panel wide" (click)="$event.stopPropagation()">
+      <header class="drawer-header">
+        <div>
+          <h2>{{ editingId() ? 'Edit diagnosis' : 'Add diagnosis' }}</h2>
+          <p class="drawer-hint">Pack fields auto-fill on discharge summary.</p>
+        </div>
+        <button type="button" class="drawer-close" (click)="closeDrawer()" aria-label="Close">×</button>
+      </header>
+
+      @if (formError()) {
+        <div class="error">{{ formError() }}</div>
+      }
+
+      <form class="drawer-form" (ngSubmit)="submit()">
+        <label>
+          Diagnosis name <span class="req">*</span>
+          <input type="text" name="name" [(ngModel)]="name" required maxlength="300" [disabled]="saving()" />
+        </label>
+
+        <label class="checkbox-row">
+          <input type="checkbox" name="isActive" [(ngModel)]="isActive" [disabled]="saving()" />
+          Active (shown in discharge dropdown)
+        </label>
+
+        <label>
+          Chief complaints
+          <textarea name="chiefComplaints" rows="2" [(ngModel)]="pack.chiefComplaints" [disabled]="saving()"></textarea>
+        </label>
+        <label>
+          Brief history
+          <textarea name="briefHistory" rows="3" [(ngModel)]="pack.briefHistory" [disabled]="saving()"></textarea>
+        </label>
+        <label>
+          Advice
+          <textarea name="advice" rows="3" [(ngModel)]="pack.advice" [disabled]="saving()"></textarea>
+        </label>
+        <label>
+          Treatment during admission
+          <textarea name="treatmentDuringAdmission" rows="3" [(ngModel)]="pack.treatmentDuringAdmission" [disabled]="saving()"></textarea>
+        </label>
+
+        <div class="grid-2">
+          <label>
+            Procedure
+            <select name="procedureKey" [(ngModel)]="pack.procedureKey" (ngModelChange)="onProcedureChange()" [disabled]="saving()">
+              @for (o of procedureOptions; track o.key || 'none') {
+                <option [value]="o.key">{{ o.label }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Anaesthesia
+            <input type="text" name="anaesthesia" [(ngModel)]="pack.anaesthesia" [disabled]="saving()" />
+          </label>
+          <label>
+            Indication
+            <input type="text" name="indication" [(ngModel)]="pack.indication" [disabled]="saving()" />
+          </label>
+          <label>
+            Catheter / drain
+            <select name="catheterKey" [(ngModel)]="pack.catheterKey" [disabled]="saving()">
+              <option value="">Select</option>
+              @for (o of catheterOptions; track o) {
+                <option [value]="o">{{ o }}</option>
+              }
+            </select>
+          </label>
+          @if (pack.catheterKey === 'Other') {
+            <label>
+              Catheter other
+              <input type="text" name="catheterOther" [(ngModel)]="pack.catheterOther" [disabled]="saving()" />
+            </label>
+          }
+          <label>
+            Specimen
+            <select name="specimen" [(ngModel)]="pack.specimen" [disabled]="saving()">
+              @for (o of specimenOptions; track o) {
+                <option [value]="o">{{ o }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Discharge type
+            <select name="dischargeType" [(ngModel)]="pack.dischargeType" [disabled]="saving()">
+              @for (o of dischargeTypeOptions; track o) {
+                <option [value]="o">{{ o }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Follow-up
+            <select name="followUpKey" [(ngModel)]="pack.followUpKey" [disabled]="saving()">
+              <option value="">Select</option>
+              @for (o of followUpOptions; track o) {
+                <option [value]="o">{{ o }}</option>
+              }
+            </select>
+          </label>
+          @if (pack.followUpKey === 'Other') {
+            <label>
+              Follow-up other
+              <input type="text" name="followUpOther" [(ngModel)]="pack.followUpOther" [disabled]="saving()" />
+            </label>
+          }
+          <label>
+            General condition
+            <input type="text" name="generalCondition" [(ngModel)]="pack.generalCondition" [disabled]="saving()" />
+          </label>
+          <label>
+            Postop course
+            <input type="text" name="postopCourse" [(ngModel)]="pack.postopCourse" [disabled]="saving()" />
+          </label>
+        </div>
+
+        <label>
+          Follow-up notes
+          <textarea name="followUpNotes" rows="2" [(ngModel)]="pack.followUpNotes" [disabled]="saving()"></textarea>
+        </label>
+
+        @if (procedureFields().length) {
+          <section class="pack-section">
+            <h3>Procedure details</h3>
+            <div class="grid-2">
+              @for (f of procedureFields(); track f.key) {
+                <label>
+                  {{ f.label }}
+                  @if (f.kind === 'select' && f.options) {
+                    <select
+                      [name]="'extra_' + f.key"
+                      [ngModel]="pack.procedureExtras[f.key] || ''"
+                      (ngModelChange)="setExtra(f.key, $event)"
+                      [disabled]="saving()"
+                    >
+                      <option value="">Select</option>
+                      @for (opt of f.options; track opt) {
+                        <option [value]="opt">{{ opt }}</option>
+                      }
+                    </select>
+                  } @else {
+                    <input
+                      [type]="f.kind === 'number' ? 'number' : 'text'"
+                      [name]="'extra_' + f.key"
+                      [placeholder]="f.placeholder || ''"
+                      [ngModel]="pack.procedureExtras[f.key] || ''"
+                      (ngModelChange)="setExtra(f.key, $event)"
+                      [disabled]="saving()"
+                    />
+                  }
+                </label>
+              }
+            </div>
+          </section>
+        }
+
+        <section class="pack-section">
+          <h3>Past history</h3>
+          <div class="grid-2">
+            <label>
+              Comorbidities
+              <input type="text" name="comorbidities" [(ngModel)]="pack.pastHistory.comorbidities" [disabled]="saving()" />
+            </label>
+            <label>
+              Past surgery
+              <input type="text" name="pastSurgery" [(ngModel)]="pack.pastHistory.pastSurgery" [disabled]="saving()" />
+            </label>
+            <label>
+              Allergy
+              <input type="text" name="allergy" [(ngModel)]="pack.pastHistory.allergy" [disabled]="saving()" />
+            </label>
+            <label>
+              Addiction
+              <input type="text" name="addiction" [(ngModel)]="pack.pastHistory.addiction" [disabled]="saving()" />
+            </label>
+          </div>
+        </section>
+
+        <section class="pack-section">
+          <div class="section-head">
+            <h3>Medicines</h3>
+            <button type="button" class="btn-secondary" [disabled]="saving()" (click)="addMedicine()">Add medicine</button>
+          </div>
+          <label>
+            Default pack size (optional)
+            <input
+              type="number"
+              name="medicinePackSize"
+              min="1"
+              max="20"
+              [(ngModel)]="pack.medicinePackSize"
+              placeholder="Leave blank to use all medicines below"
+              [disabled]="saving()"
+            />
+          </label>
+          @for (m of pack.medicines; track m.id) {
+            <div class="med-row">
+              <input type="text" placeholder="Name" [(ngModel)]="m.name" [name]="'med_name_' + m.id" [disabled]="saving()" />
+              <input type="text" placeholder="Strength" [(ngModel)]="m.strength" [name]="'med_str_' + m.id" [disabled]="saving()" />
+              <input type="text" placeholder="Dose" [(ngModel)]="m.dose" [name]="'med_dose_' + m.id" [disabled]="saving()" />
+              <select [(ngModel)]="m.frequency" [name]="'med_freq_' + m.id" [disabled]="saving()">
+                <option value="">Freq</option>
+                @for (f of frequencyOptions; track f) {
+                  <option [value]="f">{{ f }}</option>
+                }
+              </select>
+              <input type="text" placeholder="Duration" [(ngModel)]="m.duration" [name]="'med_dur_' + m.id" [disabled]="saving()" />
+              <button type="button" class="btn-text-inline danger" [disabled]="saving()" (click)="removeMedicine(m.id)">Remove</button>
+            </div>
+          }
+        </section>
+
+        <div class="drawer-actions">
+          <button type="button" class="btn-secondary" [disabled]="saving()" (click)="closeDrawer()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Saving…' : (editingId() ? 'Save diagnosis' : 'Add diagnosis') }}
+          </button>
+        </div>
+      </form>
+    </aside>
+  </div>
+}

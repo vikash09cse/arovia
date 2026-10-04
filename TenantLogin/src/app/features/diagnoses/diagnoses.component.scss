@@ -1,0 +1,114 @@
+@import '../departments/departments.component.scss';
+
+.search-bar select {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #0f172a;
+  background: #fff;
+  font-family: inherit;
+  min-width: 10rem;
+}
+
+.drawer-panel.wide {
+  width: min(100%, 640px);
+}
+
+.checkbox-row {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem !important;
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
+.drawer-form textarea,
+.drawer-form select {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #0f172a;
+  background: #fff;
+  font-family: inherit;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem 1rem;
+}
+
+.pack-section {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pack-section h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.med-row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 0.7fr 0.7fr 0.8fr auto;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.med-row input,
+.med-row select {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.actions-col {
+  width: 130px;
+}
+
+.icon-btn-delete {
+  color: #b91c1c;
+}
+
+.icon-btn-delete:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.med-row .btn-text-inline {
+  border: none;
+  background: none;
+  color: #b91c1c;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.2rem 0.35rem;
+}
+
+.med-row .btn-text-inline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .grid-2,
+  .med-row {
+    grid-template-columns: 1fr;
+  }
+}

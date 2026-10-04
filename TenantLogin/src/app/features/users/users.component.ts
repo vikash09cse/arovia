@@ -93,11 +93,15 @@ export class UsersComponent implements OnInit {
   designation = '';
   roleCode = 2;
   temporaryPassword = '';
+  newPassword = '';
   monthlySalary: number | null = null;
   salaryEffectiveFrom = this.todayIso();
 
   readonly isEditing = computed(() => this.editingUser() !== null);
   readonly docsDrawerOpen = computed(() => this.docsUser() !== null);
+  readonly passwordSaving = signal(false);
+  readonly passwordMessage = signal('');
+  readonly passwordError = signal('');
 
   readonly confirmMessage = computed(() => {
     const user = this.confirmTarget();
@@ -195,6 +199,9 @@ export class UsersComponent implements OnInit {
     this.designation = user.designation ?? '';
     this.roleCode = user.roleCode;
     this.temporaryPassword = '';
+    this.newPassword = '';
+    this.passwordMessage.set('');
+    this.passwordError.set('');
     this.monthlySalary = null;
     this.salaryEffectiveFrom = this.todayIso();
     this.reviseSalaryAmount = user.monthlySalary ?? null;
@@ -211,11 +218,13 @@ export class UsersComponent implements OnInit {
   }
 
   closeDrawer() {
-    if (this.saving() || this.salarySaving()) return;
+    if (this.saving() || this.salarySaving() || this.passwordSaving()) return;
     this.drawerOpen.set(false);
     this.editingUser.set(null);
     this.formError.set('');
     this.salaryError.set('');
+    this.passwordMessage.set('');
+    this.passwordError.set('');
     this.salaryHistory.set([]);
   }
 
@@ -226,6 +235,9 @@ export class UsersComponent implements OnInit {
     this.designation = '';
     this.roleCode = 2;
     this.temporaryPassword = '';
+    this.newPassword = '';
+    this.passwordMessage.set('');
+    this.passwordError.set('');
     this.monthlySalary = null;
     this.salaryEffectiveFrom = this.todayIso();
     this.reviseSalaryAmount = null;
@@ -444,6 +456,36 @@ export class UsersComponent implements OnInit {
         this.loadUsers();
       },
       onError: message => this.salaryError.set(message)
+    });
+  }
+
+  setPassword() {
+    const user = this.editingUser();
+    if (!user || !this.canManageUser(user)) return;
+
+    const password = this.newPassword.trim();
+    if (password.length < 6) {
+      this.passwordError.set('Password must be at least 6 characters.');
+      this.passwordMessage.set('');
+      return;
+    }
+
+    this.passwordSaving.set(true);
+    this.passwordError.set('');
+    this.passwordMessage.set('');
+
+    this.api.patch<ApiResult<boolean>>(`/users/${user.id}/password`, {
+      newPassword: password
+    }).subscribe({
+      next: res => {
+        this.passwordSaving.set(false);
+        this.newPassword = '';
+        this.passwordMessage.set(res.message || 'Password updated successfully.');
+      },
+      error: err => {
+        this.passwordSaving.set(false);
+        this.passwordError.set(err.error?.message ?? 'Unable to update password.');
+      }
     });
   }
 

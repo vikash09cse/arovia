@@ -68,3 +68,19 @@ public record LabAgencyAssignmentReportItem(
 public record LabAgencyAssignmentReportResponse(
     IEnumerable<LabAgencyAssignmentReportItem> Items,
     int TotalVisitAssignments);
+
+public record LabAgencyAssignmentReportDetailItem(
+    Guid Id,
+    Guid VisitId,
+    Guid PatientId,
+    string PatientCode,
+    string PatientName,
+    DateTime VisitDateTime,
+    DateTime AssignedAt,
+    string? TestName,
+    string? Notes);
+
+public record LabAgencyAssignmentReportDetailResponse(
+    Guid LabAgencyId,
+    string LabAgencyName,
+    IEnumerable<LabAgencyAssignmentReportDetailItem> Items);

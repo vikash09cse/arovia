@@ -123,6 +123,22 @@ export const routes: Routes = [
         path: 'settings',
         canActivate: [tenantSuperAdminGuard],
         loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent)
+      },
+      {
+        path: 'diagnoses',
+        canActivate: [tenantSuperAdminGuard],
+        loadComponent: () => import('./features/diagnoses/diagnoses.component').then(m => m.DiagnosesComponent)
+      },
+      {
+        path: 'expenses',
+        canActivate: [tenantSuperAdminGuard],
+        loadComponent: () => import('./features/expenses/expenses.component').then(m => m.ExpensesComponent)
+      },
+      {
+        path: 'monthly-reconcile',
+        canActivate: [tenantSuperAdminGuard],
+        loadComponent: () =>
+          import('./features/monthly-reconcile/monthly-reconcile.component').then(m => m.MonthlyReconcileComponent)
       }
     ]
   },

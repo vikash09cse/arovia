@@ -30,7 +30,9 @@ static class Program
         "document_templates.sql",
         "global_diagnosis_masters.sql",
         "diagnosis_masters.sql",
-        "discharge_summaries.sql"
+        "discharge_summaries.sql",
+        "expenses.sql",
+        "monthly_profiles.sql"
     ];
 
     static int Main(string[] args)

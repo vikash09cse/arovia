@@ -35,6 +35,17 @@ public class LabTestsController(LabTestsService service) : ControllerBase
         CancellationToken ct = default) =>
         (await service.GetAssignmentReportAsync(dateFrom, dateTo, phone, patientCode, ct)).ToActionResult();
 
+    [HttpGet("{id:guid}/assignment-report-details")]
+    [Authorize(Roles = $"{RoleNames.TenantSuperAdmin},{RoleNames.Staff},{RoleNames.Doctor}")]
+    public async Task<IActionResult> GetAssignmentReportDetails(
+        Guid id,
+        [FromQuery] DateOnly? dateFrom = null,
+        [FromQuery] DateOnly? dateTo = null,
+        [FromQuery] string? phone = null,
+        [FromQuery] string? patientCode = null,
+        CancellationToken ct = default) =>
+        (await service.GetAssignmentReportDetailAsync(id, dateFrom, dateTo, phone, patientCode, ct)).ToActionResult();
+
     [HttpGet("{id:guid}")]
     [Authorize(Roles = RoleNames.TenantSuperAdmin)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct) =>

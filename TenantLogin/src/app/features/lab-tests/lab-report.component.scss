@@ -1,4 +1,5 @@
 @import '../patients/patients.component.scss';
+@import '../visit-addons/visit-addons.component.scss';
 
 .summary-pill {
   display: inline-flex;
@@ -34,9 +35,93 @@
   font-weight: 600;
 }
 
+.visit-count-btn {
+  border: 1px solid #a5f3fc;
+  cursor: pointer;
+  font: inherit;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.visit-count-btn:hover {
+  background: #cffafe;
+  border-color: #67e8f9;
+  box-shadow: 0 1px 3px rgb(14 116 144 / 18%);
+}
+
+.drawer-panel {
+  width: min(100%, 880px);
+}
+
+.detail-table-wrap {
+  overflow-x: auto;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.detail-table th,
+.detail-table td {
+  padding: 0.7rem 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: top;
+}
+
+.detail-table th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  font-weight: 700;
+  background: #f8fafc;
+}
+
+.patient-link {
+  color: #0f766e;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.patient-link:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 640px) {
   .count-cell {
     justify-content: space-between;
     text-align: left;
+  }
+
+  .drawer-panel {
+    width: 100%;
+  }
+
+  .detail-table thead {
+    display: none;
+  }
+
+  .detail-table tr {
+    display: block;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .detail-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: none;
+    padding: 0.2rem 0;
+  }
+
+  .detail-table td::before {
+    content: attr(data-label);
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
   }
 }

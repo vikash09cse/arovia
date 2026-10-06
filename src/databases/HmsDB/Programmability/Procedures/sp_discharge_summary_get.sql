@@ -9,7 +9,8 @@ BEGIN
         SELECT 1
         FROM dbo.admissions a
         WHERE a.admissionid = @admissionid
-          AND a.tenantid = @tenantid)
+          AND a.tenantid = @tenantid
+          AND a.isdeleted = 0)
     BEGIN
         THROW 50401, 'Admission not found.', 1;
     END;
@@ -40,6 +41,7 @@ BEGIN
         t.hospitalname,
         t.tenantaddress AS hospitaladdress,
         t.primarycontactphone AS hospitalphone,
+        t.primarycontactemail AS hospitalemail,
         t.logourl AS hospitallogourl,
         t.website AS hospitalwebsite,
         ds.dischargesummaryid,
@@ -69,6 +71,7 @@ BEGIN
         ON ds.admissionid = a.admissionid
        AND ds.tenantid = a.tenantid
     WHERE a.admissionid = @admissionid
-      AND a.tenantid = @tenantid;
+      AND a.tenantid = @tenantid
+      AND a.isdeleted = 0;
 END
 GO

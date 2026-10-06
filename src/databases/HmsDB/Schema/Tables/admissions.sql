@@ -23,6 +23,7 @@ BEGIN
         createdat           DATETIME2        NOT NULL CONSTRAINT DF_admissions_createdat DEFAULT (SYSUTCDATETIME()),
         updatedby           UNIQUEIDENTIFIER NOT NULL,
         updatedat           DATETIME2        NOT NULL CONSTRAINT DF_admissions_updatedat DEFAULT (SYSUTCDATETIME()),
+        isdeleted           BIT              NOT NULL CONSTRAINT DF_admissions_isdeleted DEFAULT (0),
         CONSTRAINT FK_admissions_tenant FOREIGN KEY (tenantid) REFERENCES dbo.tenants (tenantid),
         CONSTRAINT FK_admissions_patient FOREIGN KEY (patientid) REFERENCES dbo.patients (patientid),
         CONSTRAINT FK_admissions_department FOREIGN KEY (departmentid) REFERENCES dbo.departments (departmentid),
@@ -48,21 +49,40 @@ BEGIN
     CREATE INDEX IX_admissions_tenant_department
         ON dbo.admissions (tenantid, departmentid);
 
-    -- One active (Admitted) stay per patient
-    CREATE UNIQUE INDEX UQ_admissions_tenant_patient_active
-        ON dbo.admissions (tenantid, patientid)
-        WHERE admissionstatus = 1;
+    -- Dynamic SQL avoids compile-time binding if isdeleted is missing on older DBs.
+    EXEC(N'
+        CREATE UNIQUE INDEX UQ_admissions_tenant_patient_active
+            ON dbo.admissions (tenantid, patientid)
+            WHERE admissionstatus = 1 AND isdeleted = 0;
+    ');
 END
 GO
 
-IF NOT EXISTS (
-    SELECT 1 FROM sys.indexes
-    WHERE name = N'UQ_admissions_tenant_patient_active'
-      AND object_id = OBJECT_ID(N'dbo.admissions'))
+-- Existing DBs: add soft-delete column before any filtered index that references it.
+IF COL_LENGTH(N'dbo.admissions', N'isdeleted') IS NULL
+   AND OBJECT_ID(N'dbo.admissions', N'U') IS NOT NULL
 BEGIN
-    CREATE UNIQUE INDEX UQ_admissions_tenant_patient_active
-        ON dbo.admissions (tenantid, patientid)
-        WHERE admissionstatus = 1;
+    ALTER TABLE dbo.admissions
+        ADD isdeleted BIT NOT NULL
+            CONSTRAINT DF_admissions_isdeleted DEFAULT (0);
+END
+GO
+
+-- Refresh unique active-stay index to exclude soft-deleted rows (dynamic SQL for bind safety).
+IF OBJECT_ID(N'dbo.admissions', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.admissions', N'isdeleted') IS NOT NULL
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM sys.indexes
+        WHERE name = N'UQ_admissions_tenant_patient_active'
+          AND object_id = OBJECT_ID(N'dbo.admissions'))
+        DROP INDEX UQ_admissions_tenant_patient_active ON dbo.admissions;
+
+    EXEC(N'
+        CREATE UNIQUE INDEX UQ_admissions_tenant_patient_active
+            ON dbo.admissions (tenantid, patientid)
+            WHERE admissionstatus = 1 AND isdeleted = 0;
+    ');
 END
 GO
 

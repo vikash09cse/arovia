@@ -105,6 +105,10 @@ BEGIN
         (
             SELECT ISNULL(SUM(ap.amount), 0)
             FROM dbo.admission_payments ap
+            INNER JOIN dbo.admissions a
+                ON a.admissionid = ap.admissionid
+               AND a.tenantid = ap.tenantid
+               AND a.isdeleted = 0
             INNER JOIN dbo.patients pt
                 ON pt.patientid = ap.patientid
                AND pt.tenantid = ap.tenantid
@@ -135,6 +139,10 @@ BEGIN
         (
             SELECT ISNULL(SUM(ap.amount), 0)
             FROM dbo.admission_payments ap
+            INNER JOIN dbo.admissions a
+                ON a.admissionid = ap.admissionid
+               AND a.tenantid = ap.tenantid
+               AND a.isdeleted = 0
             INNER JOIN dbo.patients pt
                 ON pt.patientid = ap.patientid
                AND pt.tenantid = ap.tenantid
@@ -165,6 +173,10 @@ BEGIN
         (
             SELECT ISNULL(SUM(ap.amount), 0)
             FROM dbo.admission_payments ap
+            INNER JOIN dbo.admissions a
+                ON a.admissionid = ap.admissionid
+               AND a.tenantid = ap.tenantid
+               AND a.isdeleted = 0
             INNER JOIN dbo.patients pt
                 ON pt.patientid = ap.patientid
                AND pt.tenantid = ap.tenantid
@@ -195,6 +207,10 @@ BEGIN
         (
             SELECT ISNULL(SUM(ap.amount), 0)
             FROM dbo.admission_payments ap
+            INNER JOIN dbo.admissions a
+                ON a.admissionid = ap.admissionid
+               AND a.tenantid = ap.tenantid
+               AND a.isdeleted = 0
             INNER JOIN dbo.patients pt
                 ON pt.patientid = ap.patientid
                AND pt.tenantid = ap.tenantid

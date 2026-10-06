@@ -30,7 +30,8 @@ BEGIN
         SELECT 1 FROM dbo.admissions a
         WHERE a.tenantid = @tenantid
           AND a.patientid = @patientid
-          AND a.admissionstatus = 1) -- Admitted
+          AND a.admissionstatus = 1
+          AND a.isdeleted = 0) -- Admitted
         THROW 50409, 'Patient is already admitted. Discharge the current stay before admitting again.', 1;
 
     IF NOT EXISTS (

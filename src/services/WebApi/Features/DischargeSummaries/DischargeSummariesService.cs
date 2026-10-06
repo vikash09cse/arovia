@@ -183,6 +183,7 @@ public class DischargeSummariesService(
             row.HospitalName,
             row.HospitalAddress,
             row.HospitalPhone,
+            row.HospitalEmail,
             publicUrls.ToPublicUrl(row.HospitalLogoUrl),
             row.HospitalWebsite);
 

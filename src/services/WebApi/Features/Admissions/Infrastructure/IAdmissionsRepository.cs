@@ -145,4 +145,6 @@ public interface IAdmissionsRepository
         CancellationToken ct);
 
     Task DischargeAsync(Guid tenantId, Guid admissionId, Guid actorId, CancellationToken ct);
+
+    Task DeleteAsync(Guid tenantId, Guid admissionId, Guid actorId, CancellationToken ct);
 }

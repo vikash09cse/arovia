@@ -51,4 +51,9 @@ public class AdmissionsController(AdmissionsService service) : ControllerBase
     [Authorize(Roles = $"{RoleNames.TenantSuperAdmin},{RoleNames.Staff}")]
     public async Task<IActionResult> Discharge(Guid id, CancellationToken ct) =>
         (await service.DischargeAsync(id, ct)).ToActionResult();
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = RoleNames.TenantSuperAdmin)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct) =>
+        (await service.DeleteAsync(id, ct)).ToActionResult();
 }

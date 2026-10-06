@@ -50,6 +50,7 @@ BEGIN
             ON c.admissionid = a.admissionid
            AND c.tenantid = a.tenantid
         WHERE a.tenantid = @tenantid
+          AND a.isdeleted = 0
         GROUP BY a.admissionid, a.tenantid, a.discountamount
     ),
     unified AS (
@@ -115,7 +116,7 @@ BEGIN
             c.lastname AS collectorlastname
         FROM dbo.admission_payments ap
         INNER JOIN dbo.admissions a
-            ON a.admissionid = ap.admissionid AND a.tenantid = ap.tenantid
+            ON a.admissionid = ap.admissionid AND a.tenantid = ap.tenantid AND a.isdeleted = 0
         INNER JOIN dbo.patients pt
             ON pt.patientid = ap.patientid AND pt.tenantid = ap.tenantid AND pt.isdeleted = 0
         INNER JOIN admission_balances ab ON ab.admissionid = ap.admissionid

@@ -47,7 +47,7 @@ BEGIN
         tpl.bodyhtml AS templatebodyhtml
     FROM dbo.admission_payments ap
     INNER JOIN dbo.admissions a
-        ON a.admissionid = ap.admissionid AND a.tenantid = ap.tenantid
+        ON a.admissionid = ap.admissionid AND a.tenantid = ap.tenantid AND a.isdeleted = 0
     INNER JOIN dbo.patients pt
         ON pt.patientid = ap.patientid AND pt.tenantid = ap.tenantid AND pt.isdeleted = 0
     INNER JOIN dbo.users d ON d.userid = a.attendingdoctorid

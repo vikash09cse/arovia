@@ -27,6 +27,7 @@ public class DischargeSummaryGetRow
     public string HospitalName { get; set; } = "";
     public string? HospitalAddress { get; set; }
     public string? HospitalPhone { get; set; }
+    public string? HospitalEmail { get; set; }
     public string? HospitalLogoUrl { get; set; }
     public string? HospitalWebsite { get; set; }
     public Guid? DischargeSummaryId { get; set; }

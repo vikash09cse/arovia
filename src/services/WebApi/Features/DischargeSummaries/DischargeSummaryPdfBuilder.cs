@@ -43,7 +43,7 @@ public static class DischargeSummaryPdfBuilder
                     ComposeInvestigations(col, model);
                     ComposeTreatment(col, model);
                 });
-                page.Footer().AlignRight().Text("Page 1 of 2").FontSize(8).FontColor(Colors.Grey.Darken1);
+                page.Footer().Element(c => ComposePageFooter(c, model, "Page 1 of 2"));
             });
 
             container.Page(page =>
@@ -66,7 +66,7 @@ public static class DischargeSummaryPdfBuilder
                     ComposeAdviceFollowUp(col, model);
                     ComposeSignatures(col, model);
                 });
-                page.Footer().AlignRight().Text("Page 2 of 2").FontSize(8).FontColor(Colors.Grey.Darken1);
+                page.Footer().Element(c => ComposePageFooter(c, model, "Page 2 of 2"));
             });
         }).GeneratePdf();
     }
@@ -115,6 +115,26 @@ public static class DischargeSummaryPdfBuilder
 
             col.Item().PaddingTop(6).Background(TitleBar).PaddingVertical(5).AlignCenter()
                 .Text("DISCHARGE SUMMARY").Bold().FontSize(11).FontColor(Navy).LetterSpacing(0.8f);
+        });
+    }
+
+    private static void ComposePageFooter(IContainer container, DischargeSummaryPrintModel m, string pageLabel)
+    {
+        container.Column(col =>
+        {
+            if (!string.IsNullOrWhiteSpace(m.HospitalContactLine))
+            {
+                col.Item().BorderTop(1).BorderColor(Line).PaddingTop(6)
+                    .AlignCenter()
+                    .Text(m.HospitalContactLine)
+                    .FontSize(7.5f)
+                    .FontColor(Colors.Grey.Darken2);
+            }
+
+            col.Item().PaddingTop(3).AlignRight()
+                .Text(pageLabel)
+                .FontSize(8)
+                .FontColor(Colors.Grey.Darken1);
         });
     }
 
@@ -513,8 +533,8 @@ internal sealed class DischargeSummaryPrintModel
         var contact = string.Join("  ·  ", new[]
         {
             a.HospitalAddress,
-            string.IsNullOrWhiteSpace(a.HospitalPhone) ? null : $"Ph: {a.HospitalPhone}",
-            string.IsNullOrWhiteSpace(a.HospitalWebsite) ? null : a.HospitalWebsite
+            string.IsNullOrWhiteSpace(a.HospitalEmail) ? null : $"Email: {a.HospitalEmail}",
+            string.IsNullOrWhiteSpace(a.HospitalPhone) ? null : $"Ph: {a.HospitalPhone}"
         }.Where(x => !string.IsNullOrWhiteSpace(x)));
 
         var leftKeys = new (string Key, string Label)[]

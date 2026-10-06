@@ -44,6 +44,7 @@ BEGIN
     INNER JOIN dbo.users d
         ON d.userid = a.attendingdoctorid
     WHERE a.tenantid = @tenantid
+      AND a.isdeleted = 0
       AND (@admissionstatus IS NULL OR a.admissionstatus = @admissionstatus)
       AND (@patientid IS NULL OR a.patientid = @patientid)
       AND (@admissioncode IS NULL OR a.admissioncode = @admissioncode)

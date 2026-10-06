@@ -63,6 +63,14 @@ internal static class DischargeSummaryPrintBuilder
         var hospitalBar = string.Join(" · ", new[]
         {
             a.HospitalAddress,
+            string.IsNullOrWhiteSpace(a.HospitalEmail) ? null : a.HospitalEmail,
+            string.IsNullOrWhiteSpace(a.HospitalPhone) ? null : $"Ph: {a.HospitalPhone}"
+        }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+        var hospitalFooter = string.Join(" · ", new[]
+        {
+            a.HospitalAddress,
+            string.IsNullOrWhiteSpace(a.HospitalEmail) ? null : $"Email: {a.HospitalEmail}",
             string.IsNullOrWhiteSpace(a.HospitalPhone) ? null : $"Ph: {a.HospitalPhone}"
         }.Where(x => !string.IsNullOrWhiteSpace(x)));
 
@@ -132,6 +140,7 @@ internal static class DischargeSummaryPrintBuilder
             sb.Append("</ul>");
         }
         SectionClose(sb);
+        sb.Append($"""<p class="dsf-footer">{E(hospitalFooter)}</p>""");
         sb.Append("""<p class="dsf-page-no">Page 1 of 2</p></div>""");
 
         // Page 2
@@ -219,6 +228,7 @@ internal static class DischargeSummaryPrintBuilder
                 <p style="margin:0.15rem 0 0;font-size:0.7rem">{E(a.HospitalName)}</p>
               </div>
             </div>
+            <p class="dsf-footer">{E(hospitalFooter)}</p>
             <p class="dsf-page-no">Page 2 of 2</p>
             </div></div></body></html>
             """);
@@ -409,7 +419,16 @@ internal static class DischargeSummaryPrintBuilder
             text-align: right;
             font-size: 0.68rem;
             color: #667;
-            margin-top: 0.65rem;
+            margin-top: 0.35rem;
+          }
+          .dsf-footer {
+            margin-top: 0.85rem;
+            padding-top: 0.45rem;
+            border-top: 1px solid var(--dsf-line);
+            text-align: center;
+            font-size: 0.68rem;
+            color: #445;
+            line-height: 1.35;
           }
           @media print {
             body { padding: 0; background: #fff; }

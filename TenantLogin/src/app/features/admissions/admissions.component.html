@@ -84,6 +84,21 @@
                     <circle cx="12" cy="12" r="3"/>
                   </svg>
                 </a>
+                @if (canDelete()) {
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn-delete"
+                    title="Delete admission"
+                    aria-label="Delete admission"
+                    [disabled]="deletingId() === a.id"
+                    (click)="deleteAdmission(a)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </button>
+                }
               </div>
             </td>
           </tr>
@@ -100,3 +115,15 @@
     </div>
   }
 }
+
+<app-confirm-dialog
+  [open]="confirmTarget() !== null"
+  title="Delete admission?"
+  [message]="confirmMessage()"
+  confirmLabel="Delete admission"
+  cancelLabel="Keep admission"
+  variant="danger"
+  [loading]="deletingId() !== null"
+  (confirm)="confirmDelete()"
+  (cancel)="cancelDelete()"
+/>

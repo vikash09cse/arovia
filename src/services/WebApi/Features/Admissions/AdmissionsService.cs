@@ -207,6 +207,16 @@ public class AdmissionsService(
         return await GetByIdAsync(admissionId, ct);
     }
 
+    public async Task<Result<bool>> DeleteAsync(Guid admissionId, CancellationToken ct)
+    {
+        var tenantError = RequireTenantContext<bool>();
+        if (tenantError != null) return tenantError;
+
+        var tenantId = httpContextAccessor.GetTenantContext().TenantId;
+        await repository.DeleteAsync(tenantId, admissionId, GetUserId(), ct);
+        return Result<bool>.Ok(true, "Admission deleted.");
+    }
+
     private static Result<AdmissionResponse>? ValidateCreate(CreateAdmissionRequest request)
     {
         if (request.PatientId == Guid.Empty)

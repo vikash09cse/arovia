@@ -38,6 +38,7 @@ public record DischargeSummaryAdmissionHeader(
     string HospitalName,
     string? HospitalAddress,
     string? HospitalPhone,
+    string? HospitalEmail,
     string? HospitalLogoUrl,
     string? HospitalWebsite);
 

@@ -22,7 +22,8 @@ BEGIN
     SELECT @discount = a.discountamount
     FROM dbo.admissions a
     WHERE a.tenantid = @tenantid
-      AND a.admissionid = @admissionid;
+      AND a.admissionid = @admissionid
+      AND a.isdeleted = 0;
 
     SET @discount = ISNULL(@discount, 0);
 
@@ -69,7 +70,8 @@ BEGIN
         ON fv.visitid = a.fromvisitid
        AND fv.tenantid = a.tenantid
     WHERE a.tenantid = @tenantid
-      AND a.admissionid = @admissionid;
+      AND a.admissionid = @admissionid
+      AND a.isdeleted = 0;
 
     -- 2) Charges
     SELECT

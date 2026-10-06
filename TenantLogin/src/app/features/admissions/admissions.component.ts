@@ -1,10 +1,11 @@
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiResult } from '../../core/models/api.models';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
 interface AdmissionListItem {
   id: string;
@@ -37,7 +38,7 @@ interface AdmissionList {
 @Component({
   selector: 'app-admissions',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe],
+  imports: [FormsModule, RouterLink, DatePipe, ConfirmDialogComponent],
   templateUrl: './admissions.component.html',
   styleUrl: './admissions.component.scss'
 })
@@ -52,13 +53,23 @@ export class AdmissionsComponent implements OnInit {
   readonly page = signal(1);
   readonly pageSize = 10;
   readonly canEdit = signal(false);
+  readonly canDelete = signal(false);
+  readonly deletingId = signal<string | null>(null);
+  readonly confirmTarget = signal<AdmissionListItem | null>(null);
   readonly Math = Math;
 
   statusFilter: string = '1';
 
+  readonly confirmMessage = computed(() => {
+    const a = this.confirmTarget();
+    if (!a) return '';
+    return `Admission ${a.admissionCode} for ${a.patientFullName} will be removed from the admissions list, dashboard, Payment List, and monthly reconcile income. Payment rows are kept for audit only.`;
+  });
+
   ngOnInit() {
     const role = this.auth.currentUser()?.role;
     this.canEdit.set(role === 'TenantSuperAdmin' || role === 'Staff');
+    this.canDelete.set(role === 'TenantSuperAdmin');
     this.load();
   }
 
@@ -105,5 +116,35 @@ export class AdmissionsComponent implements OnInit {
     if (code === 1) return 'badge-ok';
     if (code === 2) return 'badge-muted';
     return 'badge-warn';
+  }
+
+  deleteAdmission(admission: AdmissionListItem) {
+    this.confirmTarget.set(admission);
+  }
+
+  cancelDelete() {
+    if (!this.deletingId()) {
+      this.confirmTarget.set(null);
+    }
+  }
+
+  confirmDelete() {
+    const admission = this.confirmTarget();
+    if (!admission) return;
+
+    this.deletingId.set(admission.id);
+    this.error.set('');
+
+    this.api.delete<ApiResult<boolean>>(`/admissions/${admission.id}`).subscribe({
+      next: () => {
+        this.deletingId.set(null);
+        this.confirmTarget.set(null);
+        this.load();
+      },
+      error: err => {
+        this.error.set(err.error?.message ?? 'Unable to delete admission.');
+        this.deletingId.set(null);
+      }
+    });
   }
 }

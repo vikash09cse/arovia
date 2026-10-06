@@ -17,7 +17,8 @@ BEGIN
         SELECT 1
         FROM dbo.admissions a
         WHERE a.admissionid = @admissionid
-          AND a.tenantid = @tenantid)
+          AND a.tenantid = @tenantid
+          AND a.isdeleted = 0)
     BEGIN
         THROW 50401, 'Admission not found.', 1;
     END;

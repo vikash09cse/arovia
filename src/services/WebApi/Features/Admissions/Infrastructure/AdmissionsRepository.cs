@@ -177,4 +177,13 @@ public class AdmissionsRepository(DbHelper dbHelper) : IAdmissionsRepository
             new { tenantid = tenantId, admissionid = admissionId, actorid = actorId },
             commandType: CommandType.StoredProcedure);
     }
+
+    public async Task DeleteAsync(Guid tenantId, Guid admissionId, Guid actorId, CancellationToken ct)
+    {
+        using var conn = dbHelper.GetConnection();
+        await conn.ExecuteAsync(
+            "dbo.sp_admission_delete",
+            new { tenantid = tenantId, admissionid = admissionId, actorid = actorId },
+            commandType: CommandType.StoredProcedure);
+    }
 }

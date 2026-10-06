@@ -13,7 +13,8 @@ BEGIN
         SELECT 1 FROM dbo.admissions a
         WHERE a.tenantid = @tenantid
           AND a.admissionid = @admissionid
-          AND a.admissionstatus = 1)
+          AND a.admissionstatus = 1
+          AND a.isdeleted = 0)
         THROW 50400, 'Admission not found or not admitted.', 1;
 
     IF @discountamount IS NULL OR @discountamount < 0

@@ -44,9 +44,15 @@ public class UsersService(
             return Result<TenantUserResponse>.Fail(ErrorCode.AlreadyExists, "Email is already in use.");
 
         var password = request.TemporaryPassword ?? PasswordHelper.GenerateTemporaryPassword();
-        var designation = string.IsNullOrWhiteSpace(request.Designation) ? null : request.Designation.Trim();
+        var designation = NormalizeDesignation(request.Designation);
+        if (designation is { Length: > 500 })
+            return Result<TenantUserResponse>.Fail(ErrorCode.Validation, "Designation must be at most 500 characters.");
+        var phoneError = ValidatePhoneFields(request.PhoneNumber, request.EmergencyContactNumber);
+        if (phoneError != null)
+            return Result<TenantUserResponse>.Fail(ErrorCode.Validation, phoneError);
         var id = await repository.CreateAsync(
             tenantId, request.Email.Trim(), request.FirstName, request.LastName, designation,
+            NormalizePhone(request.PhoneNumber), NormalizePhone(request.EmergencyContactNumber),
             request.Role, PasswordHelper.Hash(password), GetUserId(), ct);
 
         var created = await repository.GetByIdAsync(tenantId, id, ct);
@@ -78,9 +84,16 @@ public class UsersService(
         if (existing.Role is ((byte)UserType.TenantSuperAdmin) or ((byte)UserType.PlatformAdmin))
             return Result<TenantUserResponse>.Fail(ErrorCode.Forbidden, "Admin accounts cannot be edited here.");
 
-        var designation = string.IsNullOrWhiteSpace(request.Designation) ? null : request.Designation.Trim();
+        var designation = NormalizeDesignation(request.Designation);
+        if (designation is { Length: > 500 })
+            return Result<TenantUserResponse>.Fail(ErrorCode.Validation, "Designation must be at most 500 characters.");
+        var phoneError = ValidatePhoneFields(request.PhoneNumber, request.EmergencyContactNumber);
+        if (phoneError != null)
+            return Result<TenantUserResponse>.Fail(ErrorCode.Validation, phoneError);
         await repository.UpdateAsync(
-            tenantId, userId, request.FirstName.Trim(), request.LastName.Trim(), designation, request.Role, GetUserId(), ct);
+            tenantId, userId, request.FirstName.Trim(), request.LastName.Trim(), designation,
+            NormalizePhone(request.PhoneNumber), NormalizePhone(request.EmergencyContactNumber),
+            request.Role, GetUserId(), ct);
         var updated = await repository.GetByIdAsync(tenantId, userId, ct);
         return Result<TenantUserResponse>.Ok(Map(updated!), "User updated successfully.");
     }
@@ -162,8 +175,40 @@ public class UsersService(
 
     private static TenantUserResponse Map(TenantUserRow row) => new(
         row.UserId, row.Email, row.FirstName, row.LastName, row.Designation,
+        row.PhoneNumber, row.EmergencyContactNumber,
         RoleNames.FromUserType((UserType)row.Role), row.Role,
         row.Status == (byte)UserStatus.Active ? "Active" : "Inactive", row.Status,
         row.MonthlySalary,
         row.LastLoginAt, row.CreatedAt);
+
+    private static string? NormalizeDesignation(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var normalized = value
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace("\\n", "\n", StringComparison.Ordinal);
+        var lines = normalized
+            .Split('\n', StringSplitOptions.None)
+            .Select(l => l.Trim())
+            .ToArray();
+        var joined = string.Join('\n', lines).Trim();
+        return string.IsNullOrWhiteSpace(joined) ? null : joined;
+    }
+
+    private static string? NormalizePhone(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        return value.Trim();
+    }
+
+    private static string? ValidatePhoneFields(string? phoneNumber, string? emergencyContactNumber)
+    {
+        var phone = NormalizePhone(phoneNumber);
+        if (phone is { Length: > 20 })
+            return "Phone number must be at most 20 characters.";
+        var emergency = NormalizePhone(emergencyContactNumber);
+        if (emergency is { Length: > 20 })
+            return "Emergency contact number must be at most 20 characters.";
+        return null;
+    }
 }

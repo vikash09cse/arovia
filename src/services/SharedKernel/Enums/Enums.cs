@@ -153,7 +153,8 @@ public enum PaymentSourceType : byte
 public enum DocumentTemplateType : byte
 {
     Receipt = 1,
-    Email = 2
+    Email = 2,
+    DischargeInvoice = 3
 }
 
 public enum MonthlyProfileStatus : byte

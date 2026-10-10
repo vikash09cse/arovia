@@ -3,7 +3,7 @@ CREATE OR ALTER PROCEDURE dbo.sp_update_my_profile
     @userid       UNIQUEIDENTIFIER,
     @firstname    NVARCHAR(100),
     @lastname     NVARCHAR(100),
-    @designation  NVARCHAR(100) = NULL
+    @designation  NVARCHAR(500) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;

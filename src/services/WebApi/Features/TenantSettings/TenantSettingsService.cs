@@ -52,6 +52,9 @@ public class TenantSettingsService(
         var website = string.IsNullOrWhiteSpace(request.Website)
             ? null
             : request.Website.Trim();
+        var hospitalRegistrationNo = string.IsNullOrWhiteSpace(request.HospitalRegistrationNo)
+            ? null
+            : request.HospitalRegistrationNo.Trim();
 
         await repository.UpdateAsync(
             tenantId,
@@ -63,6 +66,7 @@ public class TenantSettingsService(
             request.Address.Trim(),
             request.Timezone.Trim(),
             website,
+            hospitalRegistrationNo,
             logoUrl,
             ct);
 
@@ -101,14 +105,14 @@ public class TenantSettingsService(
         var absoluteDir = Path.Combine(webRoot, relativeDir);
         Directory.CreateDirectory(absoluteDir);
 
-        // Remove previous logo files for this tenant
-        foreach (var old in Directory.EnumerateFiles(absoluteDir, "logo.*"))
-            File.Delete(old);
-
-        var fileName = $"logo{ext.ToLowerInvariant()}";
+        // Unique name avoids IIS locking the previous logo.png and busts browser cache.
+        var fileName = $"logo_{Guid.NewGuid():N}{ext.ToLowerInvariant()}";
         var absolutePath = Path.Combine(absoluteDir, fileName);
-        await using (var stream = File.Create(absolutePath))
+        await using (var stream = new FileStream(
+            absolutePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
+        {
             await file.CopyToAsync(stream, ct);
+        }
 
         var relativeUrl = $"/uploads/tenants/{tenantId:N}/{fileName}";
 
@@ -122,8 +126,18 @@ public class TenantSettingsService(
             existing.Address,
             existing.Timezone,
             existing.Website,
+            existing.HospitalRegistrationNo,
             relativeUrl,
             ct);
+
+        // Best-effort cleanup of older logos (may be locked while still being served).
+        foreach (var old in Directory.EnumerateFiles(absoluteDir, "logo*"))
+        {
+            if (string.Equals(Path.GetFileName(old), fileName, StringComparison.OrdinalIgnoreCase))
+                continue;
+            try { File.Delete(old); }
+            catch { /* ignore locked/in-use files */ }
+        }
 
         var updated = await repository.GetAsync(tenantId, ct);
         return Result<TenantSettingsResponse>.Ok(Map(updated!), "Logo uploaded.");
@@ -151,6 +165,8 @@ public class TenantSettingsService(
             return Result<TenantSettingsResponse>.Fail(ErrorCode.Validation, "Timezone is required.");
         if (request.Website?.Trim().Length > 200)
             return Result<TenantSettingsResponse>.Fail(ErrorCode.Validation, "Website cannot exceed 200 characters.");
+        if (request.HospitalRegistrationNo?.Trim().Length > 100)
+            return Result<TenantSettingsResponse>.Fail(ErrorCode.Validation, "Hospital registration number cannot exceed 100 characters.");
         return null;
     }
 
@@ -175,6 +191,16 @@ public class TenantSettingsService(
         row.Address,
         row.Timezone,
         string.IsNullOrWhiteSpace(row.Website) ? null : row.Website.Trim(),
-        string.IsNullOrWhiteSpace(row.LogoUrl) ? null : publicUrls.ToPublicUrl(row.LogoUrl),
+        string.IsNullOrWhiteSpace(row.HospitalRegistrationNo) ? null : row.HospitalRegistrationNo.Trim(),
+        string.IsNullOrWhiteSpace(row.LogoUrl)
+            ? null
+            : AppendCacheBuster(publicUrls.ToPublicUrl(row.LogoUrl), row.UpdatedAt),
         row.UpdatedAt);
+
+    private static string? AppendCacheBuster(string? url, DateTime updatedAt)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return url;
+        var sep = url.Contains('?', StringComparison.Ordinal) ? '&' : '?';
+        return $"{url}{sep}v={updatedAt.Ticks}";
+    }
 }

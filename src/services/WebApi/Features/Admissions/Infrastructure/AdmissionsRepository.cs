@@ -66,6 +66,7 @@ public class AdmissionsRepository(DbHelper dbHelper) : IAdmissionsRepository
         decimal? depositAmount,
         byte? depositPaymentMethod,
         Guid? collectedBy,
+        DateOnly? admissionDate,
         Guid actorId,
         CancellationToken ct)
     {
@@ -87,6 +88,7 @@ public class AdmissionsRepository(DbHelper dbHelper) : IAdmissionsRepository
                 depositamount = depositAmount,
                 depositpaymentmethod = depositPaymentMethod,
                 collectedby = collectedBy,
+                admissiondate = admissionDate,
                 actorid = actorId
             },
             commandType: CommandType.StoredProcedure);
@@ -185,5 +187,38 @@ public class AdmissionsRepository(DbHelper dbHelper) : IAdmissionsRepository
             "dbo.sp_admission_delete",
             new { tenantid = tenantId, admissionid = admissionId, actorid = actorId },
             commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<string> EnsureInvoiceNumberAsync(
+        Guid tenantId, Guid admissionId, Guid actorId, CancellationToken ct)
+    {
+        using var conn = dbHelper.GetConnection();
+        var p = new DynamicParameters();
+        p.Add("tenantid", tenantId);
+        p.Add("admissionid", admissionId);
+        p.Add("actorid", actorId);
+        p.Add("invoicenumber", dbType: DbType.String, size: 50, direction: ParameterDirection.Output);
+        await conn.ExecuteAsync(
+            "dbo.sp_admission_ensure_invoice_number",
+            p,
+            commandType: CommandType.StoredProcedure);
+        return p.Get<string>("invoicenumber") ?? string.Empty;
+    }
+
+    public async Task<(AdmissionFinalInvoiceHeaderRow? Header, IReadOnlyList<AdmissionFinalInvoiceChargeRow> Charges, IReadOnlyList<AdmissionFinalInvoicePaymentRow> Payments)> GetFinalInvoiceDataAsync(
+        Guid tenantId,
+        Guid admissionId,
+        CancellationToken ct)
+    {
+        using var conn = dbHelper.GetConnection();
+        using var multi = await conn.QueryMultipleAsync(
+            "dbo.sp_admission_get_final_invoice",
+            new { tenantid = tenantId, admissionid = admissionId },
+            commandType: CommandType.StoredProcedure);
+
+        var header = await multi.ReadFirstOrDefaultAsync<AdmissionFinalInvoiceHeaderRow>();
+        var charges = (await multi.ReadAsync<AdmissionFinalInvoiceChargeRow>()).ToList();
+        var payments = (await multi.ReadAsync<AdmissionFinalInvoicePaymentRow>()).ToList();
+        return (header, charges, payments);
     }
 }

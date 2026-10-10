@@ -33,7 +33,15 @@ public class DischargeSummariesController(DischargeSummariesService service) : C
             return result.ToActionResult();
 
         var code = result.Data.AdmissionCode;
-        var safeName = string.IsNullOrWhiteSpace(code) ? admissionId.ToString("N") : code;
-        return File(result.Data.Bytes, "application/pdf", $"discharge-summary-{safeName}.pdf");
+        var safeName = SanitizeFileName(
+            string.IsNullOrWhiteSpace(code) ? admissionId.ToString("N") : code.Trim());
+        return File(result.Data.Bytes, "application/pdf", $"{safeName}.pdf");
+    }
+
+    private static string SanitizeFileName(string name)
+    {
+        foreach (var c in Path.GetInvalidFileNameChars())
+            name = name.Replace(c, '-');
+        return string.IsNullOrWhiteSpace(name) ? "discharge-summary" : name;
     }
 }

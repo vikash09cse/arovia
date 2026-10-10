@@ -3,8 +3,12 @@ CREATE OR ALTER PROCEDURE dbo.sp_update_tenant_user
     @userid               UNIQUEIDENTIFIER,
     @firstname            NVARCHAR(100),
     @lastname             NVARCHAR(100),
-    @designation          NVARCHAR(100) = NULL,
+    @designation          NVARCHAR(500) = NULL,
     @updatedesignation    BIT = 0,
+    @phonenumber          NVARCHAR(20) = NULL,
+    @updatephonenumber    BIT = 0,
+    @emergencycontactnumber NVARCHAR(20) = NULL,
+    @updateemergencycontactnumber BIT = 0,
     @departmentid         UNIQUEIDENTIFIER = NULL,
     @updatedepartment     BIT = 0,
     @usertype             TINYINT,
@@ -30,6 +34,14 @@ BEGIN
     SET firstname = @firstname,
         lastname = @lastname,
         designation = CASE WHEN @updatedesignation = 1 THEN @designation ELSE designation END,
+        phonenumber = CASE
+            WHEN @updatephonenumber = 1 THEN NULLIF(LTRIM(RTRIM(@phonenumber)), '')
+            ELSE phonenumber
+        END,
+        emergencycontactnumber = CASE
+            WHEN @updateemergencycontactnumber = 1 THEN NULLIF(LTRIM(RTRIM(@emergencycontactnumber)), '')
+            ELSE emergencycontactnumber
+        END,
         departmentid = CASE WHEN @updatedepartment = 1 THEN @departmentid ELSE departmentid END,
         usertype = @usertype,
         updatedby = @updatedby,

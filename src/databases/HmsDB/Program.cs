@@ -20,6 +20,7 @@ static class Program
         "visit_sequences.sql",
         "visits.sql",
         "receipt_sequences.sql",
+        "invoice_sequences.sql",
         "payments.sql",
         "departments.sql",
         "admission_sequences.sql",

@@ -67,6 +67,17 @@
           />
         </label>
 
+        <label>
+          Hospital Registration No
+          <input
+            type="text"
+            name="hospitalRegistrationNo"
+            [(ngModel)]="hospitalRegistrationNo"
+            maxlength="100"
+            placeholder="e.g. REG/2024/001"
+          />
+        </label>
+
         <label class="full">
           <span class="field-label">Address <span class="req">*</span></span>
           <textarea name="address" [(ngModel)]="address" rows="3" required maxlength="500"></textarea>

@@ -111,6 +111,61 @@ export async function downloadPaymentReceiptPdf(api: ApiService, paymentId: stri
   URL.revokeObjectURL(url);
 }
 
+export async function downloadAdmissionFinalInvoicePdf(api: ApiService, admissionId: string): Promise<void> {
+  let response;
+  try {
+    response = await firstValueFrom(api.getBlob(`/admissions/${admissionId}/final-invoice.pdf`));
+  } catch (err: unknown) {
+    throw new Error(await readBlobErrorMessage(err, 'Unable to download invoice.'));
+  }
+
+  const blob = response.body;
+  if (!blob) throw new Error('PDF download failed.');
+
+  if (blob.type.includes('application/json') || !response.ok) {
+    const text = await blob.text();
+    try {
+      const parsed = JSON.parse(text) as { message?: string };
+      throw new Error(parsed.message || 'Unable to download invoice.');
+    } catch (e) {
+      if (e instanceof Error && !(e instanceof SyntaxError)) throw e;
+      throw new Error(text?.trim() || 'Unable to download invoice.');
+    }
+  }
+
+  const disposition = response.headers.get('content-disposition') ?? '';
+  const match = /filename\*?=(?:UTF-8''|")?([^\";]+)/i.exec(disposition);
+  const fromHeader = match?.[1] ? decodeURIComponent(match[1].replace(/"/g, '')) : '';
+  const fileName = fromHeader || `invoice-${admissionId}.pdf`;
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function readBlobErrorMessage(err: unknown, fallback: string): Promise<string> {
+  const httpErr = err as { error?: Blob | { message?: string }; message?: string };
+  if (httpErr?.error instanceof Blob) {
+    try {
+      const text = await httpErr.error.text();
+      const parsed = JSON.parse(text) as { message?: string };
+      if (parsed.message) return parsed.message;
+      if (text.trim()) return text.trim();
+    } catch {
+      /* ignore parse failures */
+    }
+  } else if (httpErr?.error && typeof httpErr.error === 'object' && 'message' in httpErr.error) {
+    const msg = (httpErr.error as { message?: string }).message;
+    if (msg) return msg;
+  } else if (typeof httpErr?.message === 'string' && httpErr.message) {
+    return httpErr.message;
+  }
+  return fallback;
+}
+
 /** Convenience injector-friendly helpers for components */
 export function createReceiptActions() {
   const api = inject(ApiService);

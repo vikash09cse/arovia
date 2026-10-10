@@ -82,10 +82,16 @@ public class DoctorsService(
         if (await repository.EmailExistsAsync(tenantId, email, null, ct))
             return Result<DoctorResponse>.Fail(ErrorCode.AlreadyExists, "Email is already in use.");
 
+        var phoneError = ValidatePhoneFields(request.PhoneNumber, request.EmergencyContactNumber);
+        if (phoneError != null)
+            return Result<DoctorResponse>.Fail(ErrorCode.Validation, phoneError);
+
         var password = request.TemporaryPassword ?? PasswordHelper.GenerateTemporaryPassword();
         var id = await repository.CreateAsync(
             tenantId, email, request.FirstName.Trim(), request.LastName.Trim(),
-            request.DepartmentId, PasswordHelper.Hash(password), GetUserId(), ct);
+            request.DepartmentId,
+            NormalizePhone(request.PhoneNumber), NormalizePhone(request.EmergencyContactNumber),
+            PasswordHelper.Hash(password), GetUserId(), ct);
 
         var created = await repository.GetByIdAsync(tenantId, id, ct);
         return Result<DoctorResponse>.Ok(Map(created!), "Doctor created successfully.");
@@ -106,9 +112,15 @@ public class DoctorsService(
         if (existing == null)
             return Result<DoctorResponse>.Fail(ErrorCode.NotFound, "Doctor not found.");
 
+        var phoneError = ValidatePhoneFields(request.PhoneNumber, request.EmergencyContactNumber);
+        if (phoneError != null)
+            return Result<DoctorResponse>.Fail(ErrorCode.Validation, phoneError);
+
         await repository.UpdateAsync(
             tenantId, doctorId, request.FirstName.Trim(), request.LastName.Trim(),
-            request.DepartmentId, GetUserId(), ct);
+            request.DepartmentId,
+            NormalizePhone(request.PhoneNumber), NormalizePhone(request.EmergencyContactNumber),
+            GetUserId(), ct);
         var updated = await repository.GetByIdAsync(tenantId, doctorId, ct);
         return Result<DoctorResponse>.Ok(Map(updated!), "Doctor updated successfully.");
     }
@@ -144,10 +156,29 @@ public class DoctorsService(
         row.FirstName,
         row.LastName,
         $"{row.FirstName} {row.LastName}".Trim(),
+        row.PhoneNumber,
+        row.EmergencyContactNumber,
         row.DepartmentId,
         row.DepartmentName,
         row.Status == (byte)UserStatus.Active ? "Active" : "Inactive",
         row.Status,
         row.LastLoginAt,
         row.CreatedAt);
+
+    private static string? NormalizePhone(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        return value.Trim();
+    }
+
+    private static string? ValidatePhoneFields(string? phoneNumber, string? emergencyContactNumber)
+    {
+        var phone = NormalizePhone(phoneNumber);
+        if (phone is { Length: > 20 })
+            return "Phone number must be at most 20 characters.";
+        var emergency = NormalizePhone(emergencyContactNumber);
+        if (emergency is { Length: > 20 })
+            return "Emergency contact number must be at most 20 characters.";
+        return null;
+    }
 }

@@ -184,7 +184,7 @@ export class LayoutComponent {
         this.profileEmail = p?.email ?? '';
         this.profileFirstName = p?.firstName ?? '';
         this.profileLastName = p?.lastName ?? '';
-        this.profileDesignation = p?.designation ?? '';
+        this.profileDesignation = normalizeProfileDesignation(p?.designation);
         this.profileLoading.set(false);
       },
       error: err => {
@@ -251,7 +251,7 @@ export class LayoutComponent {
     this.api.put<ApiResult<MyProfile>>('/auth/me', {
       firstName: this.profileFirstName.trim(),
       lastName: this.profileLastName.trim(),
-      designation: this.profileDesignation.trim() || null
+      designation: normalizeProfileDesignation(this.profileDesignation) || null
     }).subscribe({
       next: res => {
         const p = res.data;
@@ -262,7 +262,7 @@ export class LayoutComponent {
           );
           this.profileFirstName = p.firstName;
           this.profileLastName = p.lastName;
-          this.profileDesignation = p.designation ?? '';
+          this.profileDesignation = normalizeProfileDesignation(p.designation);
         }
         this.accountSaving.set(false);
         this.accountMessage.set(res.message || 'Profile updated.');
@@ -279,10 +279,27 @@ export class LayoutComponent {
     this.auth.logout();
   }
 
+  designationFirstLine(value?: string | null): string {
+    const normalized = normalizeProfileDesignation(value);
+    if (!normalized) return '';
+    return normalized.split('\n')[0]?.trim() || '';
+  }
+
   private loadCollapsedPreference(): boolean {
     if (typeof window === 'undefined') return false;
     const saved = sessionStorage.getItem(SIDEBAR_COLLAPSED_KEY);
     if (saved !== null) return saved === 'true';
     return window.matchMedia('(min-width: 768px) and (max-width: 1199px)').matches;
   }
+}
+
+function normalizeProfileDesignation(value?: string | null): string {
+  if (!value) return '';
+  return value
+    .replace(/\r\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .split('\n')
+    .map(line => line.trim())
+    .join('\n')
+    .trim();
 }

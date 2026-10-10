@@ -23,6 +23,16 @@
           >
             {{ a.statusCode === 2 ? 'View discharge summary' : 'Prepare discharge summary' }}
           </a>
+          @if (canManage() && (a.statusCode === 1 || a.statusCode === 2)) {
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="downloadFinalInvoice()"
+              [disabled]="invoiceBusy()"
+            >
+              {{ invoiceBusy() ? 'Preparing…' : 'Invoice' }}
+            </button>
+          }
           @if (canManage() && a.statusCode === 1) {
             <button
               type="button"

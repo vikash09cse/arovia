@@ -42,6 +42,8 @@ public class TenantDetailRow
     public string PrimaryContactPhone { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public string Timezone { get; set; } = string.Empty;
+    public string? Website { get; set; }
+    public string? HospitalRegistrationNo { get; set; }
     public string? LogoUrl { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -156,6 +158,11 @@ public class PlatformAdminRepository(DbHelper dbHelper) : IPlatformAdminReposito
     public async Task UpdateTenantAsync(Guid id, UpdateTenantRequest req, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
+        var existing = await conn.QueryFirstOrDefaultAsync<TenantDetailRow>(
+            "dbo.sp_get_tenant_by_id",
+            new { tenantid = id },
+            commandType: CommandType.StoredProcedure);
+
         await conn.ExecuteAsync(
             "dbo.sp_update_tenant",
             new
@@ -169,7 +176,8 @@ public class PlatformAdminRepository(DbHelper dbHelper) : IPlatformAdminReposito
                 tenantaddress = req.Address,
                 timezone = req.Timezone,
                 logourl = req.LogoUrl,
-                website = (string?)null
+                website = existing?.Website,
+                hospitalregistrationno = existing?.HospitalRegistrationNo
             },
             commandType: CommandType.StoredProcedure);
     }
@@ -272,8 +280,13 @@ public class PlatformAdminRepository(DbHelper dbHelper) : IPlatformAdminReposito
     private static string GetPrefix(string hospitalName)
     {
         var parts = hospitalName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length >= 2
-            ? $"{parts[0][0]}{parts[1][0]}-".ToUpperInvariant()
-            : $"{hospitalName[..Math.Min(2, hospitalName.Length)]}-".ToUpperInvariant();
+        if (parts.Length >= 3)
+            return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[1][0])}{char.ToUpperInvariant(parts[2][0])}";
+        if (parts.Length == 2)
+            return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[1][0])}";
+        var name = hospitalName.Trim();
+        return name.Length >= 2
+            ? name[..2].ToUpperInvariant()
+            : name.ToUpperInvariant();
     }
 }

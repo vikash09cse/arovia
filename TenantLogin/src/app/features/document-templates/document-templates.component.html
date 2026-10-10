@@ -2,7 +2,7 @@
   <div class="header-row">
     <div>
       <h1>Document templates</h1>
-      <p class="subtitle">Edit Receipt and Email templates for this hospital. Only Tenant Admin can update.</p>
+      <p class="subtitle">Edit Receipt, Email, and Discharge Invoice templates for this hospital. Only Tenant Admin can update.</p>
     </div>
   </div>
 </header>
@@ -16,6 +16,7 @@
     <option [ngValue]="null">All types</option>
     <option [ngValue]="1">Receipt</option>
     <option [ngValue]="2">Email</option>
+    <option [ngValue]="3">Discharge Invoice</option>
   </select>
   <button type="submit" class="btn-secondary">Filter</button>
 </form>

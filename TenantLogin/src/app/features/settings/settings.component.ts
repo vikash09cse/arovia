@@ -16,6 +16,7 @@ interface TenantSettings {
   address: string;
   timezone: string;
   website?: string | null;
+  hospitalRegistrationNo?: string | null;
   logoUrl?: string | null;
   updatedAt: string;
 }
@@ -47,6 +48,7 @@ export class SettingsComponent implements OnInit {
   address = '';
   timezone = 'Asia/Kolkata';
   website = '';
+  hospitalRegistrationNo = '';
   logoUrl: string | null = null;
   selectedLogoFile: File | null = null;
 
@@ -74,6 +76,7 @@ export class SettingsComponent implements OnInit {
         this.address = s.address;
         this.timezone = s.timezone || 'Asia/Kolkata';
         this.website = s.website ?? '';
+        this.hospitalRegistrationNo = s.hospitalRegistrationNo ?? '';
         this.logoUrl = s.logoUrl ?? null;
         this.logoPreview.set(resolveFileUrl(this.logoUrl));
         this.selectedLogoFile = null;
@@ -141,6 +144,7 @@ export class SettingsComponent implements OnInit {
     this.saving.set(true);
 
     try {
+      let logoUploaded = false;
       if (this.selectedLogoFile) {
         this.uploadingLogo.set(true);
         const formData = new FormData();
@@ -155,9 +159,12 @@ export class SettingsComponent implements OnInit {
         this.logoPreview.set(resolveFileUrl(this.logoUrl));
         this.selectedLogoFile = null;
         this.uploadingLogo.set(false);
+        logoUploaded = true;
       }
 
-      const body = {
+      // After a successful logo upload the DB already has the new path.
+      // Omit logoUrl on PUT so we do not re-write an absolute/public URL back to the DB.
+      const body: Record<string, unknown> = {
         hospitalName: this.hospitalName.trim(),
         primaryContactFirstName: this.primaryContactFirstName.trim(),
         primaryContactLastName: this.primaryContactLastName.trim(),
@@ -166,8 +173,11 @@ export class SettingsComponent implements OnInit {
         address: this.address.trim(),
         timezone: this.timezone.trim(),
         website: this.website.trim() || null,
-        logoUrl: this.logoUrl
+        hospitalRegistrationNo: this.hospitalRegistrationNo.trim() || null
       };
+      if (!logoUploaded) {
+        body['logoUrl'] = this.logoUrl;
+      }
 
       const res = await new Promise<ApiResult<TenantSettings>>((resolve, reject) => {
         this.api.put<ApiResult<TenantSettings>>('/tenant-settings', body).subscribe({
@@ -187,6 +197,7 @@ export class SettingsComponent implements OnInit {
         this.address = s.address;
         this.timezone = s.timezone;
         this.website = s.website ?? '';
+        this.hospitalRegistrationNo = s.hospitalRegistrationNo ?? '';
         this.logoUrl = s.logoUrl ?? null;
         this.logoPreview.set(resolveFileUrl(this.logoUrl));
         this.auth.updateLocalTenantName(s.hospitalName);

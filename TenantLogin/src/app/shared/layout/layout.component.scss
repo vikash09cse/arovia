@@ -445,7 +445,8 @@
   color: #334155;
 }
 
-.account-form input {
+.account-form input,
+.account-form textarea {
   padding: 0.625rem 0.875rem;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -455,7 +456,14 @@
   font-family: inherit;
 }
 
-.account-form input:disabled {
+.account-form textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+  line-height: 1.4;
+}
+
+.account-form input:disabled,
+.account-form textarea:disabled {
   background: #f8fafc;
   color: #64748b;
 }

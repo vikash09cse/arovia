@@ -37,6 +37,28 @@
           </label>
         }
         <label>
+          Phone number
+          <input
+            type="tel"
+            name="phoneNumber"
+            [(ngModel)]="phoneNumber"
+            maxlength="20"
+            placeholder="Optional"
+            [disabled]="saving()"
+          />
+        </label>
+        <label>
+          Emergency contact number
+          <input
+            type="tel"
+            name="emergencyContactNumber"
+            [(ngModel)]="emergencyContactNumber"
+            maxlength="20"
+            placeholder="Optional"
+            [disabled]="saving()"
+          />
+        </label>
+        <label>
           Department <span class="req">*</span>
           <select name="departmentId" [(ngModel)]="departmentId" required [disabled]="saving()">
             <option value="">Select department</option>

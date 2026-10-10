@@ -36,7 +36,7 @@
           <tr>
             <td data-label="Name">{{ u.firstName }} {{ u.lastName }}</td>
             <td data-label="Email">{{ u.email }}</td>
-            <td data-label="Designation">{{ u.designation || '—' }}</td>
+            <td data-label="Designation" class="designation-cell">{{ u.designation || '—' }}</td>
             <td data-label="Role">{{ u.role }}</td>
             <td data-label="Monthly salary">
               @if (u.roleCode === 2) {
@@ -124,6 +124,7 @@
       }
 
       <form class="drawer-form" (ngSubmit)="submitUser()">
+        <div class="drawer-form-body">
         <label>
           <span class="field-label">First name <span class="req">*</span></span>
           <input type="text" name="firstName" [(ngModel)]="firstName" required minlength="2" [disabled]="saving()" />
@@ -145,16 +146,41 @@
             <span class="field-hint">Email cannot be changed after creation.</span>
           }
         </label>
+        <div class="form-row-2">
+          <label>
+            <span class="field-label">Phone number</span>
+            <input
+              type="tel"
+              name="phoneNumber"
+              [(ngModel)]="phoneNumber"
+              maxlength="20"
+              placeholder="Optional"
+              [disabled]="saving()"
+            />
+          </label>
+          <label>
+            <span class="field-label">Emergency contact number</span>
+            <input
+              type="tel"
+              name="emergencyContactNumber"
+              [(ngModel)]="emergencyContactNumber"
+              maxlength="20"
+              placeholder="Optional"
+              [disabled]="saving()"
+            />
+          </label>
+        </div>
         <label>
           <span class="field-label">Designation</span>
-          <input
-            type="text"
+          <textarea
             name="designation"
             [(ngModel)]="designation"
-            placeholder="Optional (e.g. Receptionist, Cashier)"
-            maxlength="100"
+            rows="4"
+            maxlength="500"
+            placeholder="Optional — one line per qualification (e.g. MBBS, MS, MCh)"
             [disabled]="saving()"
-          />
+          ></textarea>
+          <span class="field-hint">Use Enter for multiple lines (shown on discharge summary / invoice).</span>
         </label>
         <label>
           <span class="field-label">Role <span class="req">*</span></span>
@@ -322,6 +348,7 @@
             }
           </section>
         }
+        </div>
 
         <div class="drawer-actions">
           <button type="button" class="btn-secondary" [disabled]="saving() || salarySaving() || passwordSaving()" (click)="closeDrawer()">Cancel</button>

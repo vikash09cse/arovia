@@ -25,6 +25,7 @@ public class TenantSettingsRepository(DbHelper dbHelper) : ITenantSettingsReposi
         string address,
         string timezone,
         string? website,
+        string? hospitalRegistrationNo,
         string? logoUrl,
         CancellationToken ct)
     {
@@ -42,7 +43,8 @@ public class TenantSettingsRepository(DbHelper dbHelper) : ITenantSettingsReposi
                 tenantaddress = address,
                 timezone,
                 logourl = logoUrl,
-                website
+                website,
+                hospitalregistrationno = hospitalRegistrationNo
             },
             commandType: CommandType.StoredProcedure);
     }

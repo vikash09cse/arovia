@@ -5,7 +5,11 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api/api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiResult } from '../../core/models/api.models';
-import { downloadPaymentReceiptPdf, printPaymentReceipt } from '../../shared/receipt/receipt.util';
+import {
+  downloadAdmissionFinalInvoicePdf,
+  downloadPaymentReceiptPdf,
+  printPaymentReceipt
+} from '../../shared/receipt/receipt.util';
 
 interface AdmissionCharge {
   id: string;
@@ -87,6 +91,7 @@ export class AdmissionDetailComponent implements OnInit {
   readonly collectors = signal<LookupItem[]>([]);
   readonly busy = signal(false);
   readonly receiptBusyId = signal<string | null>(null);
+  readonly invoiceBusy = signal(false);
 
   showCharge = false;
   showPay = false;
@@ -318,6 +323,20 @@ export class AdmissionDetailComponent implements OnInit {
       this.error.set(err instanceof Error ? err.message : 'Unable to download PDF.');
     } finally {
       this.receiptBusyId.set(null);
+    }
+  }
+
+  async downloadFinalInvoice() {
+    const a = this.admission();
+    if (!a || (a.statusCode !== 1 && a.statusCode !== 2)) return;
+    this.invoiceBusy.set(true);
+    this.error.set('');
+    try {
+      await downloadAdmissionFinalInvoicePdf(this.api, a.id);
+    } catch (err: unknown) {
+      this.error.set(err instanceof Error ? err.message : 'Unable to download invoice.');
+    } finally {
+      this.invoiceBusy.set(false);
     }
   }
 }

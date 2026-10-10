@@ -114,7 +114,17 @@ public static class DependencyInjection
 
         app.UseHttpsRedirection();
         app.UseCors("AllowAngularApps");
-        app.UseStaticFiles();
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            OnPrepareResponse = ctx =>
+            {
+                // Tenant logos / uploads change in place; avoid long-lived browser caches.
+                if (ctx.Context.Request.Path.StartsWithSegments("/uploads"))
+                {
+                    ctx.Context.Response.Headers.CacheControl = "public,max-age=300,must-revalidate";
+                }
+            }
+        });
         app.UseMiddleware<GlobalExceptionMiddleware>();
         app.UseAuthentication();
         app.UseAuthorization();

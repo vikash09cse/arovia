@@ -50,6 +50,7 @@ export class AdmissionFormComponent implements OnInit {
   patientSearch = '';
   departmentId = '';
   attendingDoctorId = '';
+  admissionDate = '';
   ward = 'General';
   bed = '';
   roomClass = 'Semi-private';
@@ -63,6 +64,7 @@ export class AdmissionFormComponent implements OnInit {
   ngOnInit() {
     const user = this.auth.currentUser();
     if (user?.userId) this.collectedByUserId = user.userId;
+    this.admissionDate = this.todayIso();
 
     this.loadDepartments();
     this.loadCollectors();
@@ -165,6 +167,10 @@ export class AdmissionFormComponent implements OnInit {
     this.patientSearch = '';
   }
 
+  private todayIso(): string {
+    return new Date().toLocaleDateString('en-CA');
+  }
+
   submit() {
     const patient = this.selectedPatient();
     if (!patient) {
@@ -183,6 +189,10 @@ export class AdmissionFormComponent implements OnInit {
       this.error.set('Ward and room class are required.');
       return;
     }
+    if (!this.admissionDate) {
+      this.error.set('Admission date is required.');
+      return;
+    }
 
     const deposit = this.depositAmount ?? 0;
     if (deposit > 0 && !this.collectedByUserId) {
@@ -197,6 +207,7 @@ export class AdmissionFormComponent implements OnInit {
       patientId: patient.id,
       departmentId: this.departmentId,
       attendingDoctorId: this.attendingDoctorId,
+      admissionDate: this.admissionDate,
       ward: this.ward.trim(),
       bed: this.bed.trim() || null,
       roomClass: this.roomClass.trim(),

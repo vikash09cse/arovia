@@ -293,10 +293,25 @@ export class DischargeSummaryComponent implements OnInit {
         }
       }
 
+      const disposition = response.headers.get('content-disposition') ?? '';
+      const match = /filename\*?=(?:UTF-8''|")?([^\";]+)/i.exec(disposition);
+      const fromHeader = match?.[1] ? decodeURIComponent(match[1].replace(/"/g, '')) : '';
+      const admissionCode = this.admission()?.admissionCode?.trim();
+      const fileName =
+        fromHeader ||
+        (admissionCode ? `${admissionCode}.pdf` : `discharge-summary-${this.admissionId}.pdf`);
+
       const url = URL.createObjectURL(blob);
+
+      // Download using admission number so the file is not named after the portal title.
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = fileName;
+      anchor.click();
+
       const iframe = document.createElement('iframe');
       iframe.setAttribute('aria-hidden', 'true');
-      iframe.setAttribute('title', 'Print discharge summary');
+      iframe.setAttribute('title', fileName);
       Object.assign(iframe.style, {
         position: 'fixed',
         right: '0',
@@ -313,7 +328,6 @@ export class DischargeSummaryComponent implements OnInit {
         iframe.onload = () => resolve();
         iframe.onerror = () => reject(new Error('Unable to load PDF for print.'));
         iframe.src = url;
-        // Some browsers fire load late for PDFs; safety resolve
         setTimeout(() => resolve(), 800);
       });
 
@@ -332,7 +346,7 @@ export class DischargeSummaryComponent implements OnInit {
       setTimeout(cleanup, 60_000);
       win.focus();
       win.print();
-      this.message.set('Discharge summary PDF ready to print.');
+      this.message.set(`Downloaded ${fileName}`);
     } catch (e: any) {
       this.error.set(e?.message || 'Print failed.');
     } finally {

@@ -20,6 +20,8 @@ public class TenantSettingsController(TenantSettingsService service) : Controlle
 
     [HttpPost("logo")]
     [RequestSizeLimit(3 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 3 * 1024 * 1024)]
+    [Consumes("multipart/form-data")]
     public async Task<IActionResult> UploadLogo(IFormFile file, CancellationToken ct) =>
         (await service.UploadLogoAsync(file, ct)).ToActionResult();
 }

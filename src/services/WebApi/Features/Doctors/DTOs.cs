@@ -5,12 +5,16 @@ public record CreateDoctorRequest(
     string FirstName,
     string LastName,
     Guid DepartmentId,
-    string? TemporaryPassword);
+    string? TemporaryPassword,
+    string? PhoneNumber,
+    string? EmergencyContactNumber);
 
 public record UpdateDoctorRequest(
     string FirstName,
     string LastName,
-    Guid DepartmentId);
+    Guid DepartmentId,
+    string? PhoneNumber,
+    string? EmergencyContactNumber);
 
 public record DoctorResponse(
     Guid Id,
@@ -18,6 +22,8 @@ public record DoctorResponse(
     string FirstName,
     string LastName,
     string FullName,
+    string? PhoneNumber,
+    string? EmergencyContactNumber,
     Guid? DepartmentId,
     string? DepartmentName,
     string Status,

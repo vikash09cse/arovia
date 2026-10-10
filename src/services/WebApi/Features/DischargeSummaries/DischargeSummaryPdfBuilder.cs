@@ -2,13 +2,13 @@ using System.Text.Json;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using WebApi.Features.Shared;
 
 namespace WebApi.Features.DischargeSummaries;
 
 public static class DischargeSummaryPdfBuilder
 {
     private static readonly Color Navy = Color.FromHex("#1E4E79");
-    private static readonly Color TitleBar = Color.FromHex("#B8CCE4");
     private static readonly Color Line = Color.FromHex("#C5D0DE");
     private static readonly Color Soft = Color.FromHex("#E8EEF6");
 
@@ -21,19 +21,24 @@ public static class DischargeSummaryPdfBuilder
     {
         var model = DischargeSummaryPrintModel.From(data, logoBytes);
 
+        // Single continuous page definition so content flows naturally (no blank
+        // overflow pages from a hardcoded 2-page split).
         return Document.Create(container =>
         {
             container.Page(page =>
             {
                 page.Size(PageSizes.A4);
                 page.MarginHorizontal(28);
-                page.MarginVertical(22);
+                page.MarginTop(18);
+                page.MarginBottom(18);
                 page.DefaultTextStyle(x => x.FontSize(9).FontColor(Colors.Grey.Darken4));
 
-                page.Header().Element(c => ComposeLetterhead(c, model));
+                // Branding repeats; "DISCHARGE SUMMARY" title bar only on page 1 (in content).
+                page.Header().Element(c => ComposeLetterhead(c, model, includeDocumentTitle: false));
                 page.Content().PaddingTop(6).Column(col =>
                 {
                     col.Spacing(4);
+                    col.Item().Element(c => ClinicalDocumentChrome.ComposeDocumentTitleBar(c, "DISCHARGE SUMMARY"));
                     ComposePatientDetails(col, model);
                     SectionText(col, "2. FINAL DIAGNOSIS", model.FinalDiagnosis);
                     SectionText(col, "3. CHIEF COMPLAINTS", model.ChiefComplaints);
@@ -42,21 +47,6 @@ public static class DischargeSummaryPdfBuilder
                     ComposeExamination(col, model);
                     ComposeInvestigations(col, model);
                     ComposeTreatment(col, model);
-                });
-                page.Footer().Element(c => ComposePageFooter(c, model, "Page 1 of 2"));
-            });
-
-            container.Page(page =>
-            {
-                page.Size(PageSizes.A4);
-                page.MarginHorizontal(28);
-                page.MarginVertical(22);
-                page.DefaultTextStyle(x => x.FontSize(9).FontColor(Colors.Grey.Darken4));
-
-                page.Header().Element(c => ComposeLetterhead(c, model));
-                page.Content().PaddingTop(6).Column(col =>
-                {
-                    col.Spacing(4);
                     ComposeProcedure(col, model);
                     SectionText(col, "10. OPERATIVE FINDINGS", model.Findings);
                     SectionText(col, "11. PROCEDURE DETAILS", model.ProcedureDetails);
@@ -66,75 +56,56 @@ public static class DischargeSummaryPdfBuilder
                     ComposeAdviceFollowUp(col, model);
                     ComposeSignatures(col, model);
                 });
-                page.Footer().Element(c => ComposePageFooter(c, model, "Page 2 of 2"));
+                page.Footer().Element(c => ComposePageFooter(c, model));
             });
         }).GeneratePdf();
     }
 
-    private static void ComposeLetterhead(IContainer container, DischargeSummaryPrintModel m)
+    private static void ComposeLetterhead(
+        IContainer container, DischargeSummaryPrintModel m, bool includeDocumentTitle)
     {
-        container.Column(col =>
-        {
-            col.Item().Row(row =>
-            {
-                row.ConstantItem(58).Height(52).Element(box =>
-                {
-                    if (m.LogoBytes is { Length: > 0 })
-                    {
-                        box.Border(1).BorderColor(Line).Background(Colors.White).Padding(2)
-                            .Image(m.LogoBytes).FitArea();
-                    }
-                    else
-                    {
-                        box.Background(Navy).AlignCenter().AlignMiddle()
-                            .Text(m.LogoLetters).Bold().FontSize(14).FontColor(Colors.White);
-                    }
-                });
-
-                row.RelativeItem().PaddingHorizontal(8).AlignMiddle().Column(c =>
-                {
-                    c.Item().AlignCenter().Text(m.HospitalName.ToUpperInvariant())
-                        .Bold().FontSize(16).FontColor(Navy).FontFamily(Fonts.TimesNewRoman);
-                    c.Item().AlignCenter().Text("ADVANCED UROLOGICAL CARE")
-                        .FontSize(8).FontColor(Navy);
-                    c.Item().AlignCenter().Text("Kidney | Stone | Prostate Care")
-                        .FontSize(7.5f).FontColor(Colors.Grey.Darken2);
-                });
-
-                row.ConstantItem(150).AlignRight().AlignMiddle().Column(c =>
-                {
-                    c.Item().Text(m.DoctorName).Bold().FontSize(10).FontColor(Navy);
-                    if (!string.IsNullOrWhiteSpace(m.DoctorDesignation))
-                        c.Item().Text(m.DoctorDesignation).FontSize(7.5f).FontColor(Colors.Grey.Darken2);
-                    c.Item().Text(m.DepartmentName).FontSize(7.5f).FontColor(Colors.Grey.Darken2);
-                });
-            });
-
-            col.Item().PaddingTop(4).AlignCenter().Text(m.HospitalContactLine)
-                .FontSize(7.5f).FontColor(Colors.Grey.Darken2);
-
-            col.Item().PaddingTop(6).Background(TitleBar).PaddingVertical(5).AlignCenter()
-                .Text("DISCHARGE SUMMARY").Bold().FontSize(11).FontColor(Navy).LetterSpacing(0.8f);
-        });
+        ClinicalDocumentChrome.ComposeLetterhead(
+            container,
+            m.HospitalName,
+            m.DoctorName,
+            m.CredentialLines,
+            "DISCHARGE SUMMARY",
+            m.LogoBytes,
+            m.LogoLetters,
+            includeDocumentTitle);
     }
 
-    private static void ComposePageFooter(IContainer container, DischargeSummaryPrintModel m, string pageLabel)
+    private static void ComposePageFooter(IContainer container, DischargeSummaryPrintModel m)
     {
         container.Column(col =>
         {
-            if (!string.IsNullOrWhiteSpace(m.HospitalContactLine))
+            if (!string.IsNullOrWhiteSpace(m.HospitalPhone))
             {
-                col.Item().BorderTop(1).BorderColor(Line).PaddingTop(6)
-                    .AlignCenter()
-                    .Text(m.HospitalContactLine)
-                    .FontSize(7.5f)
-                    .FontColor(Colors.Grey.Darken2);
+                col.Item().AlignCenter().Text(text =>
+                {
+                    text.Span("☎ ").FontColor(Color.FromHex(ClinicalDocumentChrome.FooterRed)).FontSize(9);
+                    text.Span(m.HospitalPhone.Trim()).Bold().FontSize(9).FontColor(Colors.Black);
+                });
             }
 
-            col.Item().PaddingTop(3).AlignRight()
-                .Text(pageLabel)
-                .FontSize(8)
-                .FontColor(Colors.Grey.Darken1);
+            if (!string.IsNullOrWhiteSpace(m.HospitalAddress))
+            {
+                col.Item().PaddingTop(2).AlignCenter()
+                    .Text(m.HospitalAddress.Trim()).FontSize(8).FontColor(Colors.Grey.Darken3);
+            }
+
+            col.Item().PaddingTop(2).AlignCenter()
+                .Text(m.CopyrightLine).FontSize(7.5f)
+                .FontColor(Color.FromHex(ClinicalDocumentChrome.FooterRed));
+
+            col.Item().PaddingTop(3).AlignRight().Text(text =>
+            {
+                text.DefaultTextStyle(x => x.FontSize(8).FontColor(Colors.Grey.Darken1));
+                text.Span("Page ");
+                text.CurrentPageNumber();
+                text.Span(" of ");
+                text.TotalPages();
+            });
         });
     }
 
@@ -143,12 +114,18 @@ public static class DischargeSummaryPdfBuilder
             .Text(title).Bold().FontSize(8.5f).FontColor(Colors.White);
 
     private static void SectionBody(ColumnDescriptor col, Action<IContainer> content) =>
-        col.Item().Border(1).BorderColor(Line).BorderTop(0).Padding(6).Element(content);
+        col.Item().Border(1).BorderColor(Line).BorderTop(0).Padding(6)
+            .EnsureSpace(40).Element(content);
 
     private static void SectionText(ColumnDescriptor col, string title, string text)
     {
-        SectionBar(col, title);
-        SectionBody(col, body => body.Text(Dash(text)).FontSize(9));
+        // Keep heading + body together so we don't leave orphan section bars.
+        col.Item().EnsureSpace(48).Column(block =>
+        {
+            SectionBar(block, title);
+            block.Item().Border(1).BorderColor(Line).BorderTop(0).Padding(6)
+                .Text(Dash(text)).FontSize(9);
+        });
     }
 
     private static void ComposePatientDetails(ColumnDescriptor col, DischargeSummaryPrintModel m)
@@ -451,9 +428,12 @@ internal sealed class DischargeSummaryPrintModel
     public byte[]? LogoBytes { get; init; }
     public string LogoLetters { get; init; } = "JU";
     public string HospitalName { get; init; } = "";
-    public string HospitalContactLine { get; init; } = "";
+    public string HospitalAddress { get; init; } = "";
+    public string HospitalPhone { get; init; } = "";
+    public string CopyrightLine { get; init; } = "";
     public string DoctorName { get; init; } = "";
     public string DoctorDesignation { get; init; } = "";
+    public IReadOnlyList<string> CredentialLines { get; init; } = [];
     public string DepartmentName { get; init; } = "";
     public string PatientName { get; init; } = "";
     public string AgeSex { get; init; } = "";
@@ -530,13 +510,6 @@ internal sealed class DischargeSummaryPrintModel
         if (string.IsNullOrWhiteSpace(dod) && a.DischargedAt.HasValue)
             dod = a.DischargedAt.Value.ToString("dd MMM yyyy, HH:mm");
 
-        var contact = string.Join("  ·  ", new[]
-        {
-            a.HospitalAddress,
-            string.IsNullOrWhiteSpace(a.HospitalEmail) ? null : $"Email: {a.HospitalEmail}",
-            string.IsNullOrWhiteSpace(a.HospitalPhone) ? null : $"Ph: {a.HospitalPhone}"
-        }.Where(x => !string.IsNullOrWhiteSpace(x)));
-
         var leftKeys = new (string Key, string Label)[]
         {
             ("cbc", "CBC"), ("kft", "KFT"), ("urine", "Urine C/S"), ("usgCt", "USG KUB"), ("lft", "LFT")
@@ -602,11 +575,13 @@ internal sealed class DischargeSummaryPrintModel
             LogoBytes = logoBytes,
             LogoLetters = letters,
             HospitalName = a.HospitalName,
-            HospitalContactLine = contact,
-            DoctorName = a.DoctorName.StartsWith("Dr", StringComparison.OrdinalIgnoreCase)
-                ? a.DoctorName
-                : $"Dr. {a.DoctorName}",
+            HospitalAddress = a.HospitalAddress ?? "",
+            HospitalPhone = a.HospitalPhone ?? "",
+            CopyrightLine = ClinicalDocumentChrome.BuildCopyrightLine(a.HospitalName, a.HospitalAddress),
+            DoctorName = ClinicalDocumentChrome.FormatDoctorName(a.DoctorName),
             DoctorDesignation = a.DoctorDesignation ?? "",
+            CredentialLines = ClinicalDocumentChrome.CredentialLines(
+                a.DoctorDesignation, a.DepartmentName ?? "Consultant"),
             DepartmentName = a.DepartmentName ?? "",
             PatientName = a.PatientFullName,
             AgeSex = a.PatientAge.HasValue ? $"{a.PatientAge}/{genderShort}" : $"—/{genderShort}",

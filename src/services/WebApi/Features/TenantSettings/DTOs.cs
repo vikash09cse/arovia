@@ -9,6 +9,7 @@ public record UpdateTenantSettingsRequest(
     string Address,
     string Timezone,
     string? Website = null,
+    string? HospitalRegistrationNo = null,
     string? LogoUrl = null);
 
 public record TenantSettingsResponse(
@@ -22,5 +23,6 @@ public record TenantSettingsResponse(
     string Address,
     string Timezone,
     string? Website,
+    string? HospitalRegistrationNo,
     string? LogoUrl,
     DateTime UpdatedAt);

@@ -82,6 +82,17 @@
       </label>
 
       <label>
+        <span>Admission date <span class="req">*</span></span>
+        <input
+          type="date"
+          name="admissionDate"
+          [(ngModel)]="admissionDate"
+          required
+          [disabled]="saving()"
+        />
+      </label>
+
+      <label>
         <span>Room class <span class="req">*</span></span>
         <select name="roomClass" [(ngModel)]="roomClass" required [disabled]="saving()">
           <option value="General">General</option>

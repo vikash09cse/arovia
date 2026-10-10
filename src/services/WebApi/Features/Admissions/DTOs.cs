@@ -12,7 +12,8 @@ public record CreateAdmissionRequest(
     Guid? FromVisitId = null,
     decimal? DepositAmount = null,
     Guid? CollectedByUserId = null,
-    byte? PaymentMethod = null);
+    byte? PaymentMethod = null,
+    DateOnly? AdmissionDate = null);
 
 public record AddAdmissionChargeRequest(
     byte ChargeCategory,
@@ -93,6 +94,7 @@ public record AdmissionResponse(
     string? Notes,
     decimal DiscountAmount,
     string? DiscountReason,
+    string? InvoiceNumber,
     Guid? FromVisitId,
     string? FromVisitCode,
     Guid DepartmentId,
@@ -111,3 +113,8 @@ public record AdmissionResponse(
     DateTime CreatedAt,
     IEnumerable<AdmissionChargeResponse> Charges,
     IEnumerable<AdmissionPaymentResponse> Payments);
+
+public record AdmissionFinalInvoiceResponse(
+    Guid AdmissionId,
+    string InvoiceNumber,
+    string Html);

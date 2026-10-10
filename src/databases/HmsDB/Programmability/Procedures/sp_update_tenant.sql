@@ -8,7 +8,8 @@ CREATE OR ALTER PROCEDURE dbo.sp_update_tenant
     @tenantaddress            NVARCHAR(500),
     @timezone                 NVARCHAR(50),
     @logourl                  NVARCHAR(500) = NULL,
-    @website                  NVARCHAR(200) = NULL
+    @website                  NVARCHAR(200) = NULL,
+    @hospitalregistrationno   NVARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -23,6 +24,7 @@ BEGIN
         timezone                = @timezone,
         logourl                 = @logourl,
         website                 = NULLIF(LTRIM(RTRIM(@website)), ''),
+        hospitalregistrationno  = NULLIF(LTRIM(RTRIM(@hospitalregistrationno)), ''),
         updatedat               = SYSUTCDATETIME()
     WHERE tenantid = @tenantid
       AND isdeleted = 0;

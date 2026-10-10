@@ -5,7 +5,9 @@ CREATE OR ALTER PROCEDURE dbo.sp_create_tenant_user
     @passwordhash NVARCHAR(256),
     @firstname    NVARCHAR(100),
     @lastname     NVARCHAR(100),
-    @designation  NVARCHAR(100) = NULL,
+    @designation  NVARCHAR(500) = NULL,
+    @phonenumber  NVARCHAR(20) = NULL,
+    @emergencycontactnumber NVARCHAR(20) = NULL,
     @departmentid UNIQUEIDENTIFIER = NULL,
     @usertype     TINYINT,
     @userstatus   TINYINT,
@@ -26,9 +28,13 @@ BEGIN
         THROW 50400, 'Department is required for doctors.', 1;
 
     INSERT INTO dbo.users (
-        userid, tenantid, email, passwordhash, firstname, lastname, designation, departmentid, usertype, userstatus, createdby)
+        userid, tenantid, email, passwordhash, firstname, lastname, designation,
+        phonenumber, emergencycontactnumber, departmentid, usertype, userstatus, createdby)
     VALUES (
-        @userid, @tenantid, @email, @passwordhash, @firstname, @lastname, @designation, @departmentid, @usertype, @userstatus, @createdby);
+        @userid, @tenantid, @email, @passwordhash, @firstname, @lastname, @designation,
+        NULLIF(LTRIM(RTRIM(@phonenumber)), ''),
+        NULLIF(LTRIM(RTRIM(@emergencycontactnumber)), ''),
+        @departmentid, @usertype, @userstatus, @createdby);
 
     SELECT @userid AS userid;
 END

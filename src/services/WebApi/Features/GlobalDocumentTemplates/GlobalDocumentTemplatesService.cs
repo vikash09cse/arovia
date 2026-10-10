@@ -112,7 +112,13 @@ public class GlobalDocumentTemplatesService(
     private static GlobalDocumentTemplateResponse Map(GlobalDocumentTemplateRow row) => new(
         row.GlobalDocumentTemplateId,
         row.TemplateType,
-        row.TemplateType == (byte)DocumentTemplateType.Receipt ? "Receipt" : "Email",
+        row.TemplateType switch
+        {
+            (byte)DocumentTemplateType.Receipt => "Receipt",
+            (byte)DocumentTemplateType.Email => "Email",
+            (byte)DocumentTemplateType.DischargeInvoice => "Discharge Invoice",
+            _ => "Unknown"
+        },
         row.Name,
         row.Subject,
         row.BodyHtml,

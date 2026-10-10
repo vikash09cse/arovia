@@ -41,6 +41,7 @@ BEGIN
         a.notes,
         a.discountamount,
         a.discountreason,
+        a.invoicenumber,
         a.fromvisitid,
         fv.visitcode AS fromvisitcode,
         a.departmentid,

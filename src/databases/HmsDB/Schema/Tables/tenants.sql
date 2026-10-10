@@ -12,6 +12,7 @@ BEGIN
         tenantstatus            TINYINT          NOT NULL CONSTRAINT DF_tenants_tenantstatus DEFAULT (1),
         logourl                 NVARCHAR(500)    NULL,
         website                 NVARCHAR(200)    NULL,
+        hospitalregistrationno  NVARCHAR(100)    NULL,
         timezone                NVARCHAR(50)     NOT NULL,
         isdeleted               BIT              NOT NULL CONSTRAINT DF_tenants_isdeleted DEFAULT (0),
         createdat               DATETIME2        NOT NULL CONSTRAINT DF_tenants_createdat DEFAULT (SYSUTCDATETIME()),

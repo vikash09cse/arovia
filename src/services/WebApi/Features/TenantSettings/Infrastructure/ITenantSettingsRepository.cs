@@ -12,6 +12,7 @@ public class TenantSettingsRow
     public string Address { get; set; } = string.Empty;
     public string Timezone { get; set; } = string.Empty;
     public string? Website { get; set; }
+    public string? HospitalRegistrationNo { get; set; }
     public string? LogoUrl { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -30,6 +31,7 @@ public interface ITenantSettingsRepository
         string address,
         string timezone,
         string? website,
+        string? hospitalRegistrationNo,
         string? logoUrl,
         CancellationToken ct);
 }

@@ -52,6 +52,27 @@ public class AdmissionsController(AdmissionsService service) : ControllerBase
     public async Task<IActionResult> Discharge(Guid id, CancellationToken ct) =>
         (await service.DischargeAsync(id, ct)).ToActionResult();
 
+    [HttpGet("{id:guid}/final-invoice")]
+    [Authorize(Roles = $"{RoleNames.TenantSuperAdmin},{RoleNames.Staff}")]
+    public async Task<IActionResult> GetFinalInvoice(Guid id, CancellationToken ct) =>
+        (await service.GetFinalInvoiceAsync(id, ct)).ToActionResult();
+
+    [HttpGet("{id:guid}/final-invoice.pdf")]
+    [Authorize(Roles = $"{RoleNames.TenantSuperAdmin},{RoleNames.Staff}")]
+    public async Task<IActionResult> GetFinalInvoicePdf(Guid id, CancellationToken ct)
+    {
+        var result = await service.GetFinalInvoicePdfAsync(id, ct);
+        if (!result.Success)
+            return result.ToActionResult();
+
+        var invoiceNumber = result.Data.InvoiceNumber?.Trim();
+        var safeName = string.IsNullOrWhiteSpace(invoiceNumber)
+            ? id.ToString("N")
+            : string.Join("-", invoiceNumber.Split(
+                Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+        return File(result.Data.Bytes, "application/pdf", $"{safeName}.pdf");
+    }
+
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = RoleNames.TenantSuperAdmin)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct) =>

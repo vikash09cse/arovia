@@ -9,6 +9,8 @@ interface DoctorDetail {
   email: string;
   firstName: string;
   lastName: string;
+  phoneNumber?: string | null;
+  emergencyContactNumber?: string | null;
   departmentId?: string | null;
   departmentName?: string | null;
   status: string;
@@ -42,6 +44,8 @@ export class DoctorFormComponent implements OnInit {
   firstName = '';
   lastName = '';
   email = '';
+  phoneNumber = '';
+  emergencyContactNumber = '';
   temporaryPassword = '';
   departmentId = '';
 
@@ -78,6 +82,8 @@ export class DoctorFormComponent implements OnInit {
         this.firstName = d.firstName;
         this.lastName = d.lastName;
         this.email = d.email;
+        this.phoneNumber = d.phoneNumber ?? '';
+        this.emergencyContactNumber = d.emergencyContactNumber ?? '';
         this.departmentId = d.departmentId ?? '';
         this.ensureCurrentDepartmentOption(d.departmentId, d.departmentName);
         this.loading.set(false);
@@ -121,7 +127,9 @@ export class DoctorFormComponent implements OnInit {
       this.api.put<ApiResult<DoctorDetail>>(`/doctors/${this.doctorId}`, {
         firstName: this.firstName.trim(),
         lastName: this.lastName.trim(),
-        departmentId: this.departmentId
+        departmentId: this.departmentId,
+        phoneNumber: this.phoneNumber.trim() || null,
+        emergencyContactNumber: this.emergencyContactNumber.trim() || null
       }).subscribe({
         next: () => this.router.navigate(['/doctors']),
         error: err => {
@@ -132,11 +140,13 @@ export class DoctorFormComponent implements OnInit {
       return;
     }
 
-    const body: Record<string, string> = {
+    const body: Record<string, string | null> = {
       email: this.email.trim(),
       firstName: this.firstName.trim(),
       lastName: this.lastName.trim(),
-      departmentId: this.departmentId
+      departmentId: this.departmentId,
+      phoneNumber: this.phoneNumber.trim() || null,
+      emergencyContactNumber: this.emergencyContactNumber.trim() || null
     };
     if (this.temporaryPassword.trim()) {
       body['temporaryPassword'] = this.temporaryPassword.trim();

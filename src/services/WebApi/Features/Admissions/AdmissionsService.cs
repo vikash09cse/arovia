@@ -1,13 +1,21 @@
+using System.Globalization;
+using System.Net;
+using System.Text;
 using SharedKernel.Enums;
 using SharedKernel.Utilities;
 using SharedKernel.Utilities.Extensions;
+using SharedKernel.Utilities.Helpers;
 using WebApi.Features.Admissions.Infrastructure;
+using WebApi.Features.Shared;
 
 namespace WebApi.Features.Admissions;
 
 public class AdmissionsService(
     IAdmissionsRepository repository,
-    IHttpContextAccessor httpContextAccessor)
+    IHttpContextAccessor httpContextAccessor,
+    IWebHostEnvironment environment,
+    PhiEncryptionHelper encryption,
+    PublicUrlHelper publicUrls)
 {
     public async Task<Result<AdmissionListResponse>> GetListAsync(
         int page,
@@ -106,6 +114,7 @@ public class AdmissionsService(
                 request.DepositAmount is > 0 ? request.DepositAmount : null,
                 request.DepositAmount is > 0 ? request.PaymentMethod : null,
                 request.DepositAmount is > 0 ? request.CollectedByUserId : null,
+                request.AdmissionDate,
                 GetUserId(),
                 ct);
         }
@@ -243,6 +252,14 @@ public class AdmissionsService(
             && request.PaymentMethod is not ((byte)PaymentMethod.Cash) and not ((byte)PaymentMethod.Upi)
                 and not ((byte)PaymentMethod.BankAccount) and not ((byte)PaymentMethod.Cheque))
             return Result<AdmissionResponse>.Fail(ErrorCode.Validation, "Invalid payment method for deposit.");
+        if (request.AdmissionDate is { } admissionDate)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            if (admissionDate > today.AddDays(1))
+                return Result<AdmissionResponse>.Fail(ErrorCode.Validation, "Admission date cannot be more than one day in the future.");
+            if (admissionDate < today.AddYears(-2))
+                return Result<AdmissionResponse>.Fail(ErrorCode.Validation, "Admission date is too far in the past.");
+        }
         return null;
     }
 
@@ -265,6 +282,7 @@ public class AdmissionsService(
             a.Notes,
             a.DiscountAmount,
             a.DiscountReason,
+            a.InvoiceNumber,
             a.FromVisitId,
             a.FromVisitCode,
             a.DepartmentId,
@@ -343,6 +361,346 @@ public class AdmissionsService(
     {
         var name = $"{first} {last}".Trim();
         return string.IsNullOrWhiteSpace(name) ? null : name;
+    }
+
+    public async Task<Result<AdmissionFinalInvoiceResponse>> GetFinalInvoiceAsync(
+        Guid admissionId, CancellationToken ct)
+    {
+        var built = await BuildFinalInvoiceAsync(admissionId, requireTemplate: true, ct);
+        if (built.Error != null) return built.Error;
+        return Result<AdmissionFinalInvoiceResponse>.Ok(
+            new AdmissionFinalInvoiceResponse(admissionId, built.Data!.InvoiceNumber, built.Html!));
+    }
+
+    public async Task<Result<(byte[] Bytes, string InvoiceNumber)>> GetFinalInvoicePdfAsync(
+        Guid admissionId, CancellationToken ct)
+    {
+        // PDF is rendered from the Discharge Invoice HTML template after placeholder substitution.
+        var built = await BuildFinalInvoiceAsync(admissionId, requireTemplate: true, ct);
+        if (built.Error != null)
+            return Result<(byte[], string)>.Fail(built.Error.ErrorCode, built.Error.Message ?? "Unable to build invoice.");
+
+        try
+        {
+            var pdf = await HtmlPdfRenderer.RenderAsync(built.Html!, ct);
+            return Result<(byte[], string)>.Ok((pdf, built.Data!.InvoiceNumber));
+        }
+        catch (Exception ex)
+        {
+            return Result<(byte[], string)>.Fail(
+                ErrorCode.InternalError,
+                $"Unable to render invoice PDF from template. {ex.Message}");
+        }
+    }
+
+    private async Task<(
+        FinalInvoiceBuildData? Data,
+        FinalInvoiceData? PdfData,
+        string? Html,
+        Result<AdmissionFinalInvoiceResponse>? Error)> BuildFinalInvoiceAsync(
+        Guid admissionId, bool requireTemplate, CancellationToken ct)
+    {
+        var tenantError = RequireTenantContext<AdmissionFinalInvoiceResponse>();
+        if (tenantError != null) return (null, null, null, tenantError);
+
+        var tenantId = httpContextAccessor.GetTenantContext().TenantId;
+        string invoiceNumber;
+        try
+        {
+            invoiceNumber = await repository.EnsureInvoiceNumberAsync(tenantId, admissionId, GetUserId(), ct);
+        }
+        catch (Exception ex) when (TrySqlMessage(ex, out var message))
+        {
+            return (null, null, null, Result<AdmissionFinalInvoiceResponse>.Fail(ErrorCode.Validation, message));
+        }
+
+        var (header, charges, payments) = await repository.GetFinalInvoiceDataAsync(tenantId, admissionId, ct);
+        if (header == null)
+            return (null, null, null, Result<AdmissionFinalInvoiceResponse>.Fail(ErrorCode.NotFound, "Admission not found."));
+
+        if (header.AdmissionStatus is not ((byte)AdmissionStatus.Admitted)
+            and not ((byte)AdmissionStatus.Discharged))
+            return (null, null, null, Result<AdmissionFinalInvoiceResponse>.Fail(
+                ErrorCode.Validation, "Invoice is available only for admitted or discharged stays."));
+
+        if (requireTemplate && string.IsNullOrWhiteSpace(header.TemplateBodyHtml))
+            return (null, null, null, Result<AdmissionFinalInvoiceResponse>.Fail(
+                ErrorCode.NotFound, "Discharge invoice template is not configured."));
+
+        invoiceNumber = string.IsNullOrWhiteSpace(invoiceNumber)
+            ? (header.InvoiceNumber ?? "—")
+            : invoiceNumber;
+
+        var pdfData = MapFinalInvoiceData(header, charges, payments, invoiceNumber);
+        var html = string.IsNullOrWhiteSpace(header.TemplateBodyHtml)
+            ? null
+            : BuildFinalInvoiceHtml(header, charges, invoiceNumber, pdfData);
+
+        return (new FinalInvoiceBuildData(admissionId, invoiceNumber), pdfData, html, null);
+    }
+
+    private FinalInvoiceData MapFinalInvoiceData(
+        AdmissionFinalInvoiceHeaderRow header,
+        IReadOnlyList<AdmissionFinalInvoiceChargeRow> charges,
+        IReadOnlyList<AdmissionFinalInvoicePaymentRow> payments,
+        string invoiceNumber)
+    {
+        var gender = header.PatientGender switch
+        {
+            (byte)Gender.Male => "Male",
+            (byte)Gender.Female => "Female",
+            (byte)Gender.Other => "Other",
+            _ => "—"
+        };
+
+        var latestPayment = payments.OrderByDescending(p => p.CollectionDateTime).FirstOrDefault();
+        var paymentModes = payments
+            .Select(p => FormatPaymentMethod(p.PaymentMethod))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var paymentMode = paymentModes.Count == 0 ? "—" : string.Join(" / ", paymentModes);
+        var paymentDate = latestPayment?.CollectionDateTime.ToString("dd-MM-yyyy") ?? "—";
+
+        var procedureDate = header.ProcedureChargedOn ?? header.AdmittedAt;
+        var billDate = header.DischargedAt ?? header.AdmittedAt;
+        var receiptHeader = string.IsNullOrWhiteSpace(header.ReceiptHeaderText)
+            ? "ADVANCED UROLOGY & KIDNEY STONE CARE CENTRE"
+            : header.ReceiptHeaderText.Trim();
+        var proceduresLine = string.IsNullOrWhiteSpace(header.ReceiptFooterText)
+            ? "PCNL | RIRS | URSL | TURP | UROFLOWMETRY | CYSTOSCOPY"
+            : header.ReceiptFooterText.Trim();
+
+        var discount = header.DiscountAmount;
+        string? discountLine = discount > 0
+            ? $"PACKAGE DISCOUNT{(string.IsNullOrWhiteSpace(header.DiscountReason) ? "" : $" ({header.DiscountReason.Trim()})")} (-) ₹{Money(discount)} /-"
+            : null;
+
+        var chargeLines = charges.Select(c => new FinalInvoiceChargeLine(
+            FormatChargeCategory(c.ChargeCategory),
+            c.Description,
+            Money(c.Amount))).ToList();
+
+        return new FinalInvoiceData
+        {
+            HospitalName = header.HospitalName ?? "",
+            HospitalAddress = header.HospitalAddress ?? "",
+            HospitalPhone = header.HospitalPhone ?? "",
+            Website = header.Website?.Trim() ?? "",
+            LogoBytes = TryReadLogoBytes(header.LogoUrl),
+            ReceiptHeader = receiptHeader,
+            ProceduresLine = proceduresLine,
+            RegistrationNumber = string.IsNullOrWhiteSpace(header.RegistrationNumber) ? "—" : header.RegistrationNumber.Trim(),
+            InvoiceNumber = invoiceNumber,
+            PatientId = string.IsNullOrWhiteSpace(header.PatientCode) ? "—" : header.PatientCode.Trim(),
+            PatientName = $"{header.PatientFirstName} {header.PatientLastName}".Trim(),
+            Age = header.PatientAge?.ToString() ?? "—",
+            Gender = gender,
+            Address = SafeDecrypt(header.AddressCipher),
+            Phone = SafeDecrypt(header.PhoneCipher),
+            BillDate = billDate.ToString("dd-MM-yyyy"),
+            AdmissionDate = header.AdmittedAt.ToString("dd-MM-yyyy"),
+            ProcedureDate = procedureDate.ToString("dd-MM-yyyy"),
+            DischargeDate = header.DischargedAt?.ToString("dd-MM-yyyy") ?? "—",
+            Charges = chargeLines,
+            GrossTotal = Money(header.ChargesTotal),
+            DiscountLine = discountLine,
+            PayableAmount = Money(header.BillTotal),
+            AmountInWords = IndianCurrencyWords.ToRupeesOnly(header.BillTotal),
+            AmountPaid = Money(header.PaidTotal),
+            PaymentMode = paymentMode,
+            PaymentDate = paymentDate,
+            ShowPaidStamp = header.BalanceDue <= 0.009m,
+            DoctorName = ClinicalDocumentChrome.FormatDoctorName(header.DoctorFirstName, header.DoctorLastName),
+            DoctorDesignation = header.DoctorDesignation ?? "",
+            CredentialLines = ClinicalDocumentChrome.CredentialLines(header.DoctorDesignation),
+            CopyrightLine = ClinicalDocumentChrome.BuildCopyrightLine(header.HospitalName ?? "", header.HospitalAddress)
+        };
+    }
+
+    private string BuildFinalInvoiceHtml(
+        AdmissionFinalInvoiceHeaderRow header,
+        IReadOnlyList<AdmissionFinalInvoiceChargeRow> charges,
+        string invoiceNumber,
+        FinalInvoiceData data)
+    {
+        var logoHtml = BuildLogoHtml(header.LogoUrl, header.HospitalName);
+        var chargeRows = BuildChargeRowsHtml(charges);
+        var discountLineHtml = string.IsNullOrWhiteSpace(data.DiscountLine)
+            ? ""
+            : $"<div class=\"discount\">{WebUtility.HtmlEncode(data.DiscountLine)}</div>";
+        var paidStampClass = data.ShowPaidStamp ? "" : "hidden";
+        var credentialsHtml = string.Join("", data.CredentialLines.Select(l =>
+            $"<div class=\"cdc-doctor-cred\">{WebUtility.HtmlEncode(l)}</div>"));
+        var designationHtml = data.CredentialLines.Count > 0
+            ? string.Join("<br/>", data.CredentialLines.Select(WebUtility.HtmlEncode))
+            : Enc(data.DoctorDesignation);
+        var brandTitleHtml = ClinicalDocumentChrome.InvoiceBrandTitleHtml(data.HospitalName);
+        var websiteDisplay = FormatWebsiteForTemplate(data.Website);
+        var registration = Enc(data.RegistrationNumber);
+
+        return header.TemplateBodyHtml!
+            .Replace("{{HospitalName}}", Enc(data.HospitalName), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{HospitalAddress}}", Enc(data.HospitalAddress), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{HospitalPhone}}", Enc(data.HospitalPhone), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{Website}}", Enc(websiteDisplay), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{LogoHtml}}", logoHtml, StringComparison.OrdinalIgnoreCase)
+            .Replace("{{BrandTitleHtml}}", brandTitleHtml, StringComparison.OrdinalIgnoreCase)
+            .Replace("{{DoctorCredentialsHtml}}", credentialsHtml, StringComparison.OrdinalIgnoreCase)
+            .Replace("{{CopyrightLine}}", Enc(data.CopyrightLine), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{ReceiptHeader}}", Enc(data.ReceiptHeader), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{ProceduresLine}}", Enc(data.ProceduresLine), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{RegistrationNumber}}", registration, StringComparison.OrdinalIgnoreCase)
+            .Replace("{{HospitalRegistrationNo}}", registration, StringComparison.OrdinalIgnoreCase)
+            .Replace("{{PatientId}}", Enc(data.PatientId), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{PatientCode}}", Enc(data.PatientId), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{PatientName}}", Enc(data.PatientName), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{Age}}", Enc(data.Age), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{Gender}}", Enc(data.Gender), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{Address}}", Enc(data.Address), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{Phone}}", Enc(data.Phone), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{InvoiceNumber}}", Enc(invoiceNumber), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{BillDate}}", Enc(data.BillDate), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{AdmissionDate}}", Enc(data.AdmissionDate), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{ProcedureDate}}", Enc(data.ProcedureDate), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{DischargeDate}}", Enc(data.DischargeDate), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{ChargeRows}}", chargeRows, StringComparison.OrdinalIgnoreCase)
+            .Replace("{{GrossTotal}}", data.GrossTotal, StringComparison.OrdinalIgnoreCase)
+            .Replace("{{DiscountLine}}", discountLineHtml, StringComparison.OrdinalIgnoreCase)
+            .Replace("{{PayableAmount}}", data.PayableAmount, StringComparison.OrdinalIgnoreCase)
+            .Replace("{{AmountInWords}}", Enc(data.AmountInWords), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{AmountPaid}}", data.AmountPaid, StringComparison.OrdinalIgnoreCase)
+            .Replace("{{PaymentMode}}", Enc(data.PaymentMode), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{PaymentDate}}", Enc(data.PaymentDate), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{PaidStampClass}}", paidStampClass, StringComparison.OrdinalIgnoreCase)
+            .Replace("{{DoctorName}}", Enc(data.DoctorName), StringComparison.OrdinalIgnoreCase)
+            .Replace("{{DoctorDesignation}}", designationHtml, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string FormatWebsiteForTemplate(string? website)
+    {
+        if (string.IsNullOrWhiteSpace(website) || website.Trim() == "—")
+            return "—";
+        var w = website.Trim();
+        if (w.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            w = w[8..];
+        else if (w.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            w = w[7..];
+        return w.TrimEnd('/');
+    }
+
+    private sealed record FinalInvoiceBuildData(Guid AdmissionId, string InvoiceNumber);
+
+    private static string BuildChargeRowsHtml(IReadOnlyList<AdmissionFinalInvoiceChargeRow> charges)
+    {
+        if (charges.Count == 0)
+        {
+            return """
+              <tr>
+                <td class="sno">1</td>
+                <td class="part">—</td>
+                <td>No charges recorded</td>
+                <td class="amt">₹ 0.00</td>
+              </tr>
+              """;
+        }
+
+        var sb = new StringBuilder();
+        var i = 1;
+        foreach (var c in charges)
+        {
+            sb.AppendLine($"""
+              <tr>
+                <td class="sno">{i}</td>
+                <td class="part">{Enc(FormatChargeCategory(c.ChargeCategory))}</td>
+                <td>{Enc(c.Description)}</td>
+                <td class="amt">₹ {Money(c.Amount)}</td>
+              </tr>
+              """);
+            i++;
+        }
+        return sb.ToString();
+    }
+
+    private string BuildLogoHtml(string? logoUrl, string hospitalName)
+    {
+        var bytes = TryReadLogoBytes(logoUrl);
+        if (bytes is { Length: > 0 })
+        {
+            var mime = GuessImageMime(logoUrl);
+            var b64 = Convert.ToBase64String(bytes);
+            return $"<img class=\"cdc-logo logo\" src=\"data:{mime};base64,{b64}\" alt=\"Logo\"/>";
+        }
+
+        var publicUrl = publicUrls.ToPublicUrl(logoUrl);
+        if (!string.IsNullOrWhiteSpace(publicUrl))
+            return $"<img class=\"cdc-logo logo\" src=\"{WebUtility.HtmlEncode(publicUrl)}\" alt=\"Logo\"/>";
+
+        var initial = string.IsNullOrWhiteSpace(hospitalName) ? "H" : hospitalName.Trim()[..1].ToUpperInvariant();
+        return $"<div class=\"cdc-logo-fallback logo-fallback\">{Enc(initial)}</div>";
+    }
+
+    private byte[]? TryReadLogoBytes(string? logoUrl)
+    {
+        var relative = publicUrls.ToWebRootRelativePath(logoUrl);
+        if (string.IsNullOrWhiteSpace(relative)) return null;
+
+        var webRoot = environment.WebRootPath;
+        if (string.IsNullOrWhiteSpace(webRoot)) return null;
+
+        var absolutePath = Path.GetFullPath(Path.Combine(webRoot, relative));
+        var rootFull = Path.GetFullPath(webRoot);
+        if (!absolutePath.StartsWith(rootFull, StringComparison.OrdinalIgnoreCase) || !File.Exists(absolutePath))
+            return null;
+
+        try { return File.ReadAllBytes(absolutePath); }
+        catch { return null; }
+    }
+
+    private static string GuessImageMime(string? logoUrl)
+    {
+        var ext = Path.GetExtension(logoUrl ?? string.Empty).ToLowerInvariant();
+        return ext switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".bmp" => "image/bmp",
+            _ => "image/png"
+        };
+    }
+
+    private string SafeDecrypt(byte[]? cipher)
+    {
+        if (cipher == null || cipher.Length == 0) return "—";
+        try { return encryption.Decrypt(cipher); }
+        catch { return "—"; }
+    }
+
+    private static string Money(decimal amount) =>
+        amount.ToString("N2", CultureInfo.InvariantCulture);
+
+    private static string Enc(string? value) =>
+        WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(value) ? "—" : value);
+
+    private static bool TrySqlMessage(Exception ex, out string message)
+    {
+        message = ex.Message;
+        if (ex is Microsoft.Data.SqlClient.SqlException sql && !string.IsNullOrWhiteSpace(sql.Message))
+        {
+            message = sql.Message.Split('\n')[0].Trim();
+            return true;
+        }
+
+        for (var inner = ex.InnerException; inner != null; inner = inner.InnerException)
+        {
+            if (inner is Microsoft.Data.SqlClient.SqlException sqlInner && !string.IsNullOrWhiteSpace(sqlInner.Message))
+            {
+                message = sqlInner.Message.Split('\n')[0].Trim();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private Result<T>? RequireTenantContext<T>()

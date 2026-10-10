@@ -51,6 +51,10 @@ public class PublicUrlHelper(
             catch { return null; }
         }
 
+        var queryIdx = value.IndexOf('?', StringComparison.Ordinal);
+        if (queryIdx >= 0)
+            value = value[..queryIdx];
+
         var idx = value.IndexOf("/uploads/", StringComparison.OrdinalIgnoreCase);
         if (idx >= 0)
             return value[idx..];

@@ -6,13 +6,17 @@ public record CreateTenantUserRequest(
     string LastName,
     byte Role,
     string? TemporaryPassword,
-    string? Designation);
+    string? Designation,
+    string? PhoneNumber,
+    string? EmergencyContactNumber);
 
 public record UpdateTenantUserRequest(
     string FirstName,
     string LastName,
     byte Role,
-    string? Designation);
+    string? Designation,
+    string? PhoneNumber,
+    string? EmergencyContactNumber);
 
 public record SetUserPasswordRequest(string NewPassword);
 
@@ -22,6 +26,8 @@ public record TenantUserResponse(
     string FirstName,
     string LastName,
     string? Designation,
+    string? PhoneNumber,
+    string? EmergencyContactNumber,
     string Role,
     byte RoleCode,
     string Status,

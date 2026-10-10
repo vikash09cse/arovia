@@ -17,6 +17,7 @@ BEGIN
         t.timezone,
         t.logourl,
         t.website,
+        t.hospitalregistrationno,
         t.createdat,
         t.updatedat
     FROM dbo.tenants t

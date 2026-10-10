@@ -18,6 +18,7 @@ BEGIN
         notes               NVARCHAR(1000)   NULL,
         discountamount      DECIMAL(18, 2)   NOT NULL CONSTRAINT DF_admissions_discount DEFAULT (0),
         discountreason      NVARCHAR(500)    NULL,
+        invoicenumber       NVARCHAR(50)     NULL,
         fromvisitid         UNIQUEIDENTIFIER NULL,
         createdby           UNIQUEIDENTIFIER NOT NULL,
         createdat           DATETIME2        NOT NULL CONSTRAINT DF_admissions_createdat DEFAULT (SYSUTCDATETIME()),

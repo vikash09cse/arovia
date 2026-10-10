@@ -12,6 +12,8 @@ interface TenantUser {
   firstName: string;
   lastName: string;
   designation?: string | null;
+  phoneNumber?: string | null;
+  emergencyContactNumber?: string | null;
   role: string;
   roleCode: number;
   status: string;
@@ -91,6 +93,8 @@ export class UsersComponent implements OnInit {
   lastName = '';
   email = '';
   designation = '';
+  phoneNumber = '';
+  emergencyContactNumber = '';
   roleCode = 2;
   temporaryPassword = '';
   newPassword = '';
@@ -196,7 +200,9 @@ export class UsersComponent implements OnInit {
     this.firstName = user.firstName;
     this.lastName = user.lastName;
     this.email = user.email;
-    this.designation = user.designation ?? '';
+    this.designation = normalizeDesignation(user.designation);
+    this.phoneNumber = user.phoneNumber ?? '';
+    this.emergencyContactNumber = user.emergencyContactNumber ?? '';
     this.roleCode = user.roleCode;
     this.temporaryPassword = '';
     this.newPassword = '';
@@ -233,6 +239,8 @@ export class UsersComponent implements OnInit {
     this.lastName = '';
     this.email = '';
     this.designation = '';
+    this.phoneNumber = '';
+    this.emergencyContactNumber = '';
     this.roleCode = 2;
     this.temporaryPassword = '';
     this.newPassword = '';
@@ -285,10 +293,13 @@ export class UsersComponent implements OnInit {
       email: this.email.trim(),
       firstName: this.firstName.trim(),
       lastName: this.lastName.trim(),
-      role: this.roleCode
+      role: this.roleCode,
+      phoneNumber: this.phoneNumber.trim() || null,
+      emergencyContactNumber: this.emergencyContactNumber.trim() || null
     };
-    if (this.designation.trim()) {
-      body['designation'] = this.designation.trim();
+    const designation = normalizeDesignation(this.designation);
+    if (designation) {
+      body['designation'] = designation;
     }
     if (this.temporaryPassword.trim()) {
       body['temporaryPassword'] = this.temporaryPassword.trim();
@@ -353,7 +364,9 @@ export class UsersComponent implements OnInit {
       firstName: this.firstName.trim(),
       lastName: this.lastName.trim(),
       role: this.roleCode,
-      designation: this.designation.trim() || null
+      designation: normalizeDesignation(this.designation) || null,
+      phoneNumber: this.phoneNumber.trim() || null,
+      emergencyContactNumber: this.emergencyContactNumber.trim() || null
     };
 
     this.api.put<ApiResult<TenantUser>>(`/users/${user.id}`, body).subscribe({
@@ -650,4 +663,16 @@ export class UsersComponent implements OnInit {
     if (Number.isNaN(d.getTime())) return '';
     return d.toLocaleDateString('en-CA');
   }
+}
+
+/** Preserve real newlines; convert typed "\\n" sequences from older single-line edits. */
+function normalizeDesignation(value?: string | null): string {
+  if (!value) return '';
+  return value
+    .replace(/\r\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .split('\n')
+    .map(line => line.trim())
+    .join('\n')
+    .trim();
 }

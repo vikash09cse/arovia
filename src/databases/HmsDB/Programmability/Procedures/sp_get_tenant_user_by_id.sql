@@ -11,6 +11,8 @@ BEGIN
         u.firstname,
         u.lastname,
         u.designation,
+        u.phonenumber,
+        u.emergencycontactnumber,
         u.usertype AS role,
         u.userstatus AS status,
         u.lastloginat,

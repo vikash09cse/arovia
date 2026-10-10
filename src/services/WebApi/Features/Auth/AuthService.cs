@@ -172,8 +172,9 @@ public class AuthService(
             return Result<MyProfileResponse>.Fail(ErrorCode.Validation, "First name cannot exceed 100 characters.");
         if (request.LastName.Trim().Length > 100)
             return Result<MyProfileResponse>.Fail(ErrorCode.Validation, "Last name cannot exceed 100 characters.");
-        if (request.Designation?.Trim().Length > 100)
-            return Result<MyProfileResponse>.Fail(ErrorCode.Validation, "Designation cannot exceed 100 characters.");
+        var designation = NormalizeDesignation(request.Designation);
+        if (designation is { Length: > 500 })
+            return Result<MyProfileResponse>.Fail(ErrorCode.Validation, "Designation cannot exceed 500 characters.");
 
         var ctx = httpContextAccessor.GetTenantContext();
         try
@@ -183,7 +184,7 @@ public class AuthService(
                 ctx.UserId,
                 request.FirstName.Trim(),
                 request.LastName.Trim(),
-                string.IsNullOrWhiteSpace(request.Designation) ? null : request.Designation.Trim(),
+                designation,
                 ct);
 
             if (row == null)
@@ -274,5 +275,19 @@ public class AuthService(
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
         return Convert.ToBase64String(bytes);
+    }
+
+    private static string? NormalizeDesignation(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var normalized = value
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace("\\n", "\n", StringComparison.Ordinal);
+        var lines = normalized
+            .Split('\n', StringSplitOptions.None)
+            .Select(l => l.Trim())
+            .ToArray();
+        var joined = string.Join('\n', lines).Trim();
+        return string.IsNullOrWhiteSpace(joined) ? null : joined;
     }
 }

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using WebApi.Features.Shared;
 
 namespace WebApi.Features.DischargeSummaries;
 
@@ -55,24 +56,10 @@ internal static class DischargeSummaryPrintBuilder
             .Where(l => l.Length > 0)
             .ToArray();
 
-        var hospital = a.HospitalName.ToUpperInvariant();
-        var doctor = a.DoctorName;
-        var doctorCred = string.IsNullOrWhiteSpace(a.DoctorDesignation)
-            ? (a.DepartmentName ?? "Consultant")
-            : a.DoctorDesignation!;
-        var hospitalBar = string.Join(" · ", new[]
-        {
-            a.HospitalAddress,
-            string.IsNullOrWhiteSpace(a.HospitalEmail) ? null : a.HospitalEmail,
-            string.IsNullOrWhiteSpace(a.HospitalPhone) ? null : $"Ph: {a.HospitalPhone}"
-        }.Where(x => !string.IsNullOrWhiteSpace(x)));
-
-        var hospitalFooter = string.Join(" · ", new[]
-        {
-            a.HospitalAddress,
-            string.IsNullOrWhiteSpace(a.HospitalEmail) ? null : $"Email: {a.HospitalEmail}",
-            string.IsNullOrWhiteSpace(a.HospitalPhone) ? null : $"Ph: {a.HospitalPhone}"
-        }.Where(x => !string.IsNullOrWhiteSpace(x)));
+        var doctor = ClinicalDocumentChrome.FormatDoctorName(a.DoctorName);
+        var credentialLines = ClinicalDocumentChrome.CredentialLines(
+            a.DoctorDesignation, a.DepartmentName ?? "Consultant");
+        var copyright = ClinicalDocumentChrome.BuildCopyrightLine(a.HospitalName, a.HospitalAddress);
 
         var procedureLabel = !string.IsNullOrWhiteSpace(S("procedureKey")) && S("procedureKey") != "Other"
             ? S("procedureKey")
@@ -80,11 +67,11 @@ internal static class DischargeSummaryPrintBuilder
 
         var logoLetters = LogoLetters(a.HospitalName);
         var sb = new StringBuilder();
-        sb.Append(Css());
+        sb.Append(Css(a.AdmissionCode));
 
-        // Page 1
+        // Continuous document — browser/PDF print paginates naturally (no forced blank pages).
         sb.Append("""<div class="dsf-page">""");
-        AppendLetterhead(sb, hospital, hospitalBar, doctor, doctorCred, logoLetters, logoBytes);
+        AppendLetterhead(sb, a.HospitalName, doctor, credentialLines, logoLetters, logoBytes);
 
         SectionOpen(sb, 1, "PATIENT DETAILS");
         sb.Append("""<div class="dsf-grid-2"><div>""");
@@ -140,12 +127,6 @@ internal static class DischargeSummaryPrintBuilder
             sb.Append("</ul>");
         }
         SectionClose(sb);
-        sb.Append($"""<p class="dsf-footer">{E(hospitalFooter)}</p>""");
-        sb.Append("""<p class="dsf-page-no">Page 1 of 2</p></div>""");
-
-        // Page 2
-        sb.Append("""<div class="dsf-page">""");
-        AppendLetterhead(sb, hospital, hospitalBar, doctor, doctorCred, logoLetters, logoBytes);
 
         SectionOpen(sb, 9, "PROCEDURE / SURGERY DETAILS");
         sb.Append("""<div class="dsf-grid-2"><div>""");
@@ -224,22 +205,26 @@ internal static class DischargeSummaryPrintBuilder
               <div class="dsf-sign-box" style="text-align:right">
                 <div class="dsf-sign-line" style="margin-left:auto;width:80%">Treating Doctor Signature &amp; Stamp</div>
                 <p style="margin:0.45rem 0 0;font-weight:700">{E(doctor)}</p>
-                <p style="margin:0.15rem 0 0;font-size:0.7rem">{E(doctorCred)}</p>
+                <p style="margin:0.15rem 0 0;font-size:0.7rem">{E(string.Join(" · ", credentialLines))}</p>
                 <p style="margin:0.15rem 0 0;font-size:0.7rem">{E(a.HospitalName)}</p>
               </div>
             </div>
-            <p class="dsf-footer">{E(hospitalFooter)}</p>
-            <p class="dsf-page-no">Page 2 of 2</p>
+            """);
+        sb.Append(ClinicalDocumentChrome.FooterHtml(a.HospitalPhone, a.HospitalAddress, copyright));
+        sb.Append("""
             </div></div></body></html>
             """);
 
         return sb.ToString();
     }
 
-    private static string Css() => """
+    private static string Css(string? admissionCode)
+    {
+        var title = E(string.IsNullOrWhiteSpace(admissionCode) ? "Discharge Summary" : admissionCode);
+        return ("""
         <!DOCTYPE html>
         <html><head><meta charset="utf-8" />
-        <title>Discharge Summary</title>
+        <title>__DOC_TITLE__</title>
         <style>
           :root {
             --dsf-navy: #1e3a5f;
@@ -267,68 +252,6 @@ internal static class DischargeSummaryPrintBuilder
             margin: 0 auto 1rem;
             max-width: 900px;
             box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
-          }
-          .dsf-letterhead-top {
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            gap: 0.75rem;
-            align-items: center;
-          }
-          .dsf-logo-mark {
-            width: 3rem;
-            height: 3rem;
-            border-radius: 999px;
-            background: linear-gradient(135deg, var(--dsf-teal), var(--dsf-navy));
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            font-weight: 800;
-            letter-spacing: 0.02em;
-          }
-          .dsf-logo-img {
-            width: 3.25rem;
-            height: 3.25rem;
-            object-fit: contain;
-            border: 1px solid var(--dsf-line);
-            border-radius: 6px;
-            background: #fff;
-          }
-          .dsf-hospital {
-            margin: 0;
-            text-align: center;
-            font-size: 1.35rem;
-            font-weight: 900;
-            letter-spacing: 0.04em;
-            color: var(--dsf-navy);
-          }
-          .dsf-tagline {
-            margin: 0.15rem 0 0;
-            text-align: center;
-            font-size: 0.7rem;
-            color: #445;
-          }
-          .dsf-letterhead-doc { text-align: right; font-size: 0.72rem; max-width: 11rem; }
-          .dsf-doc-name { margin: 0; font-weight: 700; color: var(--dsf-navy); }
-          .dsf-doc-cred { margin: 0.15rem 0 0; color: #445; line-height: 1.3; }
-          .dsf-subbar {
-            margin-top: 0.55rem;
-            background: var(--dsf-bar);
-            color: #fff;
-            font-size: 0.68rem;
-            text-align: center;
-            padding: 0.28rem 0.5rem;
-          }
-          .dsf-title {
-            margin-top: 0.55rem;
-            background: var(--dsf-title);
-            color: var(--dsf-navy);
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-align: center;
-            padding: 0.4rem;
-            font-size: 0.95rem;
           }
           .dsf-bar {
             background: var(--dsf-navy);
@@ -421,15 +344,6 @@ internal static class DischargeSummaryPrintBuilder
             color: #667;
             margin-top: 0.35rem;
           }
-          .dsf-footer {
-            margin-top: 0.85rem;
-            padding-top: 0.45rem;
-            border-top: 1px solid var(--dsf-line);
-            text-align: center;
-            font-size: 0.68rem;
-            color: #445;
-            line-height: 1.35;
-          }
           @media print {
             body { padding: 0; background: #fff; }
             .dsf-page {
@@ -439,57 +353,45 @@ internal static class DischargeSummaryPrintBuilder
               padding: 8mm 10mm;
               margin: 0;
               max-width: none;
-              break-after: page;
-              page-break-after: always;
             }
-            .dsf-page:last-child {
-              break-after: auto;
-              page-break-after: auto;
+            .cdc-letterhead-wrap {
+              break-inside: avoid;
+              page-break-inside: avoid;
             }
           }
           @media (max-width: 720px) {
-            .dsf-grid-2, .dsf-inv-wrap, .dsf-split, .dsf-sign, .dsf-past, .dsf-letterhead-top {
+            .dsf-grid-2, .dsf-inv-wrap, .dsf-split, .dsf-sign, .dsf-past, .cdc-letterhead {
               grid-template-columns: 1fr;
             }
-            .dsf-letterhead-doc { text-align: left; max-width: none; }
             .dsf-past > div { border-right: 0; border-bottom: 1px solid var(--dsf-line); }
           }
+        """ + ClinicalDocumentChrome.CssBlock() + """
         </style></head><body><div class="dsf-root">
-        """;
-
+        """).Replace("__DOC_TITLE__", title, StringComparison.Ordinal);
+    }
 
     private static void AppendLetterhead(
-        StringBuilder sb, string hospital, string hospitalBar, string doctor, string doctorCred,
-        string logoLetters, byte[]? logoBytes)
+        StringBuilder sb,
+        string hospitalName,
+        string doctor,
+        IReadOnlyList<string> credentialLines,
+        string logoLetters,
+        byte[]? logoBytes)
     {
-        string logoHtml;
+        string? logoHtml = null;
         if (logoBytes is { Length: > 0 })
         {
             var b64 = Convert.ToBase64String(logoBytes);
-            logoHtml = $"""<img class="dsf-logo-img" src="data:image/png;base64,{b64}" alt="Logo" />""";
-        }
-        else
-        {
-            logoHtml = $"""<div class="dsf-logo-mark" aria-hidden="true">{E(logoLetters)}</div>""";
+            logoHtml = $"""<img class="cdc-logo" src="data:image/png;base64,{b64}" alt="Logo" />""";
         }
 
-        sb.Append($"""
-            <header>
-              <div class="dsf-letterhead-top">
-                {logoHtml}
-                <div>
-                  <p class="dsf-hospital">{E(hospital)}</p>
-                  <p class="dsf-tagline">ADVANCED UROLOGICAL CARE · Kidney | Stone | Prostate Care</p>
-                </div>
-                <div class="dsf-letterhead-doc">
-                  <p class="dsf-doc-name">{E(doctor)}</p>
-                  <p class="dsf-doc-cred">{E(doctorCred)}</p>
-                </div>
-              </div>
-              <div class="dsf-subbar">{E(hospitalBar)}</div>
-              <div class="dsf-title">DISCHARGE SUMMARY</div>
-            </header>
-            """);
+        sb.Append(ClinicalDocumentChrome.LetterheadHtml(
+            hospitalName,
+            doctor,
+            credentialLines,
+            "DISCHARGE SUMMARY",
+            logoHtml,
+            logoLetters));
     }
 
     private static void SectionOpen(StringBuilder sb, int n, string title) =>

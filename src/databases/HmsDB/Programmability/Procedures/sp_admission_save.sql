@@ -12,6 +12,7 @@ CREATE OR ALTER PROCEDURE dbo.sp_admission_save
     @depositamount       DECIMAL(18, 2) = NULL,
     @depositpaymentmethod TINYINT = NULL,
     @collectedby         UNIQUEIDENTIFIER = NULL,
+    @admissiondate        DATE = NULL, -- tenant-local calendar date; NULL = today
     @actorid             UNIQUEIDENTIFIER
 AS
 BEGIN
@@ -89,8 +90,11 @@ BEGIN
     END
 
     DECLARE @timezone NVARCHAR(50);
-    DECLARE @admittedUtc DATETIME2 = SYSUTCDATETIME();
+    DECLARE @nowUtc DATETIME2 = SYSUTCDATETIME();
+    DECLARE @nowLocal DATETIME2;
+    DECLARE @admittedUtc DATETIME2;
     DECLARE @regDate DATE;
+    DECLARE @localAdmit DATETIME2;
     DECLARE @seq INT;
     DECLARE @admissioncode NVARCHAR(30);
     DECLARE @admissionid UNIQUEIDENTIFIER = NEWID();
@@ -103,7 +107,15 @@ BEGIN
         SET @timezone = N'UTC';
 
     SET @timezone = dbo.fn_to_sql_timezone(@timezone);
-    SET @regDate = CAST((@admittedUtc AT TIME ZONE 'UTC' AT TIME ZONE @timezone) AS DATE);
+    SET @nowLocal = (@nowUtc AT TIME ZONE 'UTC') AT TIME ZONE @timezone;
+    SET @regDate = ISNULL(@admissiondate, CAST(@nowLocal AS DATE));
+
+    -- Selected (or today) local date + current local time-of-day → store as UTC
+    SET @localAdmit = DATETIME2FROMPARTS(
+        YEAR(@regDate), MONTH(@regDate), DAY(@regDate),
+        DATEPART(HOUR, @nowLocal), DATEPART(MINUTE, @nowLocal), DATEPART(SECOND, @nowLocal),
+        0, 0);
+    SET @admittedUtc = (@localAdmit AT TIME ZONE @timezone) AT TIME ZONE 'UTC';
 
     BEGIN TRANSACTION;
 

@@ -39,7 +39,8 @@ public class DoctorsRepository(DbHelper dbHelper) : IDoctorsRepository
     }
 
     public async Task<Guid> CreateAsync(
-        Guid tenantId, string email, string firstName, string lastName, Guid departmentId, string passwordHash,
+        Guid tenantId, string email, string firstName, string lastName, Guid departmentId,
+        string? phoneNumber, string? emergencyContactNumber, string passwordHash,
         Guid createdBy, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
@@ -53,6 +54,8 @@ public class DoctorsRepository(DbHelper dbHelper) : IDoctorsRepository
                 passwordhash = passwordHash,
                 firstname = firstName,
                 lastname = lastName,
+                phonenumber = phoneNumber,
+                emergencycontactnumber = emergencyContactNumber,
                 departmentid = departmentId,
                 usertype = (byte)UserType.Doctor,
                 userstatus = (byte)UserStatus.Active,
@@ -62,7 +65,8 @@ public class DoctorsRepository(DbHelper dbHelper) : IDoctorsRepository
     }
 
     public async Task UpdateAsync(
-        Guid tenantId, Guid doctorId, string firstName, string lastName, Guid departmentId, Guid updatedBy, CancellationToken ct)
+        Guid tenantId, Guid doctorId, string firstName, string lastName, Guid departmentId,
+        string? phoneNumber, string? emergencyContactNumber, Guid updatedBy, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
         await conn.ExecuteAsync(
@@ -73,6 +77,10 @@ public class DoctorsRepository(DbHelper dbHelper) : IDoctorsRepository
                 userid = doctorId,
                 firstname = firstName,
                 lastname = lastName,
+                phonenumber = phoneNumber,
+                updatephonenumber = true,
+                emergencycontactnumber = emergencyContactNumber,
+                updateemergencycontactnumber = true,
                 departmentid = departmentId,
                 updatedepartment = 1,
                 usertype = (byte)UserType.Doctor,

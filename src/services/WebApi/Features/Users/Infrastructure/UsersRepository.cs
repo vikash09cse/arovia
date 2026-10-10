@@ -12,6 +12,8 @@ public class TenantUserRow
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string? Designation { get; set; }
+    public string? PhoneNumber { get; set; }
+    public string? EmergencyContactNumber { get; set; }
     public byte Role { get; set; }
     public byte Status { get; set; }
     public decimal? MonthlySalary { get; set; }
@@ -55,7 +57,8 @@ public class UsersRepository(DbHelper dbHelper) : IUsersRepository
     }
 
     public async Task<Guid> CreateAsync(
-        Guid tenantId, string email, string firstName, string lastName, string? designation, byte role, string passwordHash,
+        Guid tenantId, string email, string firstName, string lastName, string? designation,
+        string? phoneNumber, string? emergencyContactNumber, byte role, string passwordHash,
         Guid createdBy, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
@@ -70,6 +73,8 @@ public class UsersRepository(DbHelper dbHelper) : IUsersRepository
                 firstname = firstName,
                 lastname = lastName,
                 designation,
+                phonenumber = phoneNumber,
+                emergencycontactnumber = emergencyContactNumber,
                 usertype = role,
                 userstatus = (byte)UserStatus.Active,
                 createdby = createdBy
@@ -78,7 +83,8 @@ public class UsersRepository(DbHelper dbHelper) : IUsersRepository
     }
 
     public async Task UpdateAsync(
-        Guid tenantId, Guid userId, string firstName, string lastName, string? designation, byte role, Guid updatedBy, CancellationToken ct)
+        Guid tenantId, Guid userId, string firstName, string lastName, string? designation,
+        string? phoneNumber, string? emergencyContactNumber, byte role, Guid updatedBy, CancellationToken ct)
     {
         using var conn = dbHelper.GetConnection();
         await conn.ExecuteAsync(
@@ -91,6 +97,10 @@ public class UsersRepository(DbHelper dbHelper) : IUsersRepository
                 lastname = lastName,
                 designation,
                 updatedesignation = true,
+                phonenumber = phoneNumber,
+                updatephonenumber = true,
+                emergencycontactnumber = emergencyContactNumber,
+                updateemergencycontactnumber = true,
                 usertype = role,
                 updatedby = updatedBy
             },

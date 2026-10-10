@@ -102,6 +102,7 @@ public static class DependencyInjection
         });
 
         Dapper.DefaultTypeMap.MatchNamesWithUnderscores = false;
+        Dapper.SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
     }
 
     public static void UseGlobalConfigurations(this WebApplication app)

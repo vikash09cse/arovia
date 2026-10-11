@@ -53,14 +53,30 @@ public static class HtmlPdfRenderer
         if (_browser is { IsClosed: false })
             return _browser;
 
-        var fetcher = new BrowserFetcher();
-        await fetcher.DownloadAsync();
+        // IIS app-pool identities usually cannot write under the site folder
+        // (…\WebAPI\Chrome\…). Keep Chromium + profile under the process temp path.
+        var chromeRoot = Path.Combine(Path.GetTempPath(), "AroviaHms", "Chrome");
+        var userDataDir = Path.Combine(Path.GetTempPath(), "AroviaHms", "chrome-user-data");
+        Directory.CreateDirectory(chromeRoot);
+        Directory.CreateDirectory(userDataDir);
+
+        var fetcher = new BrowserFetcher(new BrowserFetcherOptions { Path = chromeRoot });
+        var installed = await fetcher.DownloadAsync();
         ct.ThrowIfCancellationRequested();
 
         _browser = await Puppeteer.LaunchAsync(new LaunchOptions
         {
             Headless = true,
-            Args = ["--no-sandbox", "--disable-dev-shm-usage", "--font-render-hinting=none"]
+            ExecutablePath = installed.GetExecutablePath(),
+            Args =
+            [
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--font-render-hinting=none",
+                "--disable-gpu",
+                "--disable-extensions",
+                $"--user-data-dir={userDataDir}"
+            ]
         });
         return _browser;
     }

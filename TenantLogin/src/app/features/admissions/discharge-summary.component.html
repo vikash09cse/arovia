@@ -12,10 +12,20 @@
         <p class="subtitle">Guided prep · {{ admission()!.admissionCode }} · {{ admission()!.patientFullName }}</p>
       </div>
       <div class="header-actions">
-        <button type="button" class="btn-secondary" (click)="print()" [disabled]="saving() || printing()">
+        @if (exists()) {
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="viewPdf()"
+            [disabled]="saving() || printing() || viewingPdf()"
+          >
+            {{ viewingPdf() ? 'Opening…' : 'View the discharge summary' }}
+          </button>
+        }
+        <button type="button" class="btn-primary" (click)="print()" [disabled]="saving() || printing() || viewingPdf()">
           {{ printing() ? 'Printing…' : 'Print' }}
         </button>
-        <button type="button" class="btn-primary" (click)="save()" [disabled]="saving() || printing()">
+        <button type="button" class="btn-primary" (click)="save()" [disabled]="saving() || printing() || viewingPdf()">
           {{ saving() ? 'Saving…' : 'Save' }}
         </button>
       </div>
@@ -381,8 +391,18 @@
   </section>
 
   <div class="form-actions sticky-actions">
-    <button type="button" class="btn-secondary" (click)="print()" [disabled]="saving() || printing()">Print</button>
-    <button type="button" class="btn-primary" (click)="save()" [disabled]="saving() || printing()">
+    @if (exists()) {
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="viewPdf()"
+        [disabled]="saving() || printing() || viewingPdf()"
+      >
+        {{ viewingPdf() ? 'Opening…' : 'View the discharge summary' }}
+      </button>
+    }
+    <button type="button" class="btn-primary" (click)="print()" [disabled]="saving() || printing() || viewingPdf()">Print</button>
+    <button type="button" class="btn-primary" (click)="save()" [disabled]="saving() || printing() || viewingPdf()">
       {{ saving() ? 'Saving…' : 'Save summary' }}
     </button>
   </div>

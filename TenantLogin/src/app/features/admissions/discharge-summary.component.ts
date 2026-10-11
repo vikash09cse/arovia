@@ -71,6 +71,7 @@ export class DischargeSummaryComponent implements OnInit {
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly printing = signal(false);
+  readonly viewingPdf = signal(false);
   readonly error = signal('');
   readonly message = signal('');
   readonly admission = signal<AdmissionHeader | null>(null);
@@ -246,6 +247,42 @@ export class DischargeSummaryComponent implements OnInit {
     });
   }
 
+  async viewPdf() {
+    if (!this.exists()) return;
+
+    // Open synchronously in the click gesture so the browser does not treat
+    // the later navigation as a blocked popup (window.open after await is blocked).
+    const preview = window.open('about:blank', '_blank');
+    if (!preview) {
+      this.error.set('Unable to open PDF. Allow pop-ups for this site and try again.');
+      return;
+    }
+    try {
+      preview.document.write(
+        '<p style="font:14px/1.4 system-ui,sans-serif;padding:1.25rem;color:#334155">Loading PDF…</p>'
+      );
+      preview.document.close();
+    } catch {
+      /* cross-origin / restricted blank docs — ignore */
+    }
+
+    this.viewingPdf.set(true);
+    this.error.set('');
+    this.message.set('');
+    try {
+      const { blob, fileName } = await this.fetchPrintPdfBlob();
+      const url = URL.createObjectURL(blob);
+      preview.location.href = url;
+      this.message.set(`Opened ${fileName}`);
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e: any) {
+      try { preview.close(); } catch { /* ignore */ }
+      this.error.set(e?.message || 'Unable to open PDF.');
+    } finally {
+      this.viewingPdf.set(false);
+    }
+  }
+
   async print() {
     this.printing.set(true);
     this.error.set('');
@@ -276,31 +313,7 @@ export class DischargeSummaryComponent implements OnInit {
         });
       });
 
-      const response = await firstValueFrom(
-        this.api.getBlob(`/admissions/${this.admissionId}/discharge-summary/print.pdf`)
-      );
-      const blob = response.body;
-      if (!blob) throw new Error('PDF download failed.');
-
-      if (blob.type.includes('application/json')) {
-        const text = await blob.text();
-        try {
-          const parsed = JSON.parse(text) as { message?: string };
-          throw new Error(parsed.message || 'Unable to generate PDF.');
-        } catch (e) {
-          if (e instanceof SyntaxError) throw new Error('Unable to generate PDF.');
-          throw e;
-        }
-      }
-
-      const disposition = response.headers.get('content-disposition') ?? '';
-      const match = /filename\*?=(?:UTF-8''|")?([^\";]+)/i.exec(disposition);
-      const fromHeader = match?.[1] ? decodeURIComponent(match[1].replace(/"/g, '')) : '';
-      const admissionCode = this.admission()?.admissionCode?.trim();
-      const fileName =
-        fromHeader ||
-        (admissionCode ? `${admissionCode}.pdf` : `discharge-summary-${this.admissionId}.pdf`);
-
+      const { blob, fileName } = await this.fetchPrintPdfBlob();
       const url = URL.createObjectURL(blob);
 
       // Download using admission number so the file is not named after the portal title.
@@ -352,5 +365,34 @@ export class DischargeSummaryComponent implements OnInit {
     } finally {
       this.printing.set(false);
     }
+  }
+
+  private async fetchPrintPdfBlob(): Promise<{ blob: Blob; fileName: string }> {
+    const response = await firstValueFrom(
+      this.api.getBlob(`/admissions/${this.admissionId}/discharge-summary/print.pdf`)
+    );
+    const blob = response.body;
+    if (!blob) throw new Error('PDF download failed.');
+
+    if (blob.type.includes('application/json')) {
+      const text = await blob.text();
+      try {
+        const parsed = JSON.parse(text) as { message?: string };
+        throw new Error(parsed.message || 'Unable to generate PDF.');
+      } catch (e) {
+        if (e instanceof SyntaxError) throw new Error('Unable to generate PDF.');
+        throw e;
+      }
+    }
+
+    const disposition = response.headers.get('content-disposition') ?? '';
+    const match = /filename\*?=(?:UTF-8''|")?([^\";]+)/i.exec(disposition);
+    const fromHeader = match?.[1] ? decodeURIComponent(match[1].replace(/"/g, '')) : '';
+    const admissionCode = this.admission()?.admissionCode?.trim();
+    const fileName =
+      fromHeader ||
+      (admissionCode ? `${admissionCode}.pdf` : `discharge-summary-${this.admissionId}.pdf`);
+
+    return { blob, fileName };
   }
 }
